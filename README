@@ -1,1 +1,12 @@
+Reproducing: "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" (https://arxiv.org/pdf/2408.05446)
 
+Based on @aplesner's implementation: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+
+# Notes
+
+Figures 5 and 6 in the paper show outputs from 54 layers. We only ended up with 53 layers, namely:
+
+- Input layer
+- Conv1 + BatchNorm1 + ReLU + MaxPool (combined as one layer)
+- 50 layers after each block (see: `ResNet._make_layer`)
+- Average pooling layer
