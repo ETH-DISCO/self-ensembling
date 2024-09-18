@@ -142,7 +142,7 @@ def eval():
         "acc_median": correct_median / total,
         "acc_crossmax": correct_crossmax / total,
     }
-    with open(Path.cwd() / "data" / "hyperparams.jsonl", "w") as f:
+    with open(output_path / "hyperparams.json", "w") as f:
         f.write(json.dumps(results, indent=4))
 
 
