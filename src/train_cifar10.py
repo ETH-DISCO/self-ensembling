@@ -36,6 +36,13 @@ set_seed()
 # config
 #
 
+# search_space = {
+#     "batch_size": [64, 128, 256, 512],
+#     "lr": [1e-4, 1e-3, 1e-2],
+#     "num_epochs": [5, 10, 15],
+#     "crossmax_k": [1, 2, 3]
+# }
+
 hyperparams = {
     "batch_size": 256,
     "lr": 1e-4,
