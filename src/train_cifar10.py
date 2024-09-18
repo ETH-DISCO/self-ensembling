@@ -13,6 +13,21 @@ from utils import free_mem, get_device, set_seed
 
 set_seed()
 
+
+"""
+questions:
+
+- do the hyperparams make sense? i should train them
+- does my validation / test loop make sense? is this sane?
+
+next steps:
+
+- hyperparam optimization
+- larger dataset: cifar-100
+- robustbench benchmarking + masks, visualizing results
+"""
+
+
 #
 # config
 #
@@ -122,6 +137,9 @@ def train():
         f.write(json.dumps(results, indent=4))
 
     # save model
+    modelpath = output_path / "model.pth"
+    if modelpath.exists():
+        modelpath.unlink()
     torch.save(net.state_dict(), output_path / "model.pth")
     print("saved model")
 
