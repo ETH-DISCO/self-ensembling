@@ -4,30 +4,64 @@ from pathlib import Path
 import torch
 import torchvision.datasets as datasets
 import torchvision.models as models
+from torch.utils.data import DataLoader, random_split
+from torchvision import datasets
 from tqdm import tqdm
 
 import custom_torchvision
 from utils import free_mem, get_device, set_seed
 
+set_seed()
+
+#
+# hyperparams
+#
+
 hyperparams = {
-    "batch_size": 256,
-    "lr": 1e-4,
-    "num_epochs": 2,
+    "batch_size": 128,
+    "lr": 0.1,
+    "num_epochs": 200,
+    "weight_decay": 5e-4,
+    "momentum": 0.9,
+    "lr_scheduler": "cosine",
 }
 
 dataset_path = Path.cwd() / "dataset"
 output_path = Path.cwd() / "data"
+
+#
+# data
+#
+
+cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
+cifar10_full = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
+train_size = int(0.8 * len(cifar10_full))  # holdout 80-20 split
+
+# train, val set
+val_size = len(cifar10_full) - train_size
+cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])  # train, val
+trainloader = DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
+valloader = DataLoader(cifar10_val, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+
+# test set
+cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
+testloader = DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 
 
 def train():
     # data
     cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
     cifar10_train = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
+
     trainloader = torch.utils.data.DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
+
+    cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
+    cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
+    testloader = torch.utils.data.DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, drop_last=False, num_workers=4, pin_memory=torch.cuda.is_available())
+
     print(f"loaded data")
 
     # model
-    set_seed()
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
@@ -43,7 +77,9 @@ def train():
     criterion = torch.nn.CrossEntropyLoss()
     if torch.cuda.is_available():
         criterion = criterion.cuda()
-    optimizer = torch.optim.Adam(net.parameters(), lr=hyperparams["lr"])  # Adam is always a safe bet
+    # optimizer = torch.optim.Adam(net.parameters(), lr=hyperparams["lr"])
+    optimizer = torch.optim.SGD(net.parameters(), lr=hyperparams["lr"], momentum=hyperparams["momentum"], weight_decay=hyperparams["weight_decay"])
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=hyperparams["num_epochs"])
 
     def training_step(outputs, labels):
         losses = []
@@ -58,7 +94,11 @@ def train():
         return losses
 
     for epoch in range(hyperparams["num_epochs"]):
+        net.train()
         running_losses = [0.0] * ensemble_size
+        correct = 0
+        total = 0
+
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=len(trainloader)):
             inputs, labels = inputs.to(device), labels.to(device)
 
@@ -66,12 +106,41 @@ def train():
 
             outputs = net(inputs)
             losses = training_step(outputs=outputs, labels=labels)
-            for i in range(ensemble_size):
-                running_losses[i] += losses[i].item() # accumulate losses
 
+            for i in range(ensemble_size):
+                running_losses[i] += losses[i].item()  # accumulate losses
+
+            # print stats
+            _, predicted = outputs.max(2)
+            total += labels.size(0)
+            correct += predicted.eq(labels.unsqueeze(1)).sum().item()
             if batch_idx % 20 == 19:
-                print(f"[epoch {epoch + 1} | {batch_idx + 1:5d}/{len(trainloader)}] losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                avg_loss = sum(running_losses) / len(running_losses) / 20
+                accuracy = 100.0 * correct / total
+                print(f"[Epoch {epoch + 1} | {batch_idx + 1:5d}/{len(trainloader)}] Avg Loss: {avg_loss:.3f}, Accuracy: {accuracy:.2f}%")
                 running_losses = [0.0] * ensemble_size
+                correct = 0
+                total = 0
+
+        scheduler.step()
+
+        # validation
+        net.eval()
+        val_loss = 0
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, labels in valloader:
+                inputs, labels = inputs.to(device), labels.to(device)
+                outputs = net(inputs)
+                loss = criterion(outputs.mean(1), labels)
+                val_loss += loss.item()
+                _, predicted = outputs.max(2)
+                total += labels.size(0)
+                correct += predicted.eq(labels.unsqueeze(1)).sum().item()
+
+        val_accuracy = 100.0 * correct / total
+        print(f"Validation Loss: {val_loss/len(valloader):.3f}, Accuracy: {val_accuracy:.2f}%")
 
     # save model
     model_path = Path.cwd() / "data" / "model.pth"
@@ -148,4 +217,4 @@ def eval():
 
 if __name__ == "__main__":
     train()
-    eval()
+    # eval()
