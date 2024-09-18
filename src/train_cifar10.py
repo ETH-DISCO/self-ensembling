@@ -36,6 +36,8 @@ set_seed()
 # config
 #
 
+# run with argparse and nohup
+# 
 # search_space = {
 #     "batch_size": [64, 128, 256, 512],
 #     "lr": [1e-4, 1e-3, 1e-2],
