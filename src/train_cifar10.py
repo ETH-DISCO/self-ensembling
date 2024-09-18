@@ -4,6 +4,7 @@ from pathlib import Path
 import torch
 import torchvision.datasets as datasets
 import torchvision.models as models
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
@@ -54,7 +55,7 @@ def train():
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)
     ensemble_size = len(net.fc_layers)
-    print(f"loaded model")
+    print(f"loaded backbone")
 
     #
     # train loop
@@ -90,7 +91,7 @@ def train():
                 running_losses[i] += losses[i].item()  # accumulate losses
 
             if batch_idx % 20 == 19:
-                print(f"[epoch {epoch + 1} | {batch_idx + 1:5d}/{len(trainloader)}] losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                print(f"[epoch {epoch + 1} | {batch_idx + 1:5d}/{len(trainloader)}] ensemble losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
 
     # save model
@@ -109,8 +110,6 @@ def eval():
     #
     # eval loop
     #
-
-    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
     def calculate_metrics(y_true, y_pred):
         accuracy = accuracy_score(y_true, y_pred)
