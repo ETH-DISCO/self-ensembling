@@ -10,6 +10,8 @@ from tqdm import tqdm
 import custom_torchvision
 from utils import free_mem, get_device, set_seed
 
+set_seed()
+
 #
 # hyperparams
 #
@@ -29,18 +31,18 @@ dataset_path = Path.cwd() / "dataset"
 
 cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
 cifar10_full = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-train_size = int(0.8 * len(cifar10_full))  # holdout 80-20 train-test-split
+train_size = int(0.8 * len(cifar10_full))
 
-# train set, val set
 val_size = len(cifar10_full) - train_size
-cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])  # train, val
+cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])
 trainloader = DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
 valloader = DataLoader(cifar10_val, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+print(f"train size: {len(cifar10_train)}")
+print(f"val size: {len(cifar10_val)}")
 
-# test set
 cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
 testloader = DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
-print(f"loaded data")
+print(f"test size: {len(cifar10_test)}")
 
 
 def train():
@@ -51,7 +53,6 @@ def train():
     print(f"loaded data")
 
     # model
-    set_seed()
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
@@ -67,7 +68,7 @@ def train():
     criterion = torch.nn.CrossEntropyLoss()
     if torch.cuda.is_available():
         criterion = criterion.cuda()
-    optimizer = torch.optim.Adam(net.parameters(), lr=hyperparams["lr"])  # based on https://karpathy.github.io/2019/04/25/recipe/
+    optimizer = torch.optim.Adam(net.parameters(), lr=hyperparams["lr"])  # see: https://karpathy.github.io/2019/04/25/recipe/
 
     def training_step(outputs, labels):
         losses = []
