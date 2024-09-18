@@ -89,7 +89,7 @@ def train():
             
             losses = training_step(outputs=outputs, labels=labels)
             for i in range(ensemble_size):
-                running_losses[i] += losses[i].item()  # accumulate losses
+                running_losses[i] += losses[i].item()
 
             if batch_idx % 20 == 19:
                 print(f"[epoch: {epoch + 1}, batch: {batch_idx + 1:5d}/{len(trainloader)}] ensemble losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
