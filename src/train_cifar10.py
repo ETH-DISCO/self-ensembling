@@ -76,7 +76,6 @@ def train():
         total_loss = sum(losses)
         total_loss.backward()
         optimizer.step()
-
         return losses
 
     for epoch in range(hyperparams["num_epochs"]):
@@ -85,8 +84,9 @@ def train():
             inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
-
+            
             outputs = net(inputs)
+            
             losses = training_step(outputs=outputs, labels=labels)
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()  # accumulate losses
