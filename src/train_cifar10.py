@@ -13,7 +13,7 @@ from utils import free_mem, get_device, set_seed
 set_seed()
 
 #
-# hyperparams
+# config
 #
 
 hyperparams = {
@@ -23,16 +23,17 @@ hyperparams = {
     "crossmax_k": 2,
 }
 
+dataset_path = Path.cwd() / "dataset"
+output_path = Path.cwd() / "data"
+
 #
 # data
 #
 
-dataset_path = Path.cwd() / "dataset"
-
 cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
+
 cifar10_full = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
 train_size = int(0.8 * len(cifar10_full))
-
 val_size = len(cifar10_full) - train_size
 cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])
 trainloader = DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
@@ -46,12 +47,6 @@ print(f"test size: {len(cifar10_test)}")
 
 
 def train():
-    # data
-    cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
-    cifar10_train = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-    trainloader = torch.utils.data.DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-    print(f"loaded data")
-
     # model
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
@@ -99,24 +94,15 @@ def train():
                 running_losses = [0.0] * ensemble_size
 
     # save model
-    model_path = Path.cwd() / "data" / "model.pth"
-    torch.save(net.state_dict(), model_path)
+    torch.save(net.state_dict(), output_path / "model.pth")
     print("saved model")
 
 
 def eval():
-    # data
-    cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
-    cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
-    testloader = torch.utils.data.DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, drop_last=False, num_workers=4, pin_memory=torch.cuda.is_available())
-    print(f"loaded data")
-
     # model
-    set_seed()
     device = get_device(disable_mps=False)
-    model_path = Path.cwd() / "data" / "model.pth"
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
-    net.load_state_dict(torch.load(model_path, map_location=torch.device("cpu"), weights_only=True))
+    net.load_state_dict(torch.load(output_path / "model.pth", map_location=torch.device("cpu"), weights_only=True))
     net = net.to(device)
     print(f"loaded model")
 
@@ -126,6 +112,7 @@ def eval():
 
     correct_crossmax = 0
     total = len(cifar10_test)
+
     with torch.no_grad(), torch.inference_mode():
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
