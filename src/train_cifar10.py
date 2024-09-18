@@ -130,8 +130,7 @@ def eval():
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
 
-            outputs = net(images)  # shape: [batch_size, ensemble_size, num_classes]
-
+            outputs = net(images)
             predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=hyperparams["crossmax_k"])
             correct_crossmax += (predictions == labels).sum().item()
 
