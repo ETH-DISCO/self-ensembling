@@ -353,7 +353,7 @@ preprocess = v2.Compose(
 
 
 """
-custom stuff
+self ensemble resnet152 model with linear probes
 """
 
 
@@ -464,3 +464,17 @@ def freeze_backbone(model):
     for name, param in model.named_parameters():
         if "fc" not in name:  # skip fully connected layers
             param.requires_grad = False  # freeze
+
+
+def get_cross_max_consensus(outputs: torch.Tensor, k, self_assemble_mode=True):
+    # based on https://arxiv.org/pdf/2408.05446
+    Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]  # subtract the max per-predictor over classes
+    Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]  # subtract the per-class max over predictors
+    Y, _ = torch.topk(Z_hat, k, dim=1)  # choose the kth highest logit per class
+    if self_assemble_mode:
+        Y = torch.median(Z_hat, dim=1)[0]  # get median value
+    else:
+        Y = Y[:, -1, :]  # get k-th highest value
+
+    _, predicted = torch.max(Y, 1)
+    return predicted
