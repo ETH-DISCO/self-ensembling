@@ -1,3 +1,21 @@
+"""
+questions:
+
+- do the hyperparams make sense? i should train them
+- does my validation / test loop make sense? is this sane?
+
+next steps:
+
+- hyperparam optimization
+- larger dataset: cifar-100
+- robustbench benchmarking + masks, visualizing results
+
+
+
+
+
+"""
+
 import json
 from pathlib import Path
 
@@ -12,20 +30,6 @@ import custom_torchvision
 from utils import free_mem, get_device, set_seed
 
 set_seed()
-
-
-"""
-questions:
-
-- do the hyperparams make sense? i should train them
-- does my validation / test loop make sense? is this sane?
-
-next steps:
-
-- hyperparam optimization
-- larger dataset: cifar-100
-- robustbench benchmarking + masks, visualizing results
-"""
 
 
 #
@@ -99,9 +103,9 @@ def train():
             inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
-            
+
             outputs = net(inputs)
-            
+
             losses = training_step(outputs=outputs, labels=labels)
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()
