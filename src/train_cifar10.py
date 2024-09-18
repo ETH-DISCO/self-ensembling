@@ -110,23 +110,34 @@ def eval():
     # eval loop
     #
 
-    correct_crossmax = 0
-    total = len(cifar10_test)
+    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
-    with torch.no_grad(), torch.inference_mode():
-        for images, labels in tqdm(testloader):
+    def calculate_metrics(y_true, y_pred):
+        accuracy = accuracy_score(y_true, y_pred)
+        precision = precision_score(y_true, y_pred, average="weighted")
+        recall = recall_score(y_true, y_pred, average="weighted")
+        f1 = f1_score(y_true, y_pred, average="weighted")
+        return accuracy, precision, recall, f1
+
+    y_true = []
+    y_pred = []
+
+    with torch.no_grad():
+        for images, labels in testloader:
             images, labels = images.to(device), labels.to(device)
-
             outputs = net(images)
             predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=hyperparams["crossmax_k"])
-            correct_crossmax += (predictions == labels).sum().item()
-
+            y_true.extend(labels.cpu().numpy())
+            y_pred.extend(predictions.cpu().numpy())
             free_mem()
 
-    output_path = Path.cwd() / "data"
+    accuracy, precision, recall, f1 = calculate_metrics(y_true, y_pred)
     results = {
         "hyperparams": hyperparams,
-        "acc_crossmax": correct_crossmax / total,
+        "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1,
     }
     with open(output_path / "hyperparams.json", "w") as f:
         f.write(json.dumps(results, indent=4))

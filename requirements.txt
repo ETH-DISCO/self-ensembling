@@ -44,6 +44,10 @@ jinja2==3.1.4
     # via
     #   -r requirements.in
     #   torch
+joblib==1.4.2
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 kiwisolver==1.4.7
     # via
     #   -r requirements.in
@@ -67,6 +71,8 @@ numpy==2.1.1
     #   -r requirements.in
     #   contourpy
     #   matplotlib
+    #   scikit-learn
+    #   scipy
     #   torchvision
 packaging==24.1
     # via
@@ -93,6 +99,12 @@ requests==2.32.3
     # via -r requirements.in
 ruff==0.6.5
     # via -r requirements.in
+scikit-learn==1.5.2
+    # via -r requirements.in
+scipy==1.14.1
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 six==1.16.0
     # via
     #   -r requirements.in
@@ -101,6 +113,10 @@ sympy==1.13.2
     # via
     #   -r requirements.in
     #   torch
+threadpoolctl==3.5.0
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 torch==2.4.1
     # via
     #   -r requirements.in
