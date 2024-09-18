@@ -111,13 +111,6 @@ def eval():
     # eval loop
     #
 
-    def calculate_metrics(y_true, y_pred):
-        accuracy = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average="weighted")
-        recall = recall_score(y_true, y_pred, average="weighted")
-        f1 = f1_score(y_true, y_pred, average="weighted")
-        return accuracy, precision, recall, f1
-
     y_true = []
     y_pred = []
 
@@ -130,13 +123,12 @@ def eval():
             y_pred.extend(predictions.cpu().numpy())
             free_mem()
 
-    accuracy, precision, recall, f1 = calculate_metrics(y_true, y_pred)
     results = {
         "hyperparams": hyperparams,
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, average="weighted"),
+        "recall": recall_score(y_true, y_pred, average="weighted"),
+        "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
     with open(output_path / "hyperparams.json", "w") as f:
         f.write(json.dumps(results, indent=4))
