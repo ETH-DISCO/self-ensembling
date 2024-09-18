@@ -67,14 +67,16 @@ print(f"test size: {len(cifar10_test)}")
 
 
 def train():
-    # model
+    #
+    # load backbone
+    #
+
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)
     net.train()
-    print(f"loaded backbone")
 
     #
     # train loop
@@ -115,7 +117,7 @@ def train():
                 running_losses = [0.0] * ensemble_size
 
     #
-    # validation
+    # validation loop
     #
 
     y_true = []
@@ -140,22 +142,26 @@ def train():
     with open(output_path / "hyperparams.json", "w") as f:
         f.write(json.dumps(results, indent=4))
 
+    #
     # save model
+    #
+
     modelpath = output_path / "model.pth"
     if modelpath.exists():
         modelpath.unlink()
     torch.save(net.state_dict(), output_path / "model.pth")
-    print("saved model")
 
 
 def eval():
-    # model
+    #
+    # load model
+    #
+
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
     net.load_state_dict(torch.load(output_path / "model.pth", map_location=torch.device("cpu"), weights_only=True))
     net = net.to(device)
     net.eval()
-    print(f"loaded model")
 
     #
     # eval loop
@@ -180,7 +186,7 @@ def eval():
         "recall": recall_score(y_true, y_pred, average="weighted"),
         "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
-    with open(output_path / "hyperparams.json", "w") as f:
+    with open(output_path / "eval.json", "w") as f:
         f.write(json.dumps(results, indent=4))
 
 
