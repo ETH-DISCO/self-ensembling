@@ -1,7 +1,9 @@
+import functools
 import gc
 import os
 import random
 import secrets
+import time
 
 import numpy as np
 import torch
@@ -42,3 +44,15 @@ def free_mem() -> None:
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
         torch.cuda.reset_accumulated_memory_stats()
+
+
+def timeit(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__} took {end - start:.2f} seconds")
+        return result
+
+    return wrapper
