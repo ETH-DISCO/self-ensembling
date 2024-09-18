@@ -37,7 +37,7 @@ cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse"
 cifar10_full = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
 train_size = int(0.8 * len(cifar10_full))  # holdout 80-20 split
 
-# train, val set
+# train set, val set
 val_size = len(cifar10_full) - train_size
 cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])  # train, val
 trainloader = DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
@@ -46,21 +46,10 @@ valloader = DataLoader(cifar10_val, batch_size=hyperparams["batch_size"], shuffl
 # test set
 cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
 testloader = DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+print(f"loaded data")
 
 
 def train():
-    # data
-    cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
-    cifar10_train = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-
-    trainloader = torch.utils.data.DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-
-    cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
-    cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
-    testloader = torch.utils.data.DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, drop_last=False, num_workers=4, pin_memory=torch.cuda.is_available())
-
-    print(f"loaded data")
-
     # model
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
@@ -149,12 +138,6 @@ def train():
 
 
 def eval():
-    # data
-    cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
-    cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
-    testloader = torch.utils.data.DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, drop_last=False, num_workers=4, pin_memory=torch.cuda.is_available())
-    print(f"loaded data")
-
     # model
     set_seed()
     device = get_device(disable_mps=False)
