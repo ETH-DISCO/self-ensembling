@@ -1,21 +1,17 @@
 """
-questions:
-
-- do the hyperparams make sense? i should train them
-- does my validation / test loop make sense? is this sane?
-
 next steps:
 
 - hyperparam optimization
-- larger dataset: cifar-100
+- other datasets: cifar-100, imagenet
+- threats: adversarial attacks, noisy labels, domain shift / Linf, L2, corruptions
 - robustbench benchmarking + masks, visualizing results
-
-
-
+    - https://github.com/RobustBench/robustbench#model-zoo
+    - https://github.com/RobustBench/robustbench#notebooks
 
 
 """
 
+import argparse
 import json
 from pathlib import Path
 
@@ -36,27 +32,18 @@ set_seed()
 # config
 #
 
-# run with argparse and nohup
-# 
-# search_space = {
-#     "batch_size": [64, 128, 256, 512],
-#     "lr": [1e-4, 1e-3, 1e-2],
-#     "num_epochs": [5, 10, 15],
-#     "crossmax_k": [1, 2, 3]
-# }
-
-hyperparams = {
-    "batch_size": 256,
-    "lr": 1e-4,
-    "num_epochs": 2,
-    "crossmax_k": 2,
-}
+args = argparse.ArgumentParser()
+args.add_argument("--batch_size", type=int, required=True)  # 64, 128, 256, 512
+args.add_argument("--lr", type=float, required=True)  # 1e-4, 1e-3, 1e-2
+args.add_argument("--num_epochs", type=int, required=True)  # 5, 10, 15
+args.add_argument("--crossmax_k", type=int, required=True)  # 1, 2, 3
+hyperparams = vars(args.parse_args())
 
 dataset_path = Path.cwd() / "dataset"
 output_path = Path.cwd() / "data"
 
 #
-# data
+# dataset
 #
 
 cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
