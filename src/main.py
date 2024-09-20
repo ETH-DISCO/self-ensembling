@@ -136,6 +136,7 @@ def train():
         "recall": recall_score(y_true, y_pred, average="weighted"),
         "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
+    print(f"validation accuracy: {results['accuracy']:.3f}")
     with open(output_path / "config.json", "w") as f:
         f.write(json.dumps(results, indent=4))
 
