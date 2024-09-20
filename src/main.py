@@ -23,7 +23,7 @@ args = argparse.ArgumentParser()
 args.add_argument("--eval", type=bool, required=False, default=False)  # True, False
 
 args.add_argument("--dataset", type=str, required=False, default="cifar10")  # cifar10, cifar100, imagenet
-# args.add_argument("--attack", type=str, required=False)  # none, fgsm, pgd
+# args.add_argument("--attack", type=str, required=False)  # none, fgsm, pgd -> compare whitebox (more layer specific) vs. blackbox
 
 args.add_argument("--batch_size", type=int, required=False, default=256)  # 64, 128, 256, 512
 args.add_argument("--lr", type=float, required=False, default=1e-4)  # 1e-4, 1e-3, 1e-2
