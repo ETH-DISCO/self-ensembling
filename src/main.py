@@ -83,6 +83,7 @@ def train():
         criterion = criterion.cuda()
     optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # see: https://karpathy.github.io/2019/04/25/recipe/
     ensemble_size = len(net.fc_layers)
+    train_size = len(trainloader)
 
     def training_step(outputs, labels):
         losses = []
@@ -97,7 +98,7 @@ def train():
 
     for epoch in range(config["num_epochs"]):
         running_losses = [0.0] * ensemble_size
-        for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=len(trainloader)):
+        for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
@@ -108,8 +109,8 @@ def train():
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()
 
-            if batch_idx % 20 == 19:
-                print(f"[epoch: {epoch + 1}, batch: {batch_idx + 1:5d}/{len(trainloader)}] ensemble losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
+            if batch_idx % (train_size // 20) == 0:
+                print(f"[epoch: {epoch + 1}, batch: {batch_idx + 1:5d}/{train_size}] ensemble losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
 
     #
