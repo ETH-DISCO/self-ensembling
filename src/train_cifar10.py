@@ -20,11 +20,16 @@ set_seed()
 #
 
 args = argparse.ArgumentParser()
+args.add_argument("--eval", type=bool, required=True)  # True, False
+
+args.add_argument("--dataset", type=str, required=True)  # cifar10, cifar100, imagenet
+# args.add_argument("--attack", type=str, required=True)  # none, fgsm, pgd
+
 args.add_argument("--batch_size", type=int, required=True)  # 64, 128, 256, 512
 args.add_argument("--lr", type=float, required=True)  # 1e-4, 1e-3, 1e-2
 args.add_argument("--num_epochs", type=int, required=True)  # 5, 10, 15
 args.add_argument("--crossmax_k", type=int, required=True)  # 1, 2, 3
-hyperparams = vars(args.parse_args())
+config = vars(args.parse_args())
 
 dataset_path = Path.cwd() / "dataset"
 output_path = Path.cwd() / "data"
@@ -39,13 +44,13 @@ cifar10_full = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_
 train_size = int(0.8 * len(cifar10_full))
 val_size = len(cifar10_full) - train_size
 cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])
-trainloader = DataLoader(cifar10_train, batch_size=hyperparams["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-valloader = DataLoader(cifar10_val, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+trainloader = DataLoader(cifar10_train, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
+valloader = DataLoader(cifar10_val, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 print(f"train size: {len(cifar10_train)}")
 print(f"val size: {len(cifar10_val)}")
 
 cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
-testloader = DataLoader(cifar10_test, batch_size=hyperparams["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+testloader = DataLoader(cifar10_test, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 print(f"test size: {len(cifar10_test)}")
 
 
@@ -68,7 +73,7 @@ def train():
     criterion = torch.nn.CrossEntropyLoss().to(device)
     if torch.cuda.is_available():
         criterion = criterion.cuda()
-    optimizer = torch.optim.Adam(net.parameters(), lr=hyperparams["lr"])  # see: https://karpathy.github.io/2019/04/25/recipe/
+    optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # see: https://karpathy.github.io/2019/04/25/recipe/
     ensemble_size = len(net.fc_layers)
 
     def training_step(outputs, labels):
@@ -82,7 +87,7 @@ def train():
         optimizer.step()
         return losses
 
-    for epoch in range(hyperparams["num_epochs"]):
+    for epoch in range(config["num_epochs"]):
         running_losses = [0.0] * ensemble_size
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=len(trainloader)):
             inputs, labels = inputs.to(device), labels.to(device)
@@ -110,19 +115,19 @@ def train():
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
-            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=hyperparams["crossmax_k"])
+            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
             free_mem()
 
     results = {
-        "hyperparams": hyperparams,
+        "config": config,
         "accuracy": accuracy_score(y_true, y_pred),
         "precision": precision_score(y_true, y_pred, average="weighted"),
         "recall": recall_score(y_true, y_pred, average="weighted"),
         "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
-    with open(output_path / "hyperparams.json", "w") as f:
+    with open(output_path / "config.json", "w") as f:
         f.write(json.dumps(results, indent=4))
 
     #
@@ -157,13 +162,13 @@ def eval():
         for images, labels in testloader:
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
-            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=hyperparams["crossmax_k"])
+            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
             free_mem()
 
     results = {
-        "hyperparams": hyperparams,
+        "config": config,
         "accuracy": accuracy_score(y_true, y_pred),
         "precision": precision_score(y_true, y_pred, average="weighted"),
         "recall": recall_score(y_true, y_pred, average="weighted"),
@@ -175,3 +180,5 @@ def eval():
 
 if __name__ == "__main__":
     train()
+    if config["eval"]:
+        eval()

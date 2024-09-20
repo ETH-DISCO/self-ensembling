@@ -2,11 +2,17 @@ Reproducing: "Ensemble everything everywhere: Multi-scale aggregation for advers
 
 Based on @aplesner's implementation: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
 
-# Notes
+# usage
 
-Figures 5 and 6 in the paper show outputs from 54 layers. We only ended up with 53 layers, namely:
+```bash
+python main.py --model resnet50 --dataset cifar10 --attack pgd --eps 8 --n_iter 20 --n_samples 1000 --n_ens 10 --batch_size 100 --lr 0.01 --n_epochs 100 --seed 0
+```
 
-- Input layer
-- Conv1 + BatchNorm1 + ReLU + MaxPool (combined as one layer)
-- 50 layers after each block (see: `ResNet._make_layer`)
-- Average pooling layer
+# notes
+
+figures 5 and 6 in the paper show outputs from 54 layers. we only ended up with 53 layers, namely:
+
+- input layer
+- conv1 + batchnorm1 + relu + maxpool (combined as one layer)
+- 50 layers after each block (see: `resnet._make_layer`)
+- average pooling layer
