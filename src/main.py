@@ -20,39 +20,47 @@ set_seed()
 #
 
 args = argparse.ArgumentParser()
-args.add_argument("--eval", type=bool, required=True)  # True, False
+args.add_argument("--eval", type=bool, required=False, default=False)  # True, False
 
-args.add_argument("--dataset", type=str, required=True)  # cifar10, cifar100, imagenet
-# args.add_argument("--attack", type=str, required=True)  # none, fgsm, pgd
+args.add_argument("--dataset", type=str, required=False, default="cifar10")  # cifar10, cifar100, imagenet
+# args.add_argument("--attack", type=str, required=False)  # none, fgsm, pgd
 
-args.add_argument("--batch_size", type=int, required=True)  # 64, 128, 256, 512
-args.add_argument("--lr", type=float, required=True)  # 1e-4, 1e-3, 1e-2
-args.add_argument("--num_epochs", type=int, required=True)  # 5, 10, 15
-args.add_argument("--crossmax_k", type=int, required=True)  # 1, 2, 3
+args.add_argument("--batch_size", type=int, required=False, default=256)  # 64, 128, 256, 512
+args.add_argument("--lr", type=float, required=False, default=1e-4)  # 1e-4, 1e-3, 1e-2
+args.add_argument("--num_epochs", type=int, required=False, default=2)  # 5, 10, 15
+args.add_argument("--crossmax_k", type=int, required=False, default=2)  # 1, 2, 3
 config = vars(args.parse_args())
 
 dataset_path = Path.cwd() / "dataset"
+input_path = Path.cwd() / "data"
 output_path = Path.cwd() / "data"
 
 #
 # dataset
 #
 
-cifar10_classes = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
+if config["dataset"] == "cifar10":
+    classes = json.loads((input_path / "cifar10_classes.json").read_text())
+    loader = datasets.CIFAR10
+elif config["dataset"] == "cifar100":
+    classes = json.loads((input_path / "cifar100_classes.json").read_text())
+    loader = datasets.CIFAR100
+elif config["dataset"] == "imagenet":
+    classes = json.loads((input_path / "imagenet_classes.json").read_text())
+    loader = datasets.ImageNet
 
-cifar10_full = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-train_size = int(0.8 * len(cifar10_full))
-val_size = len(cifar10_full) - train_size
-cifar10_train, cifar10_val = random_split(cifar10_full, [train_size, val_size])
-trainloader = DataLoader(cifar10_train, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-valloader = DataLoader(cifar10_val, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
-print(f"train size: {len(cifar10_train)}")
-print(f"val size: {len(cifar10_val)}")
+full_dataset = loader(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
+train_size = int(0.8 * len(full_dataset))
+val_size = len(full_dataset) - train_size
+train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
+valloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+print(f"train size: {len(train_dataset)}")
+print(f"val size: {len(val_dataset)}")
 
-cifar10_test = datasets.CIFAR10(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
-testloader = DataLoader(cifar10_test, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
-print(f"test size: {len(cifar10_test)}")
-
+test_dataset = loader(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
+testloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+print(f"test size: {len(test_dataset)}")
 
 def train():
     #
@@ -60,7 +68,7 @@ def train():
     #
 
     device = get_device(disable_mps=False)
-    net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
+    net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)
@@ -146,7 +154,7 @@ def eval():
     #
 
     device = get_device(disable_mps=False)
-    net = custom_torchvision.resnet152_ensemble(num_classes=len(cifar10_classes))
+    net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
     net.load_state_dict(torch.load(output_path / "model.pth", map_location=torch.device("cpu"), weights_only=True))
     net = net.to(device)
     net.eval()
