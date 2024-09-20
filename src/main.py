@@ -179,6 +179,7 @@ def eval():
 
 
 if __name__ == "__main__":
-    train()
-    if config["eval"]:
+    if not config["eval"]:
+        train()
+    else:
         eval()

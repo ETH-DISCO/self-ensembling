@@ -5,7 +5,7 @@ Based on @aplesner's implementation: https://github.com/aplesner/Ensemble-everyt
 # usage
 
 ```bash
-python main.py --model resnet50 --dataset cifar10 --attack pgd --eps 8 --n_iter 20 --n_samples 1000 --n_ens 10 --batch_size 100 --lr 0.01 --n_epochs 100 --seed 0
+...
 ```
 
 # notes
