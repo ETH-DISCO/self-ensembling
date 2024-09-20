@@ -30,6 +30,7 @@ args.add_argument("--lr", type=float, required=False, default=1e-4)  # 1e-4, 1e-
 args.add_argument("--num_epochs", type=int, required=False, default=2)  # 5, 10, 15
 args.add_argument("--crossmax_k", type=int, required=False, default=2)  # 1, 2, 3
 config = vars(args.parse_args())
+print(f"config: {json.dumps(config, indent=4)}")
 
 dataset_path = Path.cwd() / "dataset"
 input_path = Path.cwd() / "data"
