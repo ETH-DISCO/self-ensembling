@@ -47,7 +47,6 @@ def train(args: dict):
     trainloader = DataLoader(train_dataset, batch_size=args["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
     valloader = DataLoader(val_dataset, batch_size=args["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 
-
     #
     # load backbone
     #
