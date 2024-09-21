@@ -20,32 +20,32 @@ output_path = Path.cwd() / "data"
 dataset_path = Path.cwd() / "dataset"
 
 
-def train(args: dict):
+def train(config: dict):
     #
     # dataset
     #
 
-    if args["dataset"] == "cifar10":
-        classes = json.loads((args["input_path"] / "cifar10_classes.json").read_text())
+    if config["dataset"] == "cifar10":
+        classes = json.loads((config["input_path"] / "cifar10_classes.json").read_text())
 
         full_dataset = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
         train_size = int(0.8 * len(full_dataset))
         val_size = len(full_dataset) - train_size
         train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
-    elif args["dataset"] == "cifar100":
-        classes = json.loads((args["input_path"] / "cifar100_classes.json").read_text())
+    elif config["dataset"] == "cifar100":
+        classes = json.loads((config["input_path"] / "cifar100_classes.json").read_text())
 
         full_dataset = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
         train_size = int(0.8 * len(full_dataset))
         val_size = len(full_dataset) - train_size
         train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
-    elif args["dataset"] == "imagenet":
-        classes = json.loads((args["input_path"] / "imagenet_classes.json").read_text())
+    elif config["dataset"] == "imagenet":
+        classes = json.loads((config["input_path"] / "imagenet_classes.json").read_text())
 
-    trainloader = DataLoader(train_dataset, batch_size=args["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-    valloader = DataLoader(val_dataset, batch_size=args["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+    trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
+    valloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 
     #
     # load backbone
@@ -55,7 +55,7 @@ def train(args: dict):
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)
-    net = net.to(device)  # don't compile, insufficent speedup and breaks mps
+    net = net.to(device)  # don't compile: breaks on mps arch, speedup is insignificant 
     net.train()
 
     #
@@ -94,7 +94,7 @@ def train(args: dict):
                 running_losses[i] += losses[i].item()
 
             if batch_idx % (train_size // 20) == 0:
-                print(f"[epoch: {epoch + 1}, batch: {batch_idx + 1:5d}/{train_size}] ensemble losses: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                print(f"[epoch {epoch + 1}, batch {batch_idx + 1:5d}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
 
     #
@@ -130,13 +130,25 @@ if __name__ == "__main__":
     # grid search
     #
 
-    searchspace = {
-        "dataset": ["cifar10", "cifar100", "imagenet"],
-        "batch_size": [64, 128, 256, 512],
-        "lr": [1e-4, 1e-3, 1e-2],
-        "num_epochs": [5, 10, 15],
-        "crossmax_k": [1, 2, 3],
+    # searchspace = {
+    #     "dataset": ["cifar10", "cifar100", "imagenet"],
+    #     "batch_size": [64, 128, 256, 512],
+    #     "lr": [1e-4, 1e-3, 1e-2],
+    #     "num_epochs": [5, 10, 15],
+    #     "crossmax_k": [1, 2, 3],
+    # }
+    # combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
+    # for combination in combinations:
+    #     if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
+    #         print(f"skipping cached combination: {combination}")
+    #         continue
+    #     train(config=combination)
+
+    config = {
+        "dataset": "cifar10",
+        "batch_size": 256,
+        "lr": 1e-4,
+        "num_epochs": 2,
+        "crossmax_k": 2,
     }
-    combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
-    for combination in combinations:
-        train(args=combination)
+    train(config=config)
