@@ -1,3 +1,4 @@
+import itertools
 import json
 from pathlib import Path
 
@@ -138,19 +139,19 @@ if __name__ == "__main__":
     # grid search
     #
 
-    # searchspace = {
-    #     "dataset": ["cifar10", "cifar100", "imagenet"],
-    #     "batch_size": [64, 128, 256, 512],
-    #     "lr": [1e-4, 1e-3, 1e-2],
-    #     "num_epochs": [5, 10, 15],
-    #     "crossmax_k": [1, 2, 3],
-    # }
-    # combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
-    # for combination in combinations:
-    #     if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
-    #         print(f"skipping cached combination: {combination}")
-    #         continue
-    #     train(config=combination)
+    searchspace = {
+        "dataset": ["cifar10", "cifar100", "imagenet"],
+        "batch_size": [64, 128, 256, 512],
+        "lr": [1e-4, 1e-3, 1e-2],
+        "num_epochs": [5, 10, 15],
+        "crossmax_k": [1, 2, 3],
+    }
+    combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
+    for combination in combinations:
+        if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
+            print(f"skipping cached combination: {combination}")
+            continue
+        train(config=combination)
 
     config = {
         "dataset": "imagenet",
