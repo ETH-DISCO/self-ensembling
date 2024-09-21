@@ -1,11 +1,10 @@
-import itertools
 import json
 from pathlib import Path
 
 import torch
 import torchvision.datasets as datasets
-from datasets import load_dataset
 import torchvision.models as models
+from datasets import load_dataset
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
@@ -64,7 +63,7 @@ def train(config: dict):
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)
-    net = net.to(device)  # don't compile: breaks on mps arch, speedup is insignificant 
+    net = net.to(device)  # don't compile: breaks on mps arch, speedup is insignificant
     net.train()
 
     #
