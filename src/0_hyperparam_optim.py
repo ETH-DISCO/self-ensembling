@@ -45,7 +45,7 @@ def train(config: dict):
     elif config["dataset"] == "imagenet":
         classes = json.loads((input_path / "imagenet_classes.json").read_text())
 
-        full_dataset = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
+        full_dataset = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False) # takes ~1h to download
         full_dataset = list(map(lambda x: (x["image"].convert("RGB"), x["label"]), full_dataset))
         full_dataset = [(custom_torchvision.preprocess(x[0]), x[1]) for x in full_dataset]
         train_size = int(0.8 * len(full_dataset))
