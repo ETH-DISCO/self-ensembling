@@ -90,17 +90,17 @@ conda-clean:
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda deactivate; \
 	'
 
-# --------------------------------------------------------------- utils
+# --------------------------------------------------------------- nohup
 
 .PHONY: monitor # create nohup with restart on failure
 monitor:
-	if [ "$(filepath)" = "" ]; then echo "missing 'path' argument"; exit 1; fi
+	if [ "$(filepath)" = "" ]; then echo "missing 'filepath' argument"; exit 1; fi
 	bash -c '\
 		monitor() { \
 			while true; do \
 				if ! ps -p $$(cat "monitor-process.pid" 2>/dev/null) > /dev/null 2>&1; then \
 					echo "$$(date): process not running or died, (re)starting..." >> monitor.log; \
-					nohup python "$(filepath)" > "monitor-process.log" 2>&1 & \
+					nohup ./.venv/bin/python3 "$(filepath)" > "monitor-process.log" 2>&1 & \
 					echo $$! > "monitor-process.pid"; \
 					echo "$$(date): started process with PID $$(cat monitor-process.pid)" >> monitor.log; \
 				fi; \
@@ -125,6 +125,8 @@ monitor-kill:
 	-kill -9 $$(cat monitor-process.pid)
 	rm -rf monitor-process.pid
 	rm -rf monitor-process.log
+
+# --------------------------------------------------------------- utils
 
 .PHONY: fmt # format codebase
 fmt:
