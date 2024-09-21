@@ -135,18 +135,6 @@ def train(config: dict):
 
 if __name__ == "__main__":
 
-    def is_cached(config: dict):
-        if not output_path.exists():
-            return False
-        content = output_path.read_text()
-        lines = content.split("\n")
-        for line in lines:
-            if not line:
-                continue
-            result = json.loads(line)
-            if result["config"] == config:
-                return True
-
     config = {
         "dataset": "cifar10",
         "batch_size": 256,
@@ -154,7 +142,6 @@ if __name__ == "__main__":
         "num_epochs": 2,
         "crossmax_k": 2,
     }
-
     train(config=config)
     exit()
 
@@ -172,5 +159,20 @@ if __name__ == "__main__":
 
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
+        def is_cached(config: dict):
+            if not output_path.exists():
+                return False
+            content = output_path.read_text()
+            lines = content.split("\n")
+            for line in lines:
+                if not line:
+                    continue
+                result = json.loads(line)
+                if result["config"] == config:
+                    return True
+        if is_cached(combination):
+            print(f"skipping: {combination}")
+            continue
+
         print(f"training: {combination}")
         train(config=combination)
