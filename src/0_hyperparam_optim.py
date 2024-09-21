@@ -3,7 +3,6 @@ import json
 from pathlib import Path
 
 import torch
-from torch.utils.data import Subset
 import torchvision.datasets as datasets
 import torchvision.models as models
 from datasets import load_dataset
@@ -21,6 +20,12 @@ input_path = Path.cwd() / "data"
 output_path = Path.cwd() / "data"
 dataset_path = Path.cwd() / "dataset"
 
+full_dataset_cifar10 = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
+full_dataset_cifar100 = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
+full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
+full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]  # takes ~1h
+print("loaded datasets")
+
 
 def train(config: dict):
     #
@@ -30,32 +35,26 @@ def train(config: dict):
     if config["dataset"] == "cifar10":
         classes = json.loads((input_path / "cifar10_classes.json").read_text())
 
-        full_dataset = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-        train_size = int(0.8 * len(full_dataset))
-        val_size = len(full_dataset) - train_size
-        train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+        train_size = int(0.8 * len(full_dataset_cifar10))
+        val_size = len(full_dataset_cifar10) - train_size
+        train_dataset, val_dataset = random_split(full_dataset_cifar10, [train_size, val_size])
 
     elif config["dataset"] == "cifar100":
         classes = json.loads((input_path / "cifar100_classes.json").read_text())
 
-        full_dataset = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-        train_size = int(0.8 * len(full_dataset))
-        val_size = len(full_dataset) - train_size
-        train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+        train_size = int(0.8 * len(full_dataset_cifar100))
+        val_size = len(full_dataset_cifar100) - train_size
+        train_dataset, val_dataset = random_split(full_dataset_cifar100, [train_size, val_size])
 
     elif config["dataset"] == "imagenet":
         classes = json.loads((input_path / "imagenet_classes.json").read_text())
 
-        full_dataset = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False) # takes ~1h to download
-        full_dataset = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset)]
-        train_size = int(0.8 * len(full_dataset))
-        val_size = len(full_dataset) - train_size
-        train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
+        train_size = int(0.8 * len(full_dataset_imagenet))
+        val_size = len(full_dataset_imagenet) - train_size
+        train_dataset, val_dataset = random_split(full_dataset_imagenet, [train_size, val_size])
 
     trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-    print("reached 7")
     valloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
-    print("reached 8")
 
     #
     # load backbone
@@ -136,34 +135,31 @@ def train(config: dict):
 
 
 if __name__ == "__main__":
-    #
-    # grid search
-    #
-
-    # searchspace = {
-    #     "dataset": ["cifar10", "cifar100", "imagenet"],
-    #     "batch_size": [64, 128, 256, 512],
-    #     "lr": [1e-4, 1e-3, 1e-2],
-    #     "num_epochs": [5, 10, 15],
-    #     "crossmax_k": [1, 2, 3],
-    # }
-    # combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
-    # for combination in combinations:
-    #     if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
-    #         print(f"skipping cached combination: {combination}")
-    #         continue
-    #     print(f"training combination: {combination}")
-    #     train(config=combination)
-    
-    # 
-    # debug
-    # 
-
     config = {
-        "dataset": "imagenet",
+        "dataset": "cifar10",
         "batch_size": 256,
         "lr": 1e-4,
         "num_epochs": 2,
         "crossmax_k": 2,
     }
     train(config=config)
+    exit()
+
+    #
+    # grid search
+    #
+
+    searchspace = {
+        "dataset": ["cifar10", "cifar100"],  # takes too long
+        "batch_size": [64, 128, 256, 512],
+        "lr": [1e-4, 1e-3, 1e-2],
+        "num_epochs": [5, 10, 15],
+        "crossmax_k": [1, 2, 3],
+    }
+    combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
+    for combination in combinations:
+        if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
+            print(f"skipping cached combination: {combination}")
+            continue
+        print(f"training combination: {combination}")
+        train(config=combination)
