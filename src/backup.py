@@ -22,7 +22,7 @@ set_seed()
 args = argparse.ArgumentParser()
 args.add_argument("--eval", type=bool, required=False, default=False)  # True, False
 
-args.add_argument("--dataset", type=str, required=False, default="cifar10")  # cifar10, cifar100, imagenet
+args.add_argument("--dataset", type=str, required=False, default="cifar10")  # cifar10, cifar100
 # args.add_argument("--attack", type=str, required=False)  # none, fgsm, pgd -> compare whitebox (more layer specific) vs. blackbox
 
 args.add_argument("--batch_size", type=int, required=False, default=256)  # 64, 128, 256, 512
@@ -62,6 +62,7 @@ print(f"val size: {len(val_dataset)}")
 test_dataset = loader(root=dataset_path, train=False, transform=custom_torchvision.preprocess, download=True)
 testloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 print(f"test size: {len(test_dataset)}")
+
 
 def train():
     #

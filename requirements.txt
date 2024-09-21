@@ -34,6 +34,8 @@ fsspec==2024.9.0
     # via
     #   -r requirements.in
     #   torch
+huggingface==0.0.1
+    # via -r requirements.in
 idna==3.10
     # via
     #   -r requirements.in
