@@ -46,18 +46,11 @@ def train(config: dict):
         classes = json.loads((input_path / "imagenet_classes.json").read_text())
 
         full_dataset = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False) # takes ~1h to download
-        print("reached 1")
         full_dataset = list(map(lambda x: (x["image"].convert("RGB"), x["label"]), full_dataset))
-        print("reached 2")
-        full_dataset = [(custom_torchvision.preprocess(x[0]), x[1]) for x in full_dataset]
-        print("reached 3")
+        full_dataset = [(custom_torchvision.preprocess(x[0]), x[1]) for x in tqdm(full_dataset)]
         train_size = int(0.8 * len(full_dataset))
-        print("reached 4")
         val_size = len(full_dataset) - train_size
-        print("reached 5")
-
         train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
-        print("reached 6")
 
     trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
     print("reached 7")
