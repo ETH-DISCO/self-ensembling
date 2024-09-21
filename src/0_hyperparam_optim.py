@@ -5,7 +5,6 @@ from pathlib import Path
 import torch
 import torchvision.datasets as datasets
 import torchvision.models as models
-from datasets import load_dataset
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
@@ -17,7 +16,7 @@ set_seed()
 
 
 input_path = Path.cwd() / "data"
-output_path = Path.cwd() / "data"
+output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 dataset_path = Path.cwd() / "dataset"
 
 full_dataset_cifar10 = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
@@ -130,11 +129,24 @@ def train(config: dict):
         "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
     print(f"validation accuracy: {results['accuracy']:.3f}")
-    with open(output_path / "config.json", "w") as f:
-        f.write(json.dumps(results, indent=4))
+    with open(output_path, "a") as f:
+        f.write(json.dumps(results) + "\n")
 
 
 if __name__ == "__main__":
+
+    def is_cached(config: dict):
+        if not output_path.exists():
+            return False
+        content = output_path.read_text()
+        lines = content.split("\n")
+        for line in lines:
+            if not line:
+                continue
+            result = json.loads(line)
+            if result["config"] == config:
+                return True
+
     config = {
         "dataset": "cifar10",
         "batch_size": 256,
@@ -142,6 +154,7 @@ if __name__ == "__main__":
         "num_epochs": 2,
         "crossmax_k": 2,
     }
+
     train(config=config)
     exit()
 
@@ -156,10 +169,8 @@ if __name__ == "__main__":
         "num_epochs": [5, 10, 15],
         "crossmax_k": [1, 2, 3],
     }
+
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
-        if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
-            print(f"skipping cached combination: {combination}")
-            continue
-        print(f"training combination: {combination}")
+        print(f"training: {combination}")
         train(config=combination)
