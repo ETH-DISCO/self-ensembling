@@ -148,7 +148,6 @@ if __name__ == "__main__":
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
-        print(20 * "-")
         if (output_path / "config.json").exists() and (combination in json.loads((output_path / "config.json").read_text())):
             print(f"skipping cached combination: {combination}")
             continue
