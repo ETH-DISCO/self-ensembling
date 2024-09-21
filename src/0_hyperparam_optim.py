@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import torch
+from torch.utils.data import Subset
 import torchvision.datasets as datasets
 import torchvision.models as models
 from datasets import load_dataset
@@ -46,8 +47,7 @@ def train(config: dict):
         classes = json.loads((input_path / "imagenet_classes.json").read_text())
 
         full_dataset = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False) # takes ~1h to download
-        full_dataset = list(map(lambda x: (x["image"].convert("RGB"), x["label"]), full_dataset))
-        full_dataset = [(custom_torchvision.preprocess(x[0]), x[1]) for x in tqdm(full_dataset)]
+        full_dataset = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset)]
         train_size = int(0.8 * len(full_dataset))
         val_size = len(full_dataset) - train_size
         train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
