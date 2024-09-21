@@ -4,6 +4,7 @@ from pathlib import Path
 
 import torch
 import torchvision.datasets as datasets
+from datasets import load_dataset
 import torchvision.models as models
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.utils.data import DataLoader, random_split
@@ -43,6 +44,14 @@ def train(config: dict):
 
     elif config["dataset"] == "imagenet":
         classes = json.loads((config["input_path"] / "imagenet_classes.json").read_text())
+
+        full_dataset = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
+        full_dataset = list(map(lambda x: (x["image"].convert("RGB"), x["label"]), full_dataset))
+        full_dataset = [(custom_torchvision.preprocess(x[0]), x[1]) for x in full_dataset]
+        train_size = int(0.8 * len(full_dataset))
+        val_size = len(full_dataset) - train_size
+
+        train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
 
     trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
     valloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
@@ -145,7 +154,7 @@ if __name__ == "__main__":
     #     train(config=combination)
 
     config = {
-        "dataset": "cifar10",
+        "dataset": "imagenet",
         "batch_size": 256,
         "lr": 1e-4,
         "num_epochs": 2,
