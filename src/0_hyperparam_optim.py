@@ -101,7 +101,7 @@ def train(config: dict):
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()
 
-            if batch_idx % (train_size // 10) == 0:
+            if batch_idx % (train_size // 5) == 0:
                 print(f"[epoch {epoch + 1}, batch {batch_idx + 1:5d}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
 
