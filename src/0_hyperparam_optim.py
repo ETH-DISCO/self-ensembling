@@ -22,8 +22,8 @@ dataset_path = Path.cwd() / "dataset"
 
 full_dataset_cifar10 = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
 full_dataset_cifar100 = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
-full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]  # takes ~1h
+# full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
+# full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]  # takes ~1h
 print("loaded datasets")
 
 
@@ -46,12 +46,12 @@ def train(config: dict):
         val_size = len(full_dataset_cifar100) - train_size
         train_dataset, val_dataset = random_split(full_dataset_cifar100, [train_size, val_size])
 
-    elif config["dataset"] == "imagenet":
-        classes = json.loads((input_path / "imagenet_classes.json").read_text())
+    # elif config["dataset"] == "imagenet":
+    #     classes = json.loads((input_path / "imagenet_classes.json").read_text())
 
-        train_size = int(0.8 * len(full_dataset_imagenet))
-        val_size = len(full_dataset_imagenet) - train_size
-        train_dataset, val_dataset = random_split(full_dataset_imagenet, [train_size, val_size])
+    #     train_size = int(0.8 * len(full_dataset_imagenet))
+    #     val_size = len(full_dataset_imagenet) - train_size
+    #     train_dataset, val_dataset = random_split(full_dataset_imagenet, [train_size, val_size])
 
     trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
     valloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
