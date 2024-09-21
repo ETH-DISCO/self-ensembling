@@ -21,7 +21,7 @@ dataset_path = Path.cwd() / "dataset"
 
 full_dataset_cifar10 = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
 full_dataset_cifar100 = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-# full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
+# full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False) # takes ~1h
 # full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]  # takes ~1h
 print("loaded datasets")
 
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     #
 
     searchspace = {
-        "dataset": ["cifar10", "cifar100"],  # takes too long
+        "dataset": ["cifar10", "cifar100"],
         "batch_size": [64, 128, 256, 512],
         "lr": [1e-4, 1e-3, 1e-2],
         "num_epochs": [5, 10, 15],
