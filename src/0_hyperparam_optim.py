@@ -161,6 +161,8 @@ if __name__ == "__main__":
 
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
+        GREEN = "\033[92m"
+        END = "\033[0m"
 
         def is_cached(config: dict):
             if not output_path.exists():
@@ -175,10 +177,8 @@ if __name__ == "__main__":
                     return True
 
         if is_cached(combination):
-            print(f"skipping: {combination}")
+            print(f"{GREEN}skipping: {combination}{END}")
             continue
 
-        GREEN = "\033[92m"
-        END = "\033[0m"
         print(f"{GREEN}training: {combination}{END}")
         train(config=combination)
