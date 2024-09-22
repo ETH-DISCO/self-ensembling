@@ -1,3 +1,4 @@
+
 # --------------------------------------------------------------- venv
 
 .PHONY: init # initialize .venv
@@ -61,7 +62,7 @@ conda-req-to-yaml:
 	pattern = r'^(\S+)==(\S+)'; \
 	matches = re.findall(pattern, requirements_text, re.MULTILINE); \
 	requirements_dict = {name: version for name, version in matches}; \
-	conda_env = {'name': 'con', 'channels': ['defaults'], 'dependencies': [f'{package}={version}' for package, version in requirements_dict.items()] + ['python=3.11']}; \
+	conda_env = {'name': 'con', 'channels': ['rusty1s', 'pytorch', 'nvidia', 'anaconda', 'conda-forge', 'defaults'], 'dependencies': ['python=3.11'] + [f'{package}={version}' for package, version in requirements_dict.items()]}; \
 	yaml.dump(conda_env, open('environment.yml', 'w'), sort_keys=False);"
 
 .PHONY: conda-gen-yaml # install conda to generate environment.yml from requirements.txt (idempotent)
@@ -87,7 +88,7 @@ conda-gen-yaml:
 conda-install:
 	bash -c '\
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
-		conda env create --file environment.yml; \
+		conda env create --file environment.yml --solver=libmamba; \
 	'
 
 .PHONY: conda-clean # wipe conda environment
