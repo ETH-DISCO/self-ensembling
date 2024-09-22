@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 import torchvision.transforms.v2 as v2
+import torchvision
+torchvision.disable_beta_transforms_warning()
+
 
 """
 modified torchvision.models.resnet
