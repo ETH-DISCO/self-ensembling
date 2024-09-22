@@ -3,10 +3,8 @@ from typing import Callable, List, Optional, Type, Union
 import torch
 import torch.nn as nn
 from torch import Tensor
+# from torchvision.transforms import v2
 import torchvision.transforms.v2 as v2
-import torchvision
-torchvision.disable_beta_transforms_warning()
-
 
 """
 modified torchvision.models.resnet
@@ -345,11 +343,11 @@ def resnet152(**kwargs) -> ResNet:
 # see: https://pytorch.org/vision/stable/transforms.html#performance-considerations
 preprocess = v2.Compose(
     [
-        v2.ToPILImage(), # ToImage() throws error
-        v2.ToDtype(torch.uint8), # scale not supported
+        v2.ToImage(),
+        v2.ToDtype(torch.uint8, scale=True),
         v2.Resize(256, antialias=True),
         v2.CenterCrop(224),
-        v2.ToDtype(torch.float32), # scale not supported
+        v2.ToDtype(torch.float32, scale=True),
         v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
 )
