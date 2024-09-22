@@ -10,9 +10,9 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
 import custom_torchvision
-from utils import free_mem, get_device, set_seed
+from utils import free_mem, get_device, set_env
 
-set_seed()
+set_env(41)
 
 
 input_path = Path.cwd() / "data"

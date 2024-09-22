@@ -1,3 +1,4 @@
+import torchvision
 import functools
 import gc
 import os
@@ -9,7 +10,7 @@ import numpy as np
 import torch
 
 
-def set_seed(seed: int = -1) -> None:
+def set_env(seed: int = -1) -> None:
     if seed == -1:
         seed = secrets.randbelow(1_000_000_000)
 
