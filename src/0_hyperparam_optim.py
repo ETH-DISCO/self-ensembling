@@ -177,5 +177,7 @@ if __name__ == "__main__":
             print(f"skipping: {combination}")
             continue
 
-        print(f"training: {combination}")
+        GREEN = "\033[92m"
+        END = "\033[0m"
+        print(f"{GREEN}training: {combination}{END}")
         train(config=combination)

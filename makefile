@@ -1,26 +1,26 @@
+PYTHON_PATH := ./.venv/bin/python3
+
 # --------------------------------------------------------------- venv
 
-.PHONY: init # initialize venv
+.PHONY: init # initialize .venv
 init:
-	# get requirements.in
 	pip install pip --upgrade
 	pip install pipreqs
 	rm -rf requirements.txt requirements.in
 	pipreqs . --mode no-pin --encoding utf-8 --ignore .venv
 	mv requirements.txt requirements.in
 
-	# get requirements.txt
 	pip install pip-tools
 	pip-compile requirements.in -o requirements.txt -vvv
 	
-	# install everything in venv
 	rm -rf .venv
-	python3 -m venv .venv
-	bash -c "source .venv/bin/activate && pip install -r requirements.txt"
+	python -m venv .venv
+	$(PYTHON_PATH) -m pip install -r requirements.txt
+	echo "to activate venv, run: source .venv/bin/activate"
 
-.PHONY: lock # freeze pip and lock reqs
+.PHONY: lock # freeze and dump .venv
 lock:
-	bash -c "source .venv/bin/activate && pip freeze > requirements.in"
+	$(PYTHON_PATH) -m pip freeze > requirements.in
 	pip-compile requirements.in -o requirements.txt -vvv
 
 # --------------------------------------------------------------- docker
@@ -34,7 +34,7 @@ docker-install:
 docker-build:
 	docker-compose build
 
-.PHONY: docker-clean # wipe everything in docker
+.PHONY: docker-clean # wipe everything in all docker containers
 docker-clean:
 	docker-compose down
 
@@ -100,7 +100,7 @@ monitor:
 			while true; do \
 				if ! ps -p $$(cat "monitor-process.pid" 2>/dev/null) > /dev/null 2>&1; then \
 					echo "$$(date): process not running or died, (re)starting..." >> monitor.log; \
-					nohup ./.venv/bin/python3 "$(filepath)" > "monitor-process.log" 2>&1 & \
+					nohup $(PYTHON_PATH) "$(filepath)" > "monitor-process.log" 2>&1 & \
 					echo $$! > "monitor-process.pid"; \
 					echo "$$(date): started process with PID $$(cat monitor-process.pid)" >> monitor.log; \
 				fi; \
@@ -130,21 +130,21 @@ monitor-kill:
 
 .PHONY: fmt # format codebase
 fmt:
-	pip install isort
-	pip install ruff
-	pip install autoflake
+	$(PYTHON_PATH) -m pip install isort
+	$(PYTHON_PATH) -m pip install ruff
+	$(PYTHON_PATH) -m pip install autoflake
 
-	isort .
-	autoflake --remove-all-unused-imports --recursive --in-place .
-	ruff format --config line-length=500 .
+	$(PYTHON_PATH) -m isort .
+	$(PYTHON_PATH) -m autoflake --remove-all-unused-imports --recursive --in-place .
+	$(PYTHON_PATH) -m ruff format --config line-length=500 .
 
 .PHONY: sec # check for vulns
 sec:
-	pip install bandit
-	pip install safety
+	$(PYTHON_PATH) -m pip install bandit
+	$(PYTHON_PATH) -m pip install safety
 	
-	bandit -r .
-	safety check --full-report
+	$(PYTHON_PATH) -m bandit -r .
+	$(PYTHON_PATH) -m safety check --full-report
 
 .PHONY: up # pull and push changes
 up:
@@ -155,5 +155,5 @@ up:
 
 .PHONY: help # generate help message
 help:
-	echo "Usage: make [target]\n"
-	grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1	\2/' | expand -t20
+	@echo "Usage: make [target]\n"
+	@grep '^.PHONY: .* #' makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1	\2/' | expand -t20
