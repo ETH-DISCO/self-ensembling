@@ -1,5 +1,3 @@
-PYTHON_PATH := ./.venv/bin/python3
-
 # --------------------------------------------------------------- venv
 
 .PHONY: init # initialize .venv
@@ -15,7 +13,7 @@ init:
 	
 	rm -rf .venv
 	python -m venv .venv
-	$(PYTHON_PATH) -m pip install -r requirements.txt
+	./.venv/bin/python3 -m pip install -r requirements.txt
 	echo "to activate venv, run: source .venv/bin/activate"
 
 .PHONY: lock # freeze and dump .venv
@@ -55,17 +53,18 @@ docker-clean:
 
 # --------------------------------------------------------------- conda
 
-.PHONY: conda-req-to-yaml # generate environment.yaml from requirements.txt (idempotent)
+.PHONY: reqs-to-yaml # generate environment.yml from requirements.txt (idempotent)
 conda-req-to-yaml:
-	@echo "name: myenv" > environment.yml
-	@echo "channels:" >> environment.yml
-	@echo "  - conda-forge" >> environment.yml
-	@echo "  - defaults" >> environment.yml
-	@echo "dependencies:" >> environment.yml
-	@echo "  - python=3.11" >> environment.yml
-	@sed 's/^/  - /' requirements.txt >> environment.yml
+	./.venv/bin/python3 -m pip install pyyaml
+	./.venv/bin/python3 -c "import re, yaml; \
+	requirements_text = open('requirements.txt').read(); \
+	pattern = r'^(\S+)==(\S+)'; \
+	matches = re.findall(pattern, requirements_text, re.MULTILINE); \
+	requirements_dict = {name: version for name, version in matches}; \
+	conda_env = {'name': 'con', 'channels': ['defaults'], 'dependencies': [f'{package}={version}' for package, version in requirements_dict.items()] + ['python=3.11']}; \
+	yaml.dump(conda_env, open('environment.yml', 'w'), sort_keys=False);"
 
-.PHONY: conda-gen-yaml # generate environment.yaml from requirements.txt (idempotent)
+.PHONY: conda-gen-yaml # install conda to generate environment.yml from requirements.txt (idempotent)
 conda-gen-yaml:
 	conda update -n base -c defaults conda
 	# conda config --env --set subdir osx-64
@@ -79,16 +78,16 @@ conda-gen-yaml:
 		\
 		pip install -r requirements.txt; \
 		\
-		conda env export --no-builds | grep -v "prefix:" > environment.yaml; \
+		conda env export --no-builds | grep -v "prefix:" > environment.yml; \
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda deactivate; \
 		conda remove --yes --name con --all; \
 	'
 
-.PHONY: conda-install # install conda from environment.yaml file
+.PHONY: conda-install # install conda from environment.yml file
 conda-install:
 	bash -c '\
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
-		conda env create --file environment.yaml; \
+		conda env create --file environment.yml; \
 	'
 
 .PHONY: conda-clean # wipe conda environment
@@ -102,7 +101,6 @@ conda-clean:
 
 # --------------------------------------------------------------- nohup
 
-# !! modified for cluster usage
 .PHONY: monitor # create nohup with restart on failure
 monitor:
 	if [ "$(filepath)" = "" ]; then echo "missing 'filepath' argument"; exit 1; fi
@@ -141,21 +139,21 @@ monitor-kill:
 
 .PHONY: fmt # format codebase
 fmt:
-	$(PYTHON_PATH) -m pip install isort
-	$(PYTHON_PATH) -m pip install ruff
-	$(PYTHON_PATH) -m pip install autoflake
+	./.venv/bin/python3 -m pip install isort
+	./.venv/bin/python3 -m pip install ruff
+	./.venv/bin/python3 -m pip install autoflake
 
-	$(PYTHON_PATH) -m isort .
-	$(PYTHON_PATH) -m autoflake --remove-all-unused-imports --recursive --in-place .
-	$(PYTHON_PATH) -m ruff format --config line-length=500 .
+	./.venv/bin/python3 -m isort .
+	./.venv/bin/python3 -m autoflake --remove-all-unused-imports --recursive --in-place .
+	./.venv/bin/python3 -m ruff format --config line-length=500 .
 
 .PHONY: sec # check for vulns
 sec:
-	$(PYTHON_PATH) -m pip install bandit
-	$(PYTHON_PATH) -m pip install safety
+	./.venv/bin/python3 -m pip install bandit
+	./.venv/bin/python3 -m pip install safety
 	
-	$(PYTHON_PATH) -m bandit -r .
-	$(PYTHON_PATH) -m safety check --full-report
+	./.venv/bin/python3 -m bandit -r .
+	./.venv/bin/python3 -m safety check --full-report
 
 .PHONY: up # pull and push changes
 up:
