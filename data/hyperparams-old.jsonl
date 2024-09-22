@@ -1,5 +1,0 @@
-{"config": {"dataset": "cifar10", "batch_size": 64, "lr": 0.0001, "num_epochs": 5, "crossmax_k": 1}, "accuracy": 0.8327, "precision": 0.8357928403325388, "recall": 0.8327, "f1_score": 0.8312612246153205}
-{"config": {"dataset": "cifar10", "batch_size": 64, "lr": 0.0001, "num_epochs": 5, "crossmax_k": 2}, "accuracy": 0.8386, "precision": 0.8402888649367449, "recall": 0.8386, "f1_score": 0.8385006883022925}
-{"config": {"dataset": "cifar10", "batch_size": 64, "lr": 0.0001, "num_epochs": 5, "crossmax_k": 3}, "accuracy": 0.8315, "precision": 0.8324739878999992, "recall": 0.8315, "f1_score": 0.8299809256111043}
-{"config": {"dataset": "cifar10", "batch_size": 64, "lr": 0.0001, "num_epochs": 10, "crossmax_k": 1}, "accuracy": 0.8437, "precision": 0.8448285304349876, "recall": 0.8437, "f1_score": 0.8428661164059149}
-{"config": {"dataset": "cifar10", "batch_size": 64, "lr": 0.0001, "num_epochs": 10, "crossmax_k": 2}, "accuracy": 0.8515, "precision": 0.8550186718023126, "recall": 0.8515, "f1_score": 0.8511241003580035}
