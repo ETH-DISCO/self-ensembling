@@ -345,7 +345,7 @@ def resnet152(**kwargs) -> ResNet:
 # see: https://pytorch.org/vision/stable/transforms.html#performance-considerations
 preprocess = v2.Compose(
     [
-        v2.ToImage(),
+        v2.ToPILImage(),
         v2.ToDtype(torch.uint8, scale=True),
         v2.Resize(256, antialias=True),
         v2.CenterCrop(224),
