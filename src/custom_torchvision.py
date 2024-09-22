@@ -2,8 +2,8 @@ from typing import Callable, List, Optional, Type, Union
 
 import torch
 import torch.nn as nn
-from torch import Tensor
 import torchvision.transforms.v2 as v2
+from torch import Tensor
 
 """
 modified torchvision.models.resnet

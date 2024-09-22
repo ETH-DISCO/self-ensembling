@@ -1,5 +1,3 @@
-PYTHON_PATH := python
-
 # --------------------------------------------------------------- venv
 
 .PHONY: init # initialize .venv
@@ -15,12 +13,12 @@ init:
 	
 	rm -rf .venv
 	python -m venv .venv
-	$(PYTHON_PATH) -m pip install -r requirements.txt
+	./.venv/bin/python3 -m pip install -r requirements.txt
 	echo "to activate venv, run: source .venv/bin/activate"
 
 .PHONY: lock # freeze and dump .venv
 lock:
-	$(PYTHON_PATH) -m pip freeze > requirements.in
+	./.venv/bin/python3 -m pip freeze > requirements.in
 	pip-compile requirements.in -o requirements.txt -vvv
 
 # --------------------------------------------------------------- docker
@@ -100,7 +98,7 @@ monitor:
 			while true; do \
 				if ! ps -p $$(cat "monitor-process.pid" 2>/dev/null) > /dev/null 2>&1; then \
 					echo "$$(date): process not running or died, (re)starting..." >> monitor.log; \
-					nohup $(PYTHON_PATH) "$(filepath)" > "monitor-process.log" 2>&1 & \
+					nohup python3 "$(filepath)" > "monitor-process.log" 2>&1 & \
 					echo $$! > "monitor-process.pid"; \
 					echo "$$(date): started process with PID $$(cat monitor-process.pid)" >> monitor.log; \
 				fi; \
@@ -130,21 +128,21 @@ monitor-kill:
 
 .PHONY: fmt # format codebase
 fmt:
-	$(PYTHON_PATH) -m pip install isort
-	$(PYTHON_PATH) -m pip install ruff
-	$(PYTHON_PATH) -m pip install autoflake
+	./.venv/bin/python3 -m pip install isort
+	./.venv/bin/python3 -m pip install ruff
+	./.venv/bin/python3 -m pip install autoflake
 
-	$(PYTHON_PATH) -m isort .
-	$(PYTHON_PATH) -m autoflake --remove-all-unused-imports --recursive --in-place .
-	$(PYTHON_PATH) -m ruff format --config line-length=500 .
+	./.venv/bin/python3 -m isort .
+	./.venv/bin/python3 -m autoflake --remove-all-unused-imports --recursive --in-place .
+	./.venv/bin/python3 -m ruff format --config line-length=500 .
 
 .PHONY: sec # check for vulns
 sec:
-	$(PYTHON_PATH) -m pip install bandit
-	$(PYTHON_PATH) -m pip install safety
+	./.venv/bin/python3 -m pip install bandit
+	./.venv/bin/python3 -m pip install safety
 	
-	$(PYTHON_PATH) -m bandit -r .
-	$(PYTHON_PATH) -m safety check --full-report
+	./.venv/bin/python3 -m bandit -r .
+	./.venv/bin/python3 -m safety check --full-report
 
 .PHONY: up # pull and push changes
 up:
