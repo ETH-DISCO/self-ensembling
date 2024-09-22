@@ -55,7 +55,7 @@ docker-clean:
 
 # --------------------------------------------------------------- conda
 
-.PHONY: conda-req-to-yaml # generate env.yaml from requirements.txt (idempotent)
+.PHONY: conda-req-to-yaml # generate environment.yaml from requirements.txt (idempotent)
 conda-req-to-yaml:
 	@echo "name: myenv" > environment.yml
 	@echo "channels:" >> environment.yml
@@ -65,7 +65,7 @@ conda-req-to-yaml:
 	@echo "  - python=3.11" >> environment.yml
 	@sed 's/^/  - /' requirements.txt >> environment.yml
 
-.PHONY: conda-gen-yaml # generate env.yaml from requirements.txt (idempotent)
+.PHONY: conda-gen-yaml # generate environment.yaml from requirements.txt (idempotent)
 conda-gen-yaml:
 	conda update -n base -c defaults conda
 	# conda config --env --set subdir osx-64
@@ -79,16 +79,16 @@ conda-gen-yaml:
 		\
 		pip install -r requirements.txt; \
 		\
-		conda env export --no-builds | grep -v "prefix:" > env.yml; \
+		conda env export --no-builds | grep -v "prefix:" > environment.yaml; \
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda deactivate; \
 		conda remove --yes --name con --all; \
 	'
 
-.PHONY: conda-install # install conda from env.yaml file
+.PHONY: conda-install # install conda from environment.yaml file
 conda-install:
 	bash -c '\
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
-		conda env create --file env.yml; \
+		conda env create --file environment.yaml; \
 	'
 
 .PHONY: conda-clean # wipe conda environment
