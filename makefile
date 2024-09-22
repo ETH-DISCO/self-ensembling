@@ -1,3 +1,5 @@
+PYTHON_PATH := ./.venv/bin/python3
+
 # --------------------------------------------------------------- venv
 
 .PHONY: init # initialize .venv
@@ -13,12 +15,12 @@ init:
 	
 	rm -rf .venv
 	python -m venv .venv
-	./.venv/bin/python3 -m pip install -r requirements.txt
+	$(PYTHON_PATH) -m pip install -r requirements.txt
 	echo "to activate venv, run: source .venv/bin/activate"
 
 .PHONY: lock # freeze and dump .venv
 lock:
-	./.venv/bin/python3 -m pip freeze > requirements.in
+	$(PYTHON_PATH) -m pip freeze > requirements.in
 	pip-compile requirements.in -o requirements.txt -vvv
 
 # --------------------------------------------------------------- docker
@@ -53,8 +55,18 @@ docker-clean:
 
 # --------------------------------------------------------------- conda
 
-.PHONY: conda-get-yaml # convert requirements.txt to env.yaml file (idempotent)
-conda-get-yaml:
+.PHONY: conda-req-to-yaml # generate env.yaml from requirements.txt (idempotent)
+conda-req-to-yaml:
+	@echo "name: myenv" > environment.yml
+	@echo "channels:" >> environment.yml
+	@echo "  - conda-forge" >> environment.yml
+	@echo "  - defaults" >> environment.yml
+	@echo "dependencies:" >> environment.yml
+	@echo "  - python=3.11" >> environment.yml
+	@sed 's/^/  - /' requirements.txt >> environment.yml
+
+.PHONY: conda-gen-yaml # generate env.yaml from requirements.txt (idempotent)
+conda-gen-yaml:
 	conda update -n base -c defaults conda
 	# conda config --env --set subdir osx-64
 	# conda config --env --set subdir osx-arm64
@@ -90,6 +102,7 @@ conda-clean:
 
 # --------------------------------------------------------------- nohup
 
+# !! modified for cluster usage
 .PHONY: monitor # create nohup with restart on failure
 monitor:
 	if [ "$(filepath)" = "" ]; then echo "missing 'filepath' argument"; exit 1; fi
@@ -98,7 +111,7 @@ monitor:
 			while true; do \
 				if ! ps -p $$(cat "monitor-process.pid" 2>/dev/null) > /dev/null 2>&1; then \
 					echo "$$(date): process not running or died, (re)starting..." >> monitor.log; \
-					nohup python3 "$(filepath)" > "monitor-process.log" 2>&1 & \
+					nohup python "$(filepath)" > "monitor-process.log" 2>&1 & \
 					echo $$! > "monitor-process.pid"; \
 					echo "$$(date): started process with PID $$(cat monitor-process.pid)" >> monitor.log; \
 				fi; \
@@ -128,21 +141,21 @@ monitor-kill:
 
 .PHONY: fmt # format codebase
 fmt:
-	./.venv/bin/python3 -m pip install isort
-	./.venv/bin/python3 -m pip install ruff
-	./.venv/bin/python3 -m pip install autoflake
+	$(PYTHON_PATH) -m pip install isort
+	$(PYTHON_PATH) -m pip install ruff
+	$(PYTHON_PATH) -m pip install autoflake
 
-	./.venv/bin/python3 -m isort .
-	./.venv/bin/python3 -m autoflake --remove-all-unused-imports --recursive --in-place .
-	./.venv/bin/python3 -m ruff format --config line-length=500 .
+	$(PYTHON_PATH) -m isort .
+	$(PYTHON_PATH) -m autoflake --remove-all-unused-imports --recursive --in-place .
+	$(PYTHON_PATH) -m ruff format --config line-length=500 .
 
 .PHONY: sec # check for vulns
 sec:
-	./.venv/bin/python3 -m pip install bandit
-	./.venv/bin/python3 -m pip install safety
+	$(PYTHON_PATH) -m pip install bandit
+	$(PYTHON_PATH) -m pip install safety
 	
-	./.venv/bin/python3 -m bandit -r .
-	./.venv/bin/python3 -m safety check --full-report
+	$(PYTHON_PATH) -m bandit -r .
+	$(PYTHON_PATH) -m safety check --full-report
 
 .PHONY: up # pull and push changes
 up:
