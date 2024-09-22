@@ -137,15 +137,15 @@ if __name__ == "__main__":
     # debugging
     #
 
-    config = {
-        "dataset": "cifar10",
-        "batch_size": 256,
-        "lr": 1e-4,
-        "num_epochs": 2,
-        "crossmax_k": 2,
-    }
-    train(config=config)
-    exit()
+    # config = {
+    #     "dataset": "cifar10",
+    #     "batch_size": 256,
+    #     "lr": 1e-4,
+    #     "num_epochs": 2,
+    #     "crossmax_k": 2,
+    # }
+    # train(config=config)
+    # exit()
 
     #
     # grid search
