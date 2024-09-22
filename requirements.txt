@@ -5,61 +5,96 @@
 #    pip-compile --output-file=requirements.txt requirements.in
 #
 aiohappyeyeballs==2.4.0
-    # via aiohttp
+    # via
+    #   -r requirements.in
+    #   aiohttp
 aiohttp==3.10.5
     # via
+    #   -r requirements.in
     #   datasets
     #   fsspec
 aiosignal==1.3.1
-    # via aiohttp
+    # via
+    #   -r requirements.in
+    #   aiohttp
 attrs==24.2.0
-    # via aiohttp
+    # via
+    #   -r requirements.in
+    #   aiohttp
+autoflake==2.3.1
+    # via -r requirements.in
 certifi==2024.8.30
-    # via requests
+    # via
+    #   -r requirements.in
+    #   requests
 charset-normalizer==3.3.2
-    # via requests
+    # via
+    #   -r requirements.in
+    #   requests
 datasets==3.0.0
     # via -r requirements.in
 dill==0.3.8
     # via
+    #   -r requirements.in
     #   datasets
     #   multiprocess
 filelock==3.16.1
     # via
+    #   -r requirements.in
     #   datasets
     #   huggingface-hub
     #   torch
 frozenlist==1.4.1
     # via
+    #   -r requirements.in
     #   aiohttp
     #   aiosignal
 fsspec[http]==2024.6.1
     # via
+    #   -r requirements.in
     #   datasets
     #   huggingface-hub
     #   torch
 huggingface-hub==0.25.0
-    # via datasets
+    # via
+    #   -r requirements.in
+    #   datasets
 idna==3.10
     # via
+    #   -r requirements.in
     #   requests
     #   yarl
+isort==5.13.2
+    # via -r requirements.in
 jinja2==3.1.4
-    # via torch
+    # via
+    #   -r requirements.in
+    #   torch
 joblib==1.4.2
-    # via scikit-learn
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 markupsafe==2.1.5
-    # via jinja2
+    # via
+    #   -r requirements.in
+    #   jinja2
 mpmath==1.3.0
-    # via sympy
+    # via
+    #   -r requirements.in
+    #   sympy
 multidict==6.1.0
     # via
+    #   -r requirements.in
     #   aiohttp
     #   yarl
 multiprocess==0.70.16
-    # via datasets
+    # via
+    #   -r requirements.in
+    #   datasets
 networkx==3.3
-    # via torch
+    # via
+    #   -r requirements.in
+    #   torch
 numpy==2.1.1
     # via
     #   -r requirements.in
@@ -71,36 +106,63 @@ numpy==2.1.1
     #   torchvision
 packaging==24.1
     # via
+    #   -r requirements.in
     #   datasets
     #   huggingface-hub
 pandas==2.2.3
-    # via datasets
+    # via
+    #   -r requirements.in
+    #   datasets
 pillow==10.4.0
-    # via torchvision
+    # via
+    #   -r requirements.in
+    #   torchvision
 pyarrow==17.0.0
-    # via datasets
+    # via
+    #   -r requirements.in
+    #   datasets
+pyflakes==3.2.0
+    # via
+    #   -r requirements.in
+    #   autoflake
 python-dateutil==2.9.0.post0
-    # via pandas
+    # via
+    #   -r requirements.in
+    #   pandas
 pytz==2024.2
-    # via pandas
+    # via
+    #   -r requirements.in
+    #   pandas
 pyyaml==6.0.2
     # via
+    #   -r requirements.in
     #   datasets
     #   huggingface-hub
 requests==2.32.3
     # via
+    #   -r requirements.in
     #   datasets
     #   huggingface-hub
+ruff==0.6.7
+    # via -r requirements.in
 scikit-learn==1.5.2
     # via -r requirements.in
 scipy==1.14.1
-    # via scikit-learn
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   -r requirements.in
+    #   python-dateutil
 sympy==1.13.3
-    # via torch
+    # via
+    #   -r requirements.in
+    #   torch
 threadpoolctl==3.5.0
-    # via scikit-learn
+    # via
+    #   -r requirements.in
+    #   scikit-learn
 torch==2.4.1
     # via
     #   -r requirements.in
@@ -114,13 +176,22 @@ tqdm==4.66.5
     #   huggingface-hub
 typing-extensions==4.12.2
     # via
+    #   -r requirements.in
     #   huggingface-hub
     #   torch
 tzdata==2024.1
-    # via pandas
+    # via
+    #   -r requirements.in
+    #   pandas
 urllib3==2.2.3
-    # via requests
+    # via
+    #   -r requirements.in
+    #   requests
 xxhash==3.5.0
-    # via datasets
+    # via
+    #   -r requirements.in
+    #   datasets
 yarl==1.11.1
-    # via aiohttp
+    # via
+    #   -r requirements.in
+    #   aiohttp

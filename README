@@ -5,7 +5,7 @@ Based on @aplesner's implementation: https://github.com/aplesner/Ensemble-everyt
 # usage
 
 ```bash
-...
+pip install -r requirements.txt
 ```
 
 # notes
