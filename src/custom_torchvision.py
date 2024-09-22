@@ -2,7 +2,7 @@ from typing import Callable, List, Optional, Type, Union
 
 import torch
 import torch.nn as nn
-import torchvision.transforms.v2 as v2
+import torchvision.transforms as transforms
 from torch import Tensor
 
 """
@@ -350,17 +350,16 @@ def resnet152(**kwargs) -> ResNet:
 #         v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 #     ]
 # )
-preprocess = v2.Compose(
+preprocess = transforms.Compose(
     [
-        v2.ToImagePIL(),
-        v2.ToDtype(torch.uint8, scale=True),
-        v2.Resize(256, antialias=True),
-        v2.CenterCrop(224),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.ToImage(),
+        transforms.ToDtype(torch.uint8, scale=True),
+        transforms.Resize(256, antialias=True),
+        transforms.CenterCrop(224),
+        transforms.ToDtype(torch.float32, scale=True),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
 )
-
 
 """
 self ensemble resnet152 model with linear probes
