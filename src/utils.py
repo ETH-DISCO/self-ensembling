@@ -1,4 +1,3 @@
-import torchvision
 import functools
 import gc
 import os
@@ -8,9 +7,10 @@ import time
 
 import numpy as np
 import torch
+import torchvision
 
 
-def set_seed(seed: int = -1) -> None:
+def set_env(seed: int = -1) -> None:
     if seed == -1:
         seed = secrets.randbelow(1_000_000_000)
 
@@ -25,9 +25,10 @@ def set_seed(seed: int = -1) -> None:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
     torch.set_float32_matmul_precision("high")
-
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"
+
+    torchvision.disable_beta_transforms_warning()
 
 
 def get_device(disable_mps=False) -> str:

@@ -12,8 +12,7 @@ from tqdm import tqdm
 import custom_torchvision
 from utils import free_mem, get_device, set_env
 
-set_env(41)
-
+set_env(seed=41)
 
 input_path = Path.cwd() / "data"
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
@@ -162,6 +161,7 @@ if __name__ == "__main__":
 
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
+
         def is_cached(config: dict):
             if not output_path.exists():
                 return False
@@ -173,6 +173,7 @@ if __name__ == "__main__":
                 result = json.loads(line)
                 if result["config"] == config:
                     return True
+
         if is_cached(combination):
             print(f"skipping: {combination}")
             continue

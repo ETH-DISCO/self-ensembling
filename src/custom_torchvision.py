@@ -2,8 +2,8 @@ from typing import Callable, List, Optional, Type, Union
 
 import torch
 import torch.nn as nn
+import torchvision.transforms.v2 as v2
 from torch import Tensor
-from torchvision.transforms import v2
 
 """
 modified torchvision.models.resnet
@@ -342,7 +342,7 @@ def resnet152(**kwargs) -> ResNet:
 # see: https://pytorch.org/vision/stable/transforms.html#performance-considerations
 preprocess = v2.Compose(
     [
-        v2.ToImage(),
+        v2.ToImagePIL(),
         v2.ToDtype(torch.uint8, scale=True),
         v2.Resize(256, antialias=True),
         v2.CenterCrop(224),
