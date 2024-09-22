@@ -3,7 +3,6 @@ from typing import Callable, List, Optional, Type, Union
 import torch
 import torch.nn as nn
 from torch import Tensor
-# from torchvision.transforms import v2
 import torchvision.transforms.v2 as v2
 
 """
