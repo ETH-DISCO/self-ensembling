@@ -1,4 +1,4 @@
-PYTHON_PATH := ./.venv/bin/python3
+PYTHON_PATH := python
 
 # --------------------------------------------------------------- venv
 
