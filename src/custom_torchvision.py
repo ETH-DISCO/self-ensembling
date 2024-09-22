@@ -352,11 +352,10 @@ def resnet152(**kwargs) -> ResNet:
 # )
 preprocess = transforms.Compose(
     [
-        transforms.ToImage(),
-        transforms.ToDtype(torch.uint8, scale=True),
-        transforms.Resize(256, antialias=True),
+        transforms.ToPILImage(),
+        transforms.Resize(256),
         transforms.CenterCrop(224),
-        transforms.ToDtype(torch.float32, scale=True),
+        transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ]
 )
