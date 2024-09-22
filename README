@@ -5,6 +5,7 @@ Based on @aplesner's implementation: https://github.com/aplesner/Ensemble-everyt
 # usage
 
 ```bash
+git clone https://github.com/ETH-DISCO/self-ensembling
 pip install -r requirements.txt
 ```
 
