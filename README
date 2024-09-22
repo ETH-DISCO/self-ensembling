@@ -6,6 +6,7 @@ Based on @aplesner's implementation: https://github.com/aplesner/Ensemble-everyt
 
 ```bash
 git clone https://github.com/ETH-DISCO/self-ensembling
+cd self-ensembling
 pip install -r requirements.txt
 ```
 
