@@ -7,6 +7,7 @@ import time
 
 import numpy as np
 import torch
+import pytorch_lightning as pl
 
 
 def set_env(seed: int = -1) -> None:
@@ -18,6 +19,7 @@ def set_env(seed: int = -1) -> None:
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
+    pl.seed_everything(seed)
 
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = True
