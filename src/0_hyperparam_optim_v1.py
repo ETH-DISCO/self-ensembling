@@ -32,7 +32,7 @@ def train(config: dict):
         trainloader = cifar100_trainloader
         valloader = cifar100_valloader
 
-    device = get_device(disable_mps=True)
+    device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)

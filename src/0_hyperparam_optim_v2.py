@@ -2,6 +2,7 @@ import itertools
 import json
 from pathlib import Path
 
+import pytorch_lightning as pl
 import torch
 import torchvision.models as models
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
@@ -17,8 +18,6 @@ output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 batch_size = 32  # lower always better, but slower
 train_ratio = 0.8  # common default
 
-import pytorch_lightning as pl
-
 
 class ResNetEnsemble(pl.LightningModule):
     def __init__(self, num_classes, lr, crossmax_k):
@@ -29,11 +28,12 @@ class ResNetEnsemble(pl.LightningModule):
         self.lr = lr
         self.crossmax_k = crossmax_k
         self.criterion = torch.nn.CrossEntropyLoss()
+        self.validation_step_outputs = []
 
     def forward(self, x):
         return self.net(x)
 
-    def training_step(self, batch):
+    def training_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self(inputs)
         losses = [self.criterion(outputs[:, i, :], labels) for i in range(len(self.net.fc_layers))]
@@ -41,15 +41,17 @@ class ResNetEnsemble(pl.LightningModule):
         self.log("train_loss", total_loss)
         return total_loss
 
-    def validation_step(self, batch):
+    def validation_step(self, batch, batch_idx):
         inputs, labels = batch
         outputs = self(inputs)
         loss = sum(self.criterion(outputs[:, i, :], labels) for i in range(len(self.net.fc_layers)))
         predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.crossmax_k)
         self.log("val_loss", loss)
+        self.validation_step_outputs.append({"val_loss": loss, "preds": predictions, "targets": labels})
         return {"val_loss": loss, "preds": predictions, "targets": labels}
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
+        outputs = self.validation_step_outputs
         preds = torch.cat([x["preds"] for x in outputs])
         targets = torch.cat([x["targets"] for x in outputs])
         accuracy = accuracy_score(targets.cpu(), preds.cpu())
@@ -60,6 +62,7 @@ class ResNetEnsemble(pl.LightningModule):
         self.log("val_precision", precision)
         self.log("val_recall", recall)
         self.log("val_f1", f1)
+        self.validation_step_outputs.clear()  # Clear the list after processing
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
@@ -70,13 +73,15 @@ def train(config: dict):
         datamodule = CIFAR10DataModule(batch_size, train_ratio)
     elif config["dataset"] == "cifar100":
         datamodule = CIFAR100DataModule(batch_size, train_ratio)
+    datamodule.setup()
 
     model = ResNetEnsemble(num_classes=len(datamodule.classes), lr=config["lr"], crossmax_k=config["crossmax_k"])
 
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
         callbacks=[pl.callbacks.EarlyStopping(monitor="val_loss", patience=config["early_stopping_patience"])],
-        gpus=-1,
+        accelerator="auto",
+        devices="auto",
     )
 
     trainer.fit(model, datamodule=datamodule)
@@ -104,7 +109,8 @@ if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
         "lr": [0.1],
-        "num_epochs": [250],  # higher with early stopping is better, but slower (usually 200-300)
+        # "num_epochs": [250],  # higher with early stopping is better, but slower (usually 200-300)
+        "num_epochs": [2],  # higher with early stopping is better, but slower (usually 200-300)
         "crossmax_k": [2],  # 2 because we assume vickery voting system (this can be tuned after training is done)
         "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
     }
