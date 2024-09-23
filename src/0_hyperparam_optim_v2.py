@@ -164,7 +164,7 @@ if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
         "lr": [1e-1, 1e-2, 1e-3],  # 0.1 seems to be the best for resnet152
-        "crossmax_k": [2, 3],  # 2 because we assume vickery voting system (this can be tuned after training is done)
+        "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")
