@@ -80,13 +80,10 @@ def train(config: dict):
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
         callbacks=[pl.callbacks.EarlyStopping(monitor="val_loss", patience=config["early_stopping_patience"])],
-        # accelerator="auto", # also works on mps
-        # devices="auto",
         accelerator="gpu",
-        strategy="ddp",  # recommended for multi-gpu
-        devices=-1,
+        devices="auto",
     )
-
+    print(f"number of gpus being used: {trainer.num_devices}")
     trainer.fit(model, datamodule=datamodule)
 
     results = {
