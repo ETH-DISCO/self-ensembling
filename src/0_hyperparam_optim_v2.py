@@ -70,7 +70,7 @@ def train(config: dict):
     patience_counter = 0
     best_model_state = None
 
-    for epoch in range(config["num_epochs"]):
+    for epoch in range(num_epochs):
         # epoch train
         net.train()
         running_losses = [0.0] * ensemble_size
