@@ -148,10 +148,10 @@ if __name__ == "__main__":
 
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
-        "lr": 0.1,
-        "num_epochs": 250,  # higher with early stopping is better, but slower (usually 200-300)
-        "crossmax_k": 2,  # 2 because we assume vickery voting system (this can be tuned after training is done)
-        "early_stopping_patience": 10,  # higher is better, but slower (usually 5-20)
+        "lr": [0.1],
+        "num_epochs": [250],  # higher with early stopping is better, but slower (usually 200-300)
+        "crossmax_k": [2],  # 2 because we assume vickery voting system (this can be tuned after training is done)
+        "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")

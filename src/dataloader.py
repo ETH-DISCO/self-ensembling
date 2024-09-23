@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytorch_lightning as pl
 import torch
 import torchvision.datasets as datasets
 from datasets import load_dataset
@@ -65,3 +66,41 @@ def get_imagenet_loaders(batch_size: int, train_ratio: int):
     testloader_imagenet = DataLoader(test_dataset_imagenet, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 
     return classes_imagenet, trainloader_imagenet, valloader_imagenet, testloader_imagenet
+
+
+class CIFAR10DataModule(pl.LightningDataModule):
+    def __init__(self, batch_size, train_ratio):
+        super().__init__()
+        self.batch_size = batch_size
+        self.train_ratio = train_ratio
+
+    def setup(self, stage=None):
+        self.classes, self.train_loader, self.val_loader, self.test_loader = get_cifar10_loaders(self.batch_size, self.train_ratio)
+
+    def train_dataloader(self):
+        return self.train_loader
+
+    def val_dataloader(self):
+        return self.val_loader
+
+    def test_dataloader(self):
+        return self.test_loader
+
+
+class CIFAR100DataModule(pl.LightningDataModule):
+    def __init__(self, batch_size, train_ratio):
+        super().__init__()
+        self.batch_size = batch_size
+        self.train_ratio = train_ratio
+
+    def setup(self, stage=None):
+        self.classes, self.train_loader, self.val_loader, self.test_loader = get_cifar100_loaders(self.batch_size, self.train_ratio)
+
+    def train_dataloader(self):
+        return self.train_loader
+
+    def val_dataloader(self):
+        return self.val_loader
+
+    def test_dataloader(self):
+        return self.test_loader
