@@ -1,3 +1,4 @@
+import os
 import itertools
 import json
 from pathlib import Path
@@ -80,8 +81,9 @@ def train(config: dict):
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
         callbacks=[pl.callbacks.EarlyStopping(monitor="val_loss", patience=config["early_stopping_patience"])],
-        accelerator="auto",
+        accelerator="gpu",
         devices="auto",
+        strategy="ddp",
     )
     print(f"number of gpus being used: {trainer.num_devices}")
     trainer.fit(model, datamodule=datamodule)
@@ -105,35 +107,36 @@ if __name__ == "__main__":
     # - https://github.com/weiaicunzai/pytorch-cifar100
     # - https://www.researchgate.net/figure/Hyperparameters-with-optimal-values-for-ResNet-models-on-CIFAR-100-dataset_tbl1_351654208
     #
+    def is_cached(config: dict):
+        if not output_path.exists():
+            return False
+        content = output_path.read_text()
+        lines = content.split("\n")
+        for line in lines:
+            if not line:
+                continue
+            result = json.loads(line)
+            if result["config"] == config:
+                return True
 
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
-        "lr": [0.1],
-        # "num_epochs": [250],  # higher with early stopping is better, but slower (usually 200-300)
-        "num_epochs": [2],  # higher with early stopping is better, but slower (usually 200-300)
-        "crossmax_k": [2],  # 2 because we assume vickery voting system (this can be tuned after training is done)
+        "lr": [1e-1, 1e-2, 1e-3], # 0.1 seems to be the best for resnet152
+        "num_epochs": [2],  # higher with early stopping is better, but slower (usually 200-300) --> use 250
+        "crossmax_k": [2, 3],
         "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")
 
-    for combination in combinations:
+    world_size = torch.cuda.device_count()
+    rank = int(os.environ.get("LOCAL_RANK", 0))
+    
+    for i, combination in enumerate(combinations):
+        if i % world_size == rank:
+            if is_cached(combination):
+                print(f"skipping: {combination}")
+                continue
 
-        def is_cached(config: dict):
-            if not output_path.exists():
-                return False
-            content = output_path.read_text()
-            lines = content.split("\n")
-            for line in lines:
-                if not line:
-                    continue
-                result = json.loads(line)
-                if result["config"] == config:
-                    return True
-
-        if is_cached(combination):
-            print(f"skipping: {combination}")
-            continue
-
-        print(f"training: {combination}")
-        train(config=combination)
+            print(f"training on GPU {rank}: {combination}")
+            train(config=combination)
