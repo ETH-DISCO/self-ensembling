@@ -28,7 +28,7 @@ class ResNetEnsemble(pl.LightningModule):
         self.lr = lr
         self.crossmax_k = crossmax_k
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.validation_step_outputs = [] # for early stopping
+        self.validation_step_outputs = []  # for early stopping
 
     def forward(self, x):
         return self.net(x)
@@ -65,7 +65,7 @@ class ResNetEnsemble(pl.LightningModule):
         self.validation_step_outputs.clear()  # clear the list after epoch
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr) # based on karpthy's blog
+        return torch.optim.Adam(self.parameters(), lr=self.lr)  # based on karpthy's blog
 
 
 def train(config: dict):
@@ -80,8 +80,11 @@ def train(config: dict):
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
         callbacks=[pl.callbacks.EarlyStopping(monitor="val_loss", patience=config["early_stopping_patience"])],
-        accelerator="auto",
-        devices="auto",
+        # accelerator="auto", # also works on mps
+        # devices="auto",
+        accelerator="gpu",
+        strategy="ddp",  # recommended for multi-gpu
+        devices=-1,
     )
 
     trainer.fit(model, datamodule=datamodule)
@@ -109,10 +112,8 @@ if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
         "lr": [0.1],
-        
         # "num_epochs": [250],  # higher with early stopping is better, but slower (usually 200-300)
         "num_epochs": [2],  # higher with early stopping is better, but slower (usually 200-300)
-
         "crossmax_k": [2],  # 2 because we assume vickery voting system (this can be tuned after training is done)
         "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
     }
