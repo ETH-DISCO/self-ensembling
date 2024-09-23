@@ -28,7 +28,7 @@ class ResNetEnsemble(pl.LightningModule):
         self.lr = lr
         self.crossmax_k = crossmax_k
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.validation_step_outputs = []
+        self.validation_step_outputs = [] # for early stopping
 
     def forward(self, x):
         return self.net(x)
@@ -62,10 +62,10 @@ class ResNetEnsemble(pl.LightningModule):
         self.log("val_precision", precision)
         self.log("val_recall", recall)
         self.log("val_f1", f1)
-        self.validation_step_outputs.clear()  # Clear the list after processing
+        self.validation_step_outputs.clear()  # clear the list after epoch
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
+        return torch.optim.Adam(self.parameters(), lr=self.lr) # based on karpthy's blog
 
 
 def train(config: dict):
