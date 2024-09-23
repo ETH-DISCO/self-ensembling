@@ -3,56 +3,34 @@ import json
 from pathlib import Path
 
 import torch
-import torchvision.datasets as datasets
 import torchvision.models as models
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
 import custom_torchvision
+from dataloader import get_cifar10_loaders, get_cifar100_loaders
 from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
 
-input_path = Path.cwd() / "data"
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
-dataset_path = Path.cwd() / "dataset"
 
-full_dataset_cifar10 = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-full_dataset_cifar100 = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
-# full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False) # takes ~1h
-# full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]  # takes ~1h
-print("loaded datasets")
+batch_size = 32  # lower always better, but slower
+train_ratio = 0.8  # common default
+
+cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio)
+cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_ratio)
 
 
 def train(config: dict):
-    #
-    # dataset
-    #
-
     if config["dataset"] == "cifar10":
-        classes = json.loads((input_path / "cifar10_classes.json").read_text())
-
-        train_size = int(0.8 * len(full_dataset_cifar10))
-        val_size = len(full_dataset_cifar10) - train_size
-        train_dataset, val_dataset = random_split(full_dataset_cifar10, [train_size, val_size])
-
+        classes = cifar10_classes
+        trainloader = cifar10_trainloader
+        valloader = cifar10_valloader
     elif config["dataset"] == "cifar100":
-        classes = json.loads((input_path / "cifar100_classes.json").read_text())
-
-        train_size = int(0.8 * len(full_dataset_cifar100))
-        val_size = len(full_dataset_cifar100) - train_size
-        train_dataset, val_dataset = random_split(full_dataset_cifar100, [train_size, val_size])
-
-    # elif config["dataset"] == "imagenet":
-    #     classes = json.loads((input_path / "imagenet_classes.json").read_text())
-
-    #     train_size = int(0.8 * len(full_dataset_imagenet))
-    #     val_size = len(full_dataset_imagenet) - train_size
-    #     train_dataset, val_dataset = random_split(full_dataset_imagenet, [train_size, val_size])
-
-    trainloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
-    valloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
+        classes = cifar100_classes
+        trainloader = cifar100_trainloader
+        valloader = cifar100_valloader
 
     #
     # load backbone
@@ -62,7 +40,7 @@ def train(config: dict):
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
     custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)
-    net = net.to(device)  # compilation speedup is insignificant, will break on mps
+    net = net.to(device)  # dont compile: speedup is insignificant, will break on mps
 
     #
     # train loop
@@ -86,7 +64,7 @@ def train(config: dict):
         optimizer.step()
         return losses
 
-    best_val_loss = float('inf')
+    best_val_loss = float("inf")
     patience_counter = 0
     best_model_state = None
 
@@ -107,7 +85,7 @@ def train(config: dict):
                 print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
             free_mem()
-        
+
         # epoch validation
         net.eval()
         val_loss = 0.0
@@ -167,25 +145,22 @@ def train(config: dict):
 if __name__ == "__main__":
     #
     # grid search
-    # 
+    #
     # - https://github.com/weiaicunzai/pytorch-cifar100
     # - https://www.researchgate.net/figure/Hyperparameters-with-optimal-values-for-ResNet-models-on-CIFAR-100-dataset_tbl1_351654208
     #
 
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
-        "batch_size": 32, # lower is better, but slower (usually 32-128)
         "lr": 0.1,
-        "num_epochs": 250, # higher is better, but slower (usually 200-300)
-        "crossmax_k": 2, # 2 because we assume vickery voting system (this can be varied after training is done)
-        "early_stopping_patience": 10, # higher is better, but slower (usually 5-20)
+        "num_epochs": 250,  # higher is better, but slower (usually 200-300)
+        "crossmax_k": 2,  # 2 because we assume vickery voting system (this can be varied after training is done)
+        "early_stopping_patience": 10,  # higher is better, but slower (usually 5-20)
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")
-    
+
     for combination in combinations:
-        GREEN = "\033[92m"
-        END = "\033[0m"
 
         def is_cached(config: dict):
             if not output_path.exists():
@@ -200,8 +175,8 @@ if __name__ == "__main__":
                     return True
 
         if is_cached(combination):
-            print(f"{GREEN}skipping: {combination}{END}")
+            print(f"skipping: {combination}")
             continue
 
-        print(f"{GREEN}training: {combination}{END}")
+        print(f"training: {combination}")
         train(config=combination)
