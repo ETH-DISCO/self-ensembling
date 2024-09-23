@@ -84,6 +84,7 @@ def train(config: dict):
         accelerator="gpu",
         devices="auto",
         strategy="ddp",
+        logger=False,
     )
     print(f"number of gpus being used: {trainer.num_devices}")
     trainer.fit(model, datamodule=datamodule)
