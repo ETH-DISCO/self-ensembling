@@ -6,8 +6,8 @@ import secrets
 import time
 
 import numpy as np
-import torch
 import pytorch_lightning as pl
+import torch
 
 
 def set_env(seed: int = -1) -> None:

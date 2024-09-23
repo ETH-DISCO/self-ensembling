@@ -2,9 +2,9 @@
 suitable for multi-gpu training but not hyperparameter optimization (don't use this)
 """
 
-import os
 import itertools
 import json
+import os
 from pathlib import Path
 
 import pytorch_lightning as pl
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
-        "lr": [1e-1, 1e-2, 1e-3], # 0.1 seems to be the best for resnet152
+        "lr": [1e-1, 1e-2, 1e-3],  # 0.1 seems to be the best for resnet152
         "num_epochs": [2],  # higher with early stopping is better, but slower (usually 200-300) --> use 250
         "crossmax_k": [2, 3],
         "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
     world_size = torch.cuda.device_count()
     rank = int(os.environ.get("LOCAL_RANK", 0))
-    
+
     for i, combination in enumerate(combinations):
         if i % world_size == rank:
             if is_cached(combination):

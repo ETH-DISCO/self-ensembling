@@ -15,8 +15,14 @@ set_env(seed=41)
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
+#
+# config constants
+#
+
 batch_size = 32  # lower always better, but slower
 train_ratio = 0.8  # common default
+num_epochs = 250  # higher with early stopping is better, but slower (usually 200-300)
+early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio)
 cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_ratio)
@@ -78,7 +84,7 @@ def train(config: dict):
 
             # print stats
             if batch_idx % (train_size // 3) == 0:
-                print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                print(f"[epoch {epoch + 1}/{num_epochs}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
             free_mem()
 
@@ -93,7 +99,7 @@ def train(config: dict):
                 val_loss += loss.item()
 
         val_loss /= len(valloader)
-        print(f"epoch {epoch + 1}/{config['num_epochs']}, validation Loss: {val_loss:.4f}")
+        print(f"epoch {epoch + 1}/{num_epochs}, validation Loss: {val_loss:.4f}")
 
         # early stopping check
         if val_loss < best_val_loss:
@@ -102,7 +108,7 @@ def train(config: dict):
             best_model_state = net.state_dict()
         else:
             patience_counter += 1
-        if patience_counter >= config["early_stopping_patience"]:
+        if patience_counter >= early_stopping_patience:
             print(f"early stopping triggered after {epoch + 1} epochs")
             break
         free_mem()
@@ -158,9 +164,7 @@ if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
         "lr": [1e-1, 1e-2, 1e-3],  # 0.1 seems to be the best for resnet152
-        "num_epochs": [250],  # higher with early stopping is better, but slower (usually 200-300)
         "crossmax_k": [2, 3],  # 2 because we assume vickery voting system (this can be tuned after training is done)
-        "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")
