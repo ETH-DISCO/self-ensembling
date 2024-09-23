@@ -1,3 +1,8 @@
+# 
+# $ git pull && python ./src/0_hyperparam_optim_v2.py
+# $ make monitor filepath="./src/0_hyperparam_optim_v2.py"
+# $ make monitor-tail
+
 import itertools
 import json
 from pathlib import Path
