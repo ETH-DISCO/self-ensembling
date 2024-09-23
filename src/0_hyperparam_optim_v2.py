@@ -45,7 +45,7 @@ def train(config: dict):
     criterion = torch.nn.CrossEntropyLoss().to(device)
     if torch.cuda.is_available():
         criterion = criterion.cuda()
-    optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # see: https://karpathy.github.io/2019/04/25/recipe/
+    optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # safe bet
     ensemble_size = len(net.fc_layers)
     train_size = len(trainloader)
 
