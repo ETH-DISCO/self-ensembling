@@ -1,8 +1,3 @@
-#
-# $ git pull && python ./src/0_hyperparam_optim_v2.py
-# $ make monitor filepath="./src/0_hyperparam_optim_v2.py"
-# $ make monitor-tail
-
 import itertools
 import json
 from pathlib import Path
@@ -24,7 +19,7 @@ output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 # config constants
 #
 
-batch_size = 32  # lower always better, but slower
+batch_size = 1024  # lower always better, but slower
 train_ratio = 0.8  # common default
 num_epochs = 250  # higher with early stopping is better, but slower (usually 200-300)
 early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
@@ -168,7 +163,7 @@ if __name__ == "__main__":
 
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
-        "lr": [1e-1, 1e-2, 1e-3],  # 0.1 seems to be the best for resnet152
+        "lr": [1e-2, 1e-3, 1e-4],
         "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
