@@ -14,7 +14,7 @@ init:
 	rm -rf .venv
 	python -m venv .venv
 	./.venv/bin/python3 -m pip install -r requirements.txt
-	echo "to activate venv, run: source .venv/bin/activate"
+	@echo "to activate venv, run: source .venv/bin/activate"
 
 .PHONY: lock # freeze and dump .venv
 lock:
@@ -26,7 +26,7 @@ lock:
 .PHONY: docker-install # run docker container
 docker-install:
 	docker-compose up --detach
-	echo "to exec into docker container, run: docker exec -it main bash"
+	@echo "to exec into docker container, run: docker exec -it main bash"
 
 .PHONY: docker-build # save changes to container
 docker-build:
@@ -53,31 +53,17 @@ docker-clean:
 
 # --------------------------------------------------------------- conda
 
-.PHONY: reqs-to-yaml # generate environment.yml from requirements.txt (idempotent)
-conda-req-to-yaml:
-	./.venv/bin/python3 -m pip install pyyaml
-	./.venv/bin/python3 -c "import re, yaml; \
-	requirements_text = open('requirements.txt').read(); \
-	pattern = r'^(\S+)==(\S+)'; \
-	matches = re.findall(pattern, requirements_text, re.MULTILINE); \
-	requirements_dict = {name: version for name, version in matches}; \
-	conda_env = {'name': 'con', 'channels': ['rusty1s', 'pytorch', 'nvidia', 'anaconda', 'conda-forge', 'defaults'], 'dependencies': ['python=3.11'] + [f'{package}={version}' for package, version in requirements_dict.items()]}; \
-	yaml.dump(conda_env, open('environment.yml', 'w'), sort_keys=False);"
-
-.PHONY: conda-gen-yaml # install conda to generate environment.yml from requirements.txt (idempotent)
-conda-gen-yaml:
+.PHONY: conda-reqs-to-yaml # install conda to generate environment.yml from requirements.txt (idempotent)
+conda-reqs-to-yaml:
 	conda update -n base -c defaults conda
-	# conda config --env --set subdir osx-64
-	# conda config --env --set subdir osx-arm64
+	conda config --env --set subdir osx-arm64
 	conda config --set auto_activate_base false
 	conda info
 	bash -c '\
-		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
+		source $$(conda info --base)/etc/profile.d/conda.sh && conda activate base; \
 		conda create --yes --name con python=3.11; \
-		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate con; \
-		\
+		source $$(conda info --base)/etc/profile.d/conda.sh && conda activate con; \
 		pip install -r requirements.txt; \
-		\
 		conda env export --no-builds | grep -v "prefix:" > environment.yml; \
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda deactivate; \
 		conda remove --yes --name con --all; \
@@ -89,6 +75,7 @@ conda-install:
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
 		conda env create --file environment.yml --solver=libmamba; \
 	'
+	@echo "to activate conda environment, run: conda activate con"
 
 .PHONY: conda-clean # wipe conda environment
 conda-clean:
@@ -120,6 +107,8 @@ monitor:
 		echo $$! > "monitor.pid"; \
 		echo "$$(date): monitor started" >> "monitor.log"; \
 	'
+	@echo "to tail monitor log, run: make monitor-tail"
+	@echo "to kill monitor, run: make monitor-kill"
 
 .PHONY: monitor-tail # tail log of nohup process
 monitor-tail:
