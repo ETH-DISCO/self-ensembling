@@ -160,7 +160,7 @@ if __name__ == "__main__":
     searchspace = {
         "dataset": ["imagenet"],
         "lr": [1e-2, 1e-3, 1e-4],
-        "num_epochs": [2, 4, 8, 16],  # paper only used 1 epoch
+        "num_epochs": [4, 8, 16],  # paper only used 1 epoch
         "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
