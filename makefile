@@ -36,9 +36,9 @@ docker-build:
 docker-clean:
 	docker-compose down
 
-	-docker stop $$(docker ps -a -q)
-	-docker rm $$(docker ps -a -q)
-	-docker rmi $$(docker images -q)
+	docker stop $$(docker ps -a -q) || true
+	docker rm $$(docker ps -a -q) || true
+	docker rmi $$(docker images -q) || true
 	yes | docker container prune
 	yes | docker image prune
 	yes | docker volume prune
@@ -56,7 +56,7 @@ docker-clean:
 .PHONY: conda-reqs-to-yaml # install conda to generate environment.yml from requirements.txt (idempotent)
 conda-reqs-to-yaml:
 	conda update -n base -c defaults conda
-	conda config --env --set subdir osx-arm64
+	conda config --env --set subdir osx-arm64 || true
 	conda config --set auto_activate_base false
 	conda info
 	bash -c '\
@@ -117,10 +117,10 @@ monitor-tail:
 
 .PHONY: monitor-kill # kill nohup process
 monitor-kill:
-	-kill -9 $$(cat monitor.pid)
+	kill -9 $$(cat monitor.pid) || true
 	rm -rf monitor.pid
 	rm -rf monitor.log
-	-kill -9 $$(cat monitor-process.pid)
+	kill -9 $$(cat monitor-process.pid) || true
 	rm -rf monitor-process.pid
 	rm -rf monitor-process.log
 
