@@ -80,7 +80,7 @@ def train(config: dict):
 
             # print stats
             if batch_idx % (train_size // 3) == 0:
-                print(f"[epoch {epoch + 1}/{config["num_epochs"]}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
             free_mem()
 
@@ -95,7 +95,7 @@ def train(config: dict):
                 val_loss += loss.item()
 
         val_loss /= len(valloader)
-        print(f"epoch {epoch + 1}/{config["num_epochs"]}, validation Loss: {val_loss:.4f}")
+        print(f"epoch {epoch + 1}/{config['num_epochs']}, validation Loss: {val_loss:.4f}")
 
         # early stopping check
         if val_loss < best_val_loss:

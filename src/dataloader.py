@@ -14,7 +14,7 @@ from utils import set_env
 set_env(seed=41)
 
 classes_path = Path.cwd() / "data"
-dataset_path = Path.cwd() / "dataset"
+dataset_path = Path.cwd() / "datasets"
 
 
 def get_cifar10_loaders(batch_size: int, train_ratio: int):
@@ -53,7 +53,7 @@ def get_imagenet_loaders(batch_size: int, train_ratio: int):
     # really slow: data loading takes ~1h, preprocessing takes ~1h, use only for final evaluation
     classes_imagenet = json.loads((classes_path / "imagenet_classes.json").read_text())
 
-    full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)
+    full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False, cache_dir=dataset_path)
     full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]
     train_size = int(train_ratio * len(full_dataset_imagenet))
     val_size = len(full_dataset_imagenet) - train_size
@@ -61,7 +61,7 @@ def get_imagenet_loaders(batch_size: int, train_ratio: int):
     trainloader_imagenet = DataLoader(train_dataset_imagenet, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=torch.cuda.is_available())
     valloader_imagenet = DataLoader(val_dataset_imagenet, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 
-    test_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="validation", streaming=False)
+    test_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="validation", streaming=False, cache_dir=dataset_path)
     test_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]
     testloader_imagenet = DataLoader(test_dataset_imagenet, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=torch.cuda.is_available())
 
