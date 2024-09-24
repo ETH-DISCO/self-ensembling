@@ -5,7 +5,6 @@ suitable for multi-gpu training but not hyperparameter optimization
 
 import itertools
 import json
-import os
 from pathlib import Path
 
 import pytorch_lightning as pl
