@@ -40,7 +40,7 @@ def train(config: dict):
 
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
-    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
+    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1) # use imagenet weights
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)  # dont compile: speedup is insignificant, will break on mps
 
