@@ -21,7 +21,7 @@ python3 -c "import torch; print(torch.__version__)"
 conda deactivate
 
 # dispatch job
-sbatch job.sh
+sbatch job.sh ./src/0_hyperparam_optim_v2.py
 
 # check results
 watch -n 1 "squeue | grep $USER"

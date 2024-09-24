@@ -27,7 +27,6 @@ class ResNetEnsemble(pl.LightningModule):
     def __init__(self, num_classes, lr, crossmax_k):
         super().__init__()
         self.net = custom_torchvision.resnet152_ensemble(num_classes=num_classes)
-        # pretrained weights
         # custom_torchvision.set_resnet_weights(self.net, models.ResNet152_Weights.IMAGENET1K_V1)
         # custom_torchvision.freeze_backbone(self.net)
         self.lr = lr
