@@ -1,5 +1,6 @@
 """
-suitable for multi-gpu training but not hyperparameter optimization (don't use this)
+suitable for multi-gpu training but not hyperparameter optimization
+(memory consumption will explode if ran in parallel)
 """
 
 import itertools
@@ -134,14 +135,9 @@ if __name__ == "__main__":
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")
 
-    world_size = torch.cuda.device_count()
-    rank = int(os.environ.get("LOCAL_RANK", 0))
-
     for i, combination in enumerate(combinations):
-        if i % world_size == rank:
-            if is_cached(combination):
-                print(f"skipping: {combination}")
-                continue
+        if is_cached(combination):
+            print(f"skipping: {combination}")
+            continue
 
-            print(f"training on GPU {rank}: {combination}")
-            train(config=combination)
+        train(config=combination)
