@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from tqdm import tqdm
 
 import custom_torchvision
-from dataloader import get_cifar10_loaders, get_cifar100_loaders
+from dataloader import get_imagenet_loaders
 from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
@@ -20,27 +20,23 @@ output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 #
 
 batch_size = 1024  # lower always better, but slower
-train_ratio = 0.8  # common default
-num_epochs = 250  # higher with early stopping is better, but slower (usually 200-300)
 early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
+train_val_ratio = 0.8  # common default
 
-cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio)
-cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_ratio)
+imagenet_classes, imagenet_trainloader, imagenet_valloader, imagenet_testloader = get_imagenet_loaders(batch_size, train_val_ratio)
 
 
 def train(config: dict):
-    if config["dataset"] == "cifar10":
-        classes = cifar10_classes
-        trainloader = cifar10_trainloader
-        valloader = cifar10_valloader
-    elif config["dataset"] == "cifar100":
-        classes = cifar100_classes
-        trainloader = cifar100_trainloader
-        valloader = cifar100_valloader
+    if config["dataset"] == "imagenet":
+        classes = imagenet_classes
+        trainloader = imagenet_trainloader
+        valloader = imagenet_valloader
+    else:
+        raise NotImplementedError
 
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
-    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1) # use imagenet weights
+    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)  # use imagenet weights
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)  # dont compile: speedup is insignificant, will break on mps
 
@@ -70,7 +66,7 @@ def train(config: dict):
     patience_counter = 0
     best_model_state = None
 
-    for epoch in range(num_epochs):
+    for epoch in range(config["num_epochs"]):
         # epoch train
         net.train()
         running_losses = [0.0] * ensemble_size
@@ -84,7 +80,7 @@ def train(config: dict):
 
             # print stats
             if batch_idx % (train_size // 3) == 0:
-                print(f"[epoch {epoch + 1}/{num_epochs}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                print(f"[epoch {epoch + 1}/{config["num_epochs"]}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
             free_mem()
 
@@ -99,7 +95,7 @@ def train(config: dict):
                 val_loss += loss.item()
 
         val_loss /= len(valloader)
-        print(f"epoch {epoch + 1}/{num_epochs}, validation Loss: {val_loss:.4f}")
+        print(f"epoch {epoch + 1}/{config["num_epochs"]}, validation Loss: {val_loss:.4f}")
 
         # early stopping check
         if val_loss < best_val_loss:
@@ -162,8 +158,9 @@ if __name__ == "__main__":
                 return True
 
     searchspace = {
-        "dataset": ["cifar10", "cifar100"],
+        "dataset": ["imagenet"],
         "lr": [1e-2, 1e-3, 1e-4],
+        "num_epochs": [2, 4, 8, 16],  # paper only used 1 epoch
         "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]

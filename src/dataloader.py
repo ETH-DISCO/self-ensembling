@@ -50,7 +50,7 @@ def get_cifar100_loaders(batch_size: int, train_ratio: int):
 
 
 def get_imagenet_loaders(batch_size: int, train_ratio: int):
-    # too slow, data loading takes ~1h, preprocessing takes ~1h, use only for final evaluation
+    # really slow: data loading takes ~1h, preprocessing takes ~1h, use only for final evaluation
     classes_imagenet = json.loads((classes_path / "imagenet_classes.json").read_text())
 
     full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False)

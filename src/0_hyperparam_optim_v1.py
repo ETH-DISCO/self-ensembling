@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
-import torchvision.models as models
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 import custom_torchvision
