@@ -7,6 +7,9 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
 #SBATCH --exclude=tikgpu[08-10]
+#CommentSBATCH --nodelist=tikgpu01 # example: specify a node
+#CommentSBATCH --account=tik-internal # example: charge a specific account
+#CommentSBATCH --constraint='titan_rtx|tesla_v100|titan_xp|a100_80gb' # example: specify a gpu
 
 set -o errexit # exit on error
 mkdir -p /itet-stor/${USER}/net_scratch/slurm
@@ -16,7 +19,7 @@ echo "in directory: $(pwd)"
 echo "starting on: $(date)"
 echo "SLURM_JOB_ID: ${SLURM_JOB_ID}"
 
-[[ -f /itet-stor/${USER}/net_scratch/conda/bin/conda ]] && eval "$(/itet-stor/${USER}/net_scratch/conda/bin/conda shell.bash hook)" # conda activate base
+eval "$(/itet-stor/$USER/net_scratch/conda/bin/conda shell.bash hook)" # conda activate base
 conda activate con
 
 filepath=$1
