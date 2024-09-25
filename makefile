@@ -18,7 +18,7 @@ init:
 
 .PHONY: lock # freeze and dump .venv
 lock:
-	$(PYTHON_PATH) -m pip freeze > requirements.in
+	./.venv/bin/python3 -m pip freeze > requirements.in
 	pip-compile requirements.in -o requirements.txt -vvv
 
 # --------------------------------------------------------------- docker
@@ -71,6 +71,7 @@ conda-reqs-to-yaml:
 
 .PHONY: conda-install # install conda from environment.yml file
 conda-install:
+	# can also be used in docker with continuumio/miniconda3 image
 	bash -c '\
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
 		conda env create --file environment.yml --solver=libmamba; \
@@ -79,7 +80,7 @@ conda-install:
 
 .PHONY: conda-clean # wipe conda environment
 conda-clean:
-	# conda clean --all
+	# conda clean --all # wipe everything
 	bash -c '\
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
 		conda remove --yes --name con --all; \

@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from tqdm import tqdm
 
 import custom_torchvision
-from dataloader import get_imagenet_loaders
+from dataloader import get_cifar10_loaders, get_cifar100_loaders
 from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
@@ -23,22 +23,25 @@ batch_size = 1024  # lower always better, but slower
 early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
 train_val_ratio = 0.8  # common default
 
-imagenet_classes, imagenet_trainloader, imagenet_valloader, imagenet_testloader = get_imagenet_loaders(batch_size, train_val_ratio)
+cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
+cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_val_ratio)
 
 
 def train(config: dict):
-    if config["dataset"] == "imagenet":
-        classes = imagenet_classes
-        trainloader = imagenet_trainloader
-        valloader = imagenet_valloader
-    else:
-        raise NotImplementedError
+    if config["dataset"] == "cifar10":
+        classes = cifar10_classes
+        trainloader = cifar10_trainloader
+        valloader = cifar10_valloader
+    elif config["dataset"] == "cifar100":
+        classes = cifar100_classes
+        trainloader = cifar100_trainloader
+        valloader = cifar100_valloader
 
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
-    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)  # use imagenet weights
+    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
     custom_torchvision.freeze_backbone(net)
-    net = net.to(device)  # dont compile: speedup is insignificant, will break on mps
+    net = net.to(device)  # dont compile: speedup is insignificant, won't run on mps arch
 
     #
     # train loop
@@ -158,8 +161,8 @@ if __name__ == "__main__":
                 return True
 
     searchspace = {
-        "dataset": ["imagenet"],
-        "lr": [1e-2, 1e-3, 1e-4],
+        "dataset": ["cifar10", "cifar100"],  # paper used pretrained imagenet weights with cifar10, cifar100
+        "lr": [1e-1, 1e-4, 1e-7],  # paper found 1.7e-5 to be most robust
         "num_epochs": [4, 8, 16],  # paper only used 1 epoch
         "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }

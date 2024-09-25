@@ -4,11 +4,11 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 import torchvision.datasets as datasets
+from datasets import load_dataset
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
 import custom_torchvision
-from datasets import load_dataset
 from utils import set_env
 
 set_env(seed=41)
