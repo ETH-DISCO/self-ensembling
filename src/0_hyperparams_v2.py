@@ -87,19 +87,6 @@ def train(config: dict):
                 running_losses = [0.0] * ensemble_size
             free_mem()
 
-        # epoch validation
-        net.eval()
-        val_loss = 0.0
-        with torch.no_grad(), torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))), torch.inference_mode():
-            for images, labels in valloader:
-                images, labels = images.to(device), labels.to(device)
-                outputs = net(images)
-                loss = sum(criterion(outputs[:, i, :], labels) for i in range(ensemble_size))
-                val_loss += loss.item()
-        val_loss /= len(valloader)
-        print(f"epoch {epoch + 1}/{config['num_epochs']}, validation loss: {val_loss:.4f}")
-        free_mem()
-
     #
     # validation loop
     #
