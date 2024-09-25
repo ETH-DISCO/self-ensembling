@@ -9,7 +9,6 @@ from pathlib import Path
 import pytorch_lightning as pl
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from torchvision import models
 
 import custom_torchvision
 from dataloader import CIFAR10DataModule, CIFAR100DataModule
@@ -26,9 +25,9 @@ train_ratio = 0.8  # common default
 class ResNetEnsemble(pl.LightningModule):
     def __init__(self, num_classes, lr, crossmax_k):
         super().__init__()
-        self.net = custom_torchvision.resnet152_ensemble(num_classes=num_classes)
-        custom_torchvision.set_resnet_weights(self.net, models.ResNet152_Weights.IMAGENET1K_V1)
-        custom_torchvision.freeze_backbone(self.net)
+        net = custom_torchvision.get_resnet152_ensemble(num_classes=num_classes)
+        custom_torchvision.set_imagenet_backbone(net)
+        custom_torchvision.freeze_backbone(net)
         self.lr = lr
         self.crossmax_k = crossmax_k
         self.criterion = torch.nn.CrossEntropyLoss()

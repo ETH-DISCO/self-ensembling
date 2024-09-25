@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 import torchvision.transforms.v2 as v2
 from torch import Tensor
+from torchvision import models
+
+from dataloader import weights_path
 
 """
 modified torchvision.models.resnet
@@ -448,12 +451,13 @@ class ResNet_conv_with_linear_probes(ResNet):
         return torch.stack(x_outputs, dim=1)
 
 
-def resnet152_ensemble(num_classes: int = 10) -> ResNet_conv_with_linear_probes:
-    # returns custom resnet152 model
+def get_resnet152_ensemble(num_classes: int = 10) -> ResNet_conv_with_linear_probes:
+    # returns the
     return ResNet_conv_with_linear_probes(Bottleneck, [3, 8, 36, 3], num_classes=num_classes)
 
 
-def set_resnet_weights(model: torch.nn.Module, weights: dict):
+def set_imagenet_backbone(model: torch.nn.Module):
+    weights = models.ResNet152_Weights.IMAGENET1K_V1.get_state_dict(progress=True, model_dir=weights_path)
     state_dict = weights.get_state_dict()
     for name, param in model.named_parameters():
         if "fc" not in name and name in state_dict:  # skip fully connected layers
