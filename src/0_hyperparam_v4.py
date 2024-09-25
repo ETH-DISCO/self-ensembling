@@ -1,7 +1,3 @@
-"""
-too memory consuming
-"""
-
 import itertools
 import json
 from pathlib import Path
@@ -17,10 +13,14 @@ from utils import set_env
 
 set_env(seed=41)
 
+#
+# config constants
+#
+
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 32  # lower always better, but slower
-train_ratio = 0.8  # common default
+batch_size = 1024  # lower always better, but slower
+train_val_ratio = 0.8  # common default
 
 
 class ResNetEnsemble(pl.LightningModule):
@@ -32,7 +32,9 @@ class ResNetEnsemble(pl.LightningModule):
         self.lr = lr
         self.crossmax_k = crossmax_k
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.validation_step_outputs = []  # for early stopping
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(self.parameters(), lr=self.lr)
 
     def forward(self, x):
         return self.net(x)
@@ -51,11 +53,9 @@ class ResNetEnsemble(pl.LightningModule):
         loss = sum(self.criterion(outputs[:, i, :], labels) for i in range(len(self.net.fc_layers)))
         predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.crossmax_k)
         self.log("val_loss", loss)
-        self.validation_step_outputs.append({"val_loss": loss, "preds": predictions, "targets": labels})
         return {"val_loss": loss, "preds": predictions, "targets": labels}
 
-    def on_validation_epoch_end(self):
-        outputs = self.validation_step_outputs
+    def validation_epoch_end(self, outputs):
         preds = torch.cat([x["preds"] for x in outputs])
         targets = torch.cat([x["targets"] for x in outputs])
         accuracy = accuracy_score(targets.cpu(), preds.cpu())
@@ -66,24 +66,19 @@ class ResNetEnsemble(pl.LightningModule):
         self.log("val_precision", precision)
         self.log("val_recall", recall)
         self.log("val_f1", f1)
-        self.validation_step_outputs.clear()  # clear the list after epoch
-
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)  # based on karpthy's blog
 
 
 def train(config: dict):
     if config["dataset"] == "cifar10":
-        datamodule = CIFAR10DataModule(batch_size, train_ratio)
+        datamodule = CIFAR10DataModule(batch_size, train_val_ratio)
     elif config["dataset"] == "cifar100":
-        datamodule = CIFAR100DataModule(batch_size, train_ratio)
+        datamodule = CIFAR100DataModule(batch_size, train_val_ratio)
     datamodule.setup()
 
     model = ResNetEnsemble(num_classes=len(datamodule.classes), lr=config["lr"], crossmax_k=config["crossmax_k"])
 
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
-        callbacks=[pl.callbacks.EarlyStopping(monitor="val_loss", patience=config["early_stopping_patience"])],
         accelerator="gpu",
         devices="auto",
         strategy="ddp",
@@ -108,9 +103,6 @@ if __name__ == "__main__":
     #
     # grid search
     #
-    # - https://github.com/weiaicunzai/pytorch-cifar100
-    # - https://www.researchgate.net/figure/Hyperparameters-with-optimal-values-for-ResNet-models-on-CIFAR-100-dataset_tbl1_351654208
-    #
     def is_cached(config: dict):
         if not output_path.exists():
             return False
@@ -124,18 +116,18 @@ if __name__ == "__main__":
                 return True
 
     searchspace = {
-        "dataset": ["cifar10", "cifar100"],
-        "lr": [1e-1, 1e-2, 1e-3],  # 0.1 seems to be the best for resnet152
-        "num_epochs": [2],  # higher with early stopping is better, but slower (usually 200-300) --> use 250
-        "crossmax_k": [2, 3],
-        "early_stopping_patience": [10],  # higher is better, but slower (usually 5-20)
+        "dataset": ["cifar10", "cifar100"],  # paper used pretrained imagenet weights with cifar10, cifar100
+        "lr": [1e-1, 1e-4, 1e-7],  # paper found 1.7e-5 to be most robust
+        "num_epochs": [4, 8, 16],  # paper only used 1 epoch
+        "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     print(f"searching {len(combinations)} combinations")
 
-    for i, combination in enumerate(combinations):
+    for combination in combinations:
         if is_cached(combination):
             print(f"skipping: {combination}")
             continue
 
+        print(f"training: {combination}")
         train(config=combination)

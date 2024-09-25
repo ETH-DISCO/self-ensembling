@@ -1,3 +1,7 @@
+"""
+improvement: no cutoff at epoch, instead train for all epochs
+"""
+
 import itertools
 import json
 from pathlib import Path
@@ -20,7 +24,6 @@ set_env(seed=41)
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
 batch_size = 1024  # lower always better, but slower
-early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)

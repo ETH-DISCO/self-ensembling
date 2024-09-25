@@ -1,5 +1,7 @@
 """
-early stopping is too memory consuming
+improvement: single gpu implementation
+
+too memory consuming
 """
 
 import itertools
