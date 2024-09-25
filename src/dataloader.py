@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 import torch
 import torchvision.datasets as datasets
 from torch.utils.data import DataLoader, random_split
+from torchvision import models
 from tqdm import tqdm
 
 import custom_torchvision
@@ -15,6 +16,11 @@ set_env(seed=41)
 
 classes_path = Path.cwd() / "data"
 dataset_path = Path.cwd() / "datasets"
+weights_path = Path.cwd() / "weights"
+
+"""
+datasets
+"""
 
 
 def get_cifar10_loaders(batch_size: int, train_ratio: int):
@@ -104,3 +110,13 @@ class CIFAR100DataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return self.test_loader
+
+
+"""
+weights
+"""
+
+
+def get_resnet152_imagenet_weights():
+    weights = models.ResNet152_Weights.IMAGENET1K_V1.get_state_dict(progress=True, model_dir=weights_path)
+    return weights
