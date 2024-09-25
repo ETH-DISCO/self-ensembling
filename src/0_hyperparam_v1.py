@@ -1,5 +1,5 @@
 """
-too memory consuming
+too memory consuming (even without early stopping)
 """
 
 import itertools

@@ -1,5 +1,5 @@
 """
-improvement: no cutoff at epoch, instead train for all epochs
+improvement: dropped early stopping
 """
 
 import itertools
