@@ -1,7 +1,3 @@
-"""
-early stopping is too memory consuming
-"""
-
 import itertools
 import json
 from pathlib import Path
@@ -23,7 +19,7 @@ set_env(seed=41)
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 512  # lower always better, but slower (1024 does not fit in gpu memory)
+batch_size = 1024  # lower always better, but slower
 early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
 train_val_ratio = 0.8  # common default
 
@@ -57,11 +53,6 @@ def train(config: dict):
     optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # safe bet
     ensemble_size = len(net.fc_layers)
     train_size = len(trainloader)
-
-    best_val_loss = float("inf")
-    patience_counter = 0
-    best_model_state = None
-    cutoff_num = config["num_epochs"]
 
     for epoch in range(config["num_epochs"]):
         # epoch train
@@ -106,25 +97,9 @@ def train(config: dict):
         print(f"epoch {epoch + 1}/{config['num_epochs']}, validation loss: {val_loss:.4f}")
         free_mem()
 
-        # early stopping check
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            patience_counter = 0
-            best_model_state = net.state_dict()
-        else:
-            patience_counter += 1
-        if patience_counter >= early_stopping_patience:
-            print(f"early stopping at epoch {epoch + 1}")
-            cutoff_num = epoch + 1
-            break
-        free_mem()
-
     #
     # validation loop
     #
-
-    if best_model_state is not None:
-        net.load_state_dict(best_model_state)
 
     y_true = []
     y_pred = []
@@ -141,7 +116,6 @@ def train(config: dict):
 
     results = {
         "config": config,
-        "cutoff": cutoff_num,
         "accuracy": accuracy_score(y_true, y_pred),
         "precision": precision_score(y_true, y_pred, average="weighted"),
         "recall": recall_score(y_true, y_pred, average="weighted"),
