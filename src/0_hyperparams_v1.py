@@ -15,6 +15,7 @@ from dataloader import CIFAR10DataModule, CIFAR100DataModule
 from utils import set_env
 
 set_env(seed=41)
+pl.seed_everything(seed=41)
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 

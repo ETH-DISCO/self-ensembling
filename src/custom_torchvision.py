@@ -456,8 +456,8 @@ def get_custom_resnet152(num_classes: int = 10) -> ResNet_conv_with_linear_probe
 
 
 def set_imagenet_backbone(model: torch.nn.Module):
-    weights = models.ResNet152_Weights.IMAGENET1K_V1.get_state_dict(progress=True, model_dir=weights_path)
-    state_dict = weights.get_state_dict()
+    weights = models.ResNet152_Weights.IMAGENET1K_V1
+    state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
     for name, param in model.named_parameters():
         if "fc" not in name and name in state_dict:  # skip fully connected layers
             param.data.copy_(state_dict[name])

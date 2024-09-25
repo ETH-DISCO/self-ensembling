@@ -43,7 +43,8 @@ def train(config: dict):
     net = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
     custom_torchvision.set_imagenet_backbone(net)
     custom_torchvision.freeze_backbone(net)
-    net = net.to(device)  # dont compile: speedup is insignificant, won't run on mps arch
+    net = net.to(device)
+    exit()
 
     #
     # train loop
