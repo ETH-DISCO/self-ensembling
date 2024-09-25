@@ -15,6 +15,7 @@ from dataloader import get_cifar10_loaders, get_cifar100_loaders
 from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
+free_mem()
 
 #
 # config constants
