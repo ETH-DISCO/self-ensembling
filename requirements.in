@@ -4,3 +4,4 @@ scikit_learn
 torch
 torchvision
 tqdm
+datasets
