@@ -19,7 +19,7 @@ set_env(seed=41)
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 1024  # lower always better, but slower
+batch_size = 512  # lower always better, but slower (1024 does not fit in gpu memory)
 early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
 train_val_ratio = 0.8  # common default
 
@@ -100,6 +100,7 @@ def train(config: dict):
                 val_loss += loss.item()
         val_loss /= len(valloader)
         print(f"epoch {epoch + 1}/{config['num_epochs']}, validation loss: {val_loss:.4f}")
+        free_mem()
 
         # early stopping check
         if val_loss < best_val_loss:
