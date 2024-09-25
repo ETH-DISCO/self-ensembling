@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from tqdm import tqdm
 
 import custom_torchvision
-from dataloader import get_cifar10_loaders, get_cifar100_loaders
+from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_imagenet_weights
 from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
@@ -42,7 +42,8 @@ def train(config: dict):
 
     device = get_device(disable_mps=False)
     net = custom_torchvision.resnet152_ensemble(num_classes=len(classes))
-    custom_torchvision.set_resnet_weights(net, models.ResNet152_Weights.IMAGENET1K_V1)
+    weights = get_resnet152_imagenet_weights()
+    custom_torchvision.set_resnet_weights(net, weights)
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)  # dont compile: speedup is insignificant, won't run on mps arch
 

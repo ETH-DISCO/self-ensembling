@@ -453,7 +453,7 @@ def resnet152_ensemble(num_classes: int = 10) -> ResNet_conv_with_linear_probes:
     return ResNet_conv_with_linear_probes(Bottleneck, [3, 8, 36, 3], num_classes=num_classes)
 
 
-def set_resnet_weights(model: torch.nn.Module, weights):
+def set_resnet_weights(model: torch.nn.Module, weights: dict):
     state_dict = weights.get_state_dict()
     for name, param in model.named_parameters():
         if "fc" not in name and name in state_dict:  # skip fully connected layers
