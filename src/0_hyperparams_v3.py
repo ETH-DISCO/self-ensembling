@@ -44,7 +44,6 @@ def train(config: dict):
     custom_torchvision.set_imagenet_backbone(net)
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)
-    exit()
 
     #
     # train loop
