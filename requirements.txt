@@ -6,45 +6,24 @@
 #
 aiohappyeyeballs==2.4.0
     # via aiohttp
-aiohttp==3.10.5
-    # via
-    #   datasets
-    #   fsspec
+aiohttp==3.10.6
+    # via fsspec
 aiosignal==1.3.1
     # via aiohttp
 attrs==24.2.0
     # via aiohttp
-certifi==2024.8.30
-    # via requests
-charset-normalizer==3.3.2
-    # via requests
-datasets==3.0.0
-    # via -r requirements.in
-dill==0.3.8
-    # via
-    #   datasets
-    #   multiprocess
 filelock==3.16.1
-    # via
-    #   datasets
-    #   huggingface-hub
-    #   torch
+    # via torch
 frozenlist==1.4.1
     # via
     #   aiohttp
     #   aiosignal
-fsspec[http]==2024.6.1
+fsspec[http]==2024.9.0
     # via
-    #   datasets
-    #   huggingface-hub
     #   pytorch-lightning
     #   torch
-huggingface-hub==0.25.0
-    # via datasets
 idna==3.10
-    # via
-    #   requests
-    #   yarl
+    # via yarl
 jinja2==3.1.4
     # via torch
 joblib==1.4.2
@@ -61,54 +40,30 @@ multidict==6.1.0
     # via
     #   aiohttp
     #   yarl
-multiprocess==0.70.16
-    # via datasets
 networkx==3.3
     # via torch
 numpy==2.1.1
     # via
     #   -r requirements.in
-    #   datasets
-    #   pandas
-    #   pyarrow
     #   scikit-learn
     #   scipy
     #   torchmetrics
     #   torchvision
 packaging==24.1
     # via
-    #   datasets
-    #   huggingface-hub
     #   lightning-utilities
     #   pytorch-lightning
     #   torchmetrics
-pandas==2.2.3
-    # via datasets
 pillow==10.4.0
     # via torchvision
-pyarrow==17.0.0
-    # via datasets
-python-dateutil==2.9.0.post0
-    # via pandas
 pytorch-lightning==2.4.0
     # via -r requirements.in
-pytz==2024.2
-    # via pandas
 pyyaml==6.0.2
-    # via
-    #   datasets
-    #   huggingface-hub
-    #   pytorch-lightning
-requests==2.32.3
-    # via
-    #   datasets
-    #   huggingface-hub
+    # via pytorch-lightning
 scikit-learn==1.5.2
     # via -r requirements.in
 scipy==1.14.1
     # via scikit-learn
-six==1.16.0
-    # via python-dateutil
 sympy==1.13.3
     # via torch
 threadpoolctl==3.5.0
@@ -126,22 +81,13 @@ torchvision==0.19.1
 tqdm==4.66.5
     # via
     #   -r requirements.in
-    #   datasets
-    #   huggingface-hub
     #   pytorch-lightning
 typing-extensions==4.12.2
     # via
-    #   huggingface-hub
     #   lightning-utilities
     #   pytorch-lightning
     #   torch
-tzdata==2024.1
-    # via pandas
-urllib3==2.2.3
-    # via requests
-xxhash==3.5.0
-    # via datasets
-yarl==1.11.1
+yarl==1.12.1
     # via aiohttp
 
 # The following packages are considered to be unsafe in a requirements file:

@@ -1,7 +1,7 @@
 # --------------------------------------------------------------- venv
 
-.PHONY: init # initialize .venv
-init:
+.PHONY: venv # initialize .venv
+venv:
 	pip install pip --upgrade
 	pip install pipreqs
 	rm -rf requirements.txt requirements.in
@@ -16,15 +16,15 @@ init:
 	./.venv/bin/python3 -m pip install -r requirements.txt
 	@echo "to activate venv, run: source .venv/bin/activate"
 
-.PHONY: lock # freeze and dump .venv
-lock:
+.PHONY: venv-lock # freeze and dump .venv
+venv-lock:
 	./.venv/bin/python3 -m pip freeze > requirements.in
 	pip-compile requirements.in -o requirements.txt -vvv
 
 # --------------------------------------------------------------- docker
 
-.PHONY: docker-install # run docker container
-docker-install:
+.PHONY: docker-up # run docker container
+docker-up:
 	docker-compose up --detach
 	@echo "to exec into docker container, run: docker exec -it main bash"
 
@@ -69,8 +69,8 @@ conda-reqs-to-yaml:
 		conda remove --yes --name con --all; \
 	'
 
-.PHONY: conda-install # install conda from environment.yml file
-conda-install:
+.PHONY: conda # install conda from environment.yml file
+conda:
 	# can also be used in docker with continuumio/miniconda3 image
 	bash -c '\
 		source $$(conda info --base)/etc/profile.d/conda.sh; conda activate base; \
@@ -111,8 +111,8 @@ monitor:
 	@echo "to tail monitor log, run: make monitor-tail"
 	@echo "to kill monitor, run: make monitor-kill"
 
-.PHONY: monitor-tail # tail log of nohup process
-monitor-tail:
+.PHONY: monitor-watch # tail log of nohup process
+monitor-watch:
 	while true; do clear; tail -n 100 monitor-process.log; sleep 0.1; done
 	# watch -n 0.1 "tail -n 100 monitor-process.log"
 
