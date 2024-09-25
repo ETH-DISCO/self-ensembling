@@ -9,7 +9,6 @@ import json
 from pathlib import Path
 
 import torch
-import torchvision.models as models
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
 
@@ -44,7 +43,7 @@ def train(config: dict):
         valloader = cifar100_valloader
 
     device = get_device(disable_mps=False)
-    net = custom_torchvision.get_resnet152_ensemble(num_classes=len(classes))
+    net = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
     custom_torchvision.set_imagenet_backbone(net)
     custom_torchvision.freeze_backbone(net)
     net = net.to(device)  # dont compile: speedup is insignificant, won't run on mps arch

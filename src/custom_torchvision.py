@@ -451,8 +451,7 @@ class ResNet_conv_with_linear_probes(ResNet):
         return torch.stack(x_outputs, dim=1)
 
 
-def get_resnet152_ensemble(num_classes: int = 10) -> ResNet_conv_with_linear_probes:
-    # returns the
+def get_custom_resnet152(num_classes: int = 10) -> ResNet_conv_with_linear_probes:
     return ResNet_conv_with_linear_probes(Bottleneck, [3, 8, 36, 3], num_classes=num_classes)
 
 

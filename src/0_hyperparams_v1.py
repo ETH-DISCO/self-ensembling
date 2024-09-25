@@ -25,7 +25,7 @@ train_ratio = 0.8  # common default
 class ResNetEnsemble(pl.LightningModule):
     def __init__(self, num_classes, lr, crossmax_k):
         super().__init__()
-        net = custom_torchvision.get_resnet152_ensemble(num_classes=num_classes)
+        net = custom_torchvision.get_custom_resnet152(num_classes=num_classes)
         custom_torchvision.set_imagenet_backbone(net)
         custom_torchvision.freeze_backbone(net)
         self.lr = lr
