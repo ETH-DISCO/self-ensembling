@@ -1,7 +1,5 @@
 """
-improvement: single gpu implementation
-
-too memory consuming
+improvement: single gpu implementation without early stopping
 """
 
 import itertools
@@ -17,6 +15,7 @@ from dataloader import get_cifar10_loaders, get_cifar100_loaders
 from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
+free_mem()
 
 #
 # config constants
@@ -24,8 +23,7 @@ set_env(seed=41)
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 512  # lower always better, but slower (1024 does not fit in gpu memory)
-early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
+batch_size = 32  # lower vals increase perf (128 barely fits in gpu memory)
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
@@ -46,7 +44,7 @@ def train(config: dict):
     net = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
     custom_torchvision.set_imagenet_backbone(net)
     custom_torchvision.freeze_backbone(net)
-    net = net.to(device)  # dont compile: speedup is insignificant, won't run on mps arch
+    net = net.to(device)
 
     #
     # train loop
@@ -58,11 +56,6 @@ def train(config: dict):
     optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # safe bet
     ensemble_size = len(net.fc_layers)
     train_size = len(trainloader)
-
-    best_val_loss = float("inf")
-    patience_counter = 0
-    best_model_state = None
-    cutoff_num = config["num_epochs"]
 
     for epoch in range(config["num_epochs"]):
         # epoch train
@@ -97,7 +90,7 @@ def train(config: dict):
         # epoch validation
         net.eval()
         val_loss = 0.0
-        with torch.no_grad(), torch.amp.autocast(device_type=device, enabled=("cuda" in str(device))), torch.inference_mode():
+        with torch.no_grad(), torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))), torch.inference_mode():
             for images, labels in valloader:
                 images, labels = images.to(device), labels.to(device)
                 outputs = net(images)
@@ -107,31 +100,15 @@ def train(config: dict):
         print(f"epoch {epoch + 1}/{config['num_epochs']}, validation loss: {val_loss:.4f}")
         free_mem()
 
-        # early stopping check
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            patience_counter = 0
-            best_model_state = net.state_dict()
-        else:
-            patience_counter += 1
-        if patience_counter >= early_stopping_patience:
-            print(f"early stopping at epoch {epoch + 1}")
-            cutoff_num = epoch + 1
-            break
-        free_mem()
-
     #
     # validation loop
     #
-
-    if best_model_state is not None:
-        net.load_state_dict(best_model_state)
 
     y_true = []
     y_pred = []
 
     net.eval()
-    with torch.no_grad(), torch.amp.autocast(device_type=device, enabled=("cuda" in str(device))), torch.inference_mode():
+    with torch.no_grad(), torch.inference_mode(), torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))):
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
             outputs = net(images)
@@ -142,7 +119,6 @@ def train(config: dict):
 
     results = {
         "config": config,
-        "cutoff": cutoff_num,
         "accuracy": accuracy_score(y_true, y_pred),
         "precision": precision_score(y_true, y_pred, average="weighted"),
         "recall": recall_score(y_true, y_pred, average="weighted"),
