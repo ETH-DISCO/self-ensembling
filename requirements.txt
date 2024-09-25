@@ -26,6 +26,7 @@ dill==0.3.7
     #   multiprocess
 filelock==3.16.1
     # via
+    #   -r requirements.in
     #   huggingface-hub
     #   torch
 frozenlist==1.4.1
