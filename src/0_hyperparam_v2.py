@@ -13,11 +13,11 @@ from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
 
-output_path = Path.cwd() / "data" / "hyperparams.jsonl"
-
 #
 # config constants
 #
+
+output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
 batch_size = 1024  # lower always better, but slower
 early_stopping_patience = 10  # higher is better, but slower (usually 5-20)
@@ -54,20 +54,10 @@ def train(config: dict):
     ensemble_size = len(net.fc_layers)
     train_size = len(trainloader)
 
-    def training_step(outputs, labels):
-        losses = []
-        for i in range(ensemble_size):
-            loss = criterion(outputs[:, i, :], labels)
-            losses.append(loss)
-            running_losses[i] += loss.item()
-        total_loss = sum(losses)
-        total_loss.backward()
-        optimizer.step()
-        return losses
-
     best_val_loss = float("inf")
     patience_counter = 0
     best_model_state = None
+    cutoff_num = config["num_epochs"]
 
     for epoch in range(config["num_epochs"]):
         # epoch train
@@ -75,13 +65,25 @@ def train(config: dict):
         running_losses = [0.0] * ensemble_size
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
+
             optimizer.zero_grad()
             outputs = net(inputs)
+
+            def training_step(outputs, labels):
+                losses = []
+                for i in range(ensemble_size):
+                    loss = criterion(outputs[:, i, :], labels)
+                    losses.append(loss)
+                    running_losses[i] += loss.item()
+                total_loss = sum(losses)
+                total_loss.backward()
+                optimizer.step()
+                return losses
+
             losses = training_step(outputs=outputs, labels=labels)
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()
 
-            # print stats
             if batch_idx % (train_size // 3) == 0:
                 print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
@@ -96,9 +98,8 @@ def train(config: dict):
                 outputs = net(images)
                 loss = sum(criterion(outputs[:, i, :], labels) for i in range(ensemble_size))
                 val_loss += loss.item()
-
         val_loss /= len(valloader)
-        print(f"epoch {epoch + 1}/{config['num_epochs']}, validation Loss: {val_loss:.4f}")
+        print(f"epoch {epoch + 1}/{config['num_epochs']}, validation loss: {val_loss:.4f}")
 
         # early stopping check
         if val_loss < best_val_loss:
@@ -108,7 +109,8 @@ def train(config: dict):
         else:
             patience_counter += 1
         if patience_counter >= early_stopping_patience:
-            print(f"early stopping triggered after {epoch + 1} epochs")
+            print(f"early stopping at epoch {epoch + 1}")
+            cutoff_num = epoch + 1
             break
         free_mem()
 
@@ -134,6 +136,7 @@ def train(config: dict):
 
     results = {
         "config": config,
+        "cutoff": cutoff_num,
         "accuracy": accuracy_score(y_true, y_pred),
         "precision": precision_score(y_true, y_pred, average="weighted"),
         "recall": recall_score(y_true, y_pred, average="weighted"),
