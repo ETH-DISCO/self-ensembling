@@ -108,8 +108,6 @@ monitor:
 		echo $$! > "monitor.pid"; \
 		echo "$$(date): monitor started" >> "monitor.log"; \
 	'
-	@echo "to tail monitor log, run: make monitor-tail"
-	@echo "to kill monitor, run: make monitor-kill"
 
 .PHONY: monitor-watch # tail log of nohup process
 monitor-watch:
