@@ -23,7 +23,7 @@ free_mem()
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 256  # lower always better, but slower
+batch_size = 256  # lower always better, but slower (anything larger won't fit into memory)
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
