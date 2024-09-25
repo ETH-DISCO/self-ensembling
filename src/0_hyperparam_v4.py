@@ -32,6 +32,7 @@ class ResNetEnsemble(pl.LightningModule):
         self.lr = lr
         self.crossmax_k = crossmax_k
         self.criterion = torch.nn.CrossEntropyLoss()
+        self.validation_step_outputs = []
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
@@ -53,9 +54,11 @@ class ResNetEnsemble(pl.LightningModule):
         loss = sum(self.criterion(outputs[:, i, :], labels) for i in range(len(self.net.fc_layers)))
         predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.crossmax_k)
         self.log("val_loss", loss)
+        self.validation_step_outputs.append({"val_loss": loss, "preds": predictions, "targets": labels})
         return {"val_loss": loss, "preds": predictions, "targets": labels}
 
-    def validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
+        outputs = self.validation_step_outputs
         preds = torch.cat([x["preds"] for x in outputs])
         targets = torch.cat([x["targets"] for x in outputs])
         accuracy = accuracy_score(targets.cpu(), preds.cpu())
@@ -66,6 +69,7 @@ class ResNetEnsemble(pl.LightningModule):
         self.log("val_precision", precision)
         self.log("val_recall", recall)
         self.log("val_f1", f1)
+        self.validation_step_outputs.clear()  # clear the list after processing
 
 
 def train(config: dict):
@@ -79,10 +83,9 @@ def train(config: dict):
 
     trainer = pl.Trainer(
         max_epochs=config["num_epochs"],
-        accelerator="gpu",
+        accelerator="auto",
         devices="auto",
-        strategy="ddp",
-        logger=False,
+        # logger=False,
     )
     print(f"number of gpus being used: {trainer.num_devices}")
     trainer.fit(model, datamodule=datamodule)
