@@ -2,3 +2,4 @@
 {"config": {"dataset": "cifar10", "lr": 0.1, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.8546, "precision": 0.8573104489349216, "recall": 0.8546, "f1_score": 0.8546433925131365}
 {"config": {"dataset": "cifar10", "lr": 0.1, "num_epochs": 8, "crossmax_k": 2}, "accuracy": 0.8527, "precision": 0.8599223332237443, "recall": 0.8527, "f1_score": 0.8534217100160948}
 {"config": {"dataset": "cifar10", "lr": 0.1, "num_epochs": 8, "crossmax_k": 3}, "accuracy": 0.853, "precision": 0.8558170648396317, "recall": 0.853, "f1_score": 0.8531090571005374}
+{"config": {"dataset": "cifar10", "lr": 0.1, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.8254, "precision": 0.8312918670454162, "recall": 0.8254, "f1_score": 0.8261520325138588}
