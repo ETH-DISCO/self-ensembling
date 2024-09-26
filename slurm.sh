@@ -26,5 +26,5 @@ sbatch job.sh $FILEPATH
 
 # check status
 watch -n 0.5 "squeue | grep $USER"
-ls -v /scratch/$USER/slurm/*.out 2>/dev/null | tail -n 1 | xargs -r cat
-ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 1 | xargs -r cat
+tail -f $(ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/*.out 2>/dev/null | tail -n 300)
