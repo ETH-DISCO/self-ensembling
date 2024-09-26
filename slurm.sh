@@ -10,7 +10,7 @@ FILEPATH="./src/0_hyperparams_v2.py"
 eval "$(/itet-stor/$USER/net_scratch/conda/bin/conda shell.bash hook)" # conda activate base
 conda info --envs
 if conda env list | grep -q "^con "; then
-    read -p "the 'con' environment already exists. do you want to remove and recreate it? (y/n): " answer
+    read -p "the 'con' environment already exists. recreate? (y/n): " answer
     if [[ $answer =~ ^[Yy]$ ]]; then
         conda remove --yes --name con --all
         rm -rf /itet-stor/$USER/net_scratch/conda_envs/con && conda remove --yes --name con --all || true
@@ -25,5 +25,6 @@ sed -i 's/{{NODE}}/'tikgpu07'/g' job.sh # template node
 sbatch job.sh $FILEPATH
 
 # check status
-watch -n 1 "squeue | grep $USER"
-ls -v cd /scratch/$USER/slurm/* | tail -n 1 | xargs cat
+watch -n 0.5 "squeue | grep $USER"
+ls -v /scratch/$USER/slurm/*.out 2>/dev/null | tail -n 1 | xargs -r cat
+ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 1 | xargs -r cat
