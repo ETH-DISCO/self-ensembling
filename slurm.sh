@@ -11,14 +11,12 @@ alias ll="ls -alF"
 # clone and run script
 #
 
-# rm -rf .cd /scratch/$USER/* # start from scratch
-
 cd /scratch/$USER
-rm -rf /scratch/$USER/self-ensembling
-git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
-FILEPATH="./src/0_hyperparams_v2.py"
+rm -rf ./*
+git clone https://github.com/ETH-DISCO/cluster-tutorial/ && cd cluster-tutorial
+FILEPATH="./mnist.py"
 
-# ------------------- dispatch job
+# ----- dispatch job
 
 # create environment.yml
 eval "$(/itet-stor/$USER/net_scratch/conda/bin/conda shell.bash hook)" # conda activate base
