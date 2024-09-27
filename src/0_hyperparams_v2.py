@@ -63,7 +63,7 @@ def train(config: dict):
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
-            with torch.amp.autocast(device_type='cuda' if torch.cuda.is_available() else 'cpu', enabled=True):
+            with torch.amp.autocast(device_type="cuda" if torch.cuda.is_available() else "cpu", enabled=True):
                 outputs = model(inputs)
                 losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
                 total_loss = sum(losses)
@@ -85,8 +85,6 @@ def train(config: dict):
             free_mem()
 
         free_mem()
-
-
 
 
 def train(config: dict):
