@@ -26,6 +26,7 @@ assert torch.cuda.is_available(), "cuda is not available"
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
 batch_size = 16  # lower vals increase perf (128 barely fits in gpu memory)
+gradient_accumulation_steps = 4  # lower vals increase perf
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
@@ -53,11 +54,11 @@ def train(config: dict):
     # train loop
     #
 
-    scaler = GradScaler(device="cuda", enabled=True)
     criterion = torch.nn.CrossEntropyLoss().to(device)
     if torch.cuda.is_available():
         criterion = criterion.cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])  # safe bet (but adam-w is better)
+    scaler = GradScaler(device=device, enabled=True)
     ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)
 
@@ -65,23 +66,22 @@ def train(config: dict):
         # epoch train
         model.train()
         running_losses = [0.0] * ensemble_size
+
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
-            optimizer.zero_grad()
-            with torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))):
+            with torch.amp.autocast(device_type=device.type, enabled=True):
                 outputs = model(inputs)
-
-            def training_step(outputs, labels):
                 losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
                 total_loss = sum(losses)
-                scaler.scale(total_loss).backward()
+
+            scaler.scale(total_loss).backward()
+
+            if (batch_idx + 1) % gradient_accumulation_steps == 0:
                 scaler.step(optimizer)
                 scaler.update()
                 optimizer.zero_grad()
-                return losses
 
-            losses = training_step(outputs=outputs, labels=labels)
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()
 
