@@ -25,7 +25,7 @@ assert torch.cuda.is_available(), "cuda is not available"
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 16  # lower vals increase perf (128 barely fits in gpu memory)
+batch_size = 32  # lower vals increase perf (128 barely fits in gpu memory)
 gradient_accumulation_steps = 4  # lower vals increase perf
 train_val_ratio = 0.8  # common default
 
