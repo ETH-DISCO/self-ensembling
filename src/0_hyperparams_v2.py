@@ -13,11 +13,12 @@ from tqdm import tqdm
 
 import custom_torchvision
 from dataloader import get_cifar10_loaders, get_cifar100_loaders
-from utils import free_mem, set_env
+from utils import free_mem, print_gpu_memory, set_env
 
 set_env(seed=41)
 free_mem()
 assert torch.cuda.is_available(), "cuda is not available"
+print_gpu_memory()
 
 #
 # config constants
@@ -26,7 +27,7 @@ assert torch.cuda.is_available(), "cuda is not available"
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
 batch_size = 8  # lower vals increase perf (128 barely fits in gpu memory)
-gradient_accumulation_steps = 8  # higher vals increase perf
+gradient_accumulation_steps = 16  # higher vals increase perf
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
@@ -74,6 +75,8 @@ def train(config: dict):
                 losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
                 total_loss = sum(losses)
 
+            free_mem()
+
             scaler.scale(total_loss).backward()
 
             free_mem()
@@ -95,8 +98,10 @@ def train(config: dict):
                 running_losses = [0.0] * ensemble_size
 
             free_mem()
+            print_gpu_memory()
 
         free_mem()
+        print_gpu_memory()
 
     #
     # validation loop

@@ -45,6 +45,12 @@ def free_mem() -> None:
         torch.cuda.reset_accumulated_memory_stats()
 
 
+def print_gpu_memory() -> None:
+    if torch.cuda.is_available():
+        print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+        print(f"GPU memory cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
+
+
 def timeit(func) -> callable:
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
