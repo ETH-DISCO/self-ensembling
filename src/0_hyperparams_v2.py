@@ -73,19 +73,12 @@ def train(config: dict):
                 outputs = model(inputs)
 
             def training_step(outputs, labels):
-                losses = []
-                for i in range(ensemble_size):
-                    loss = criterion(outputs[:, i, :], labels)
-                    losses.append(loss)
-                    running_losses[i] += loss.item()
-
-                    scaler.scale(loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-                    optimizer.zero_grad()
+                losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
                 total_loss = sum(losses)
-                total_loss.backward()
-                optimizer.step()
+                scaler.scale(total_loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
                 return losses
 
             losses = training_step(outputs=outputs, labels=labels)
