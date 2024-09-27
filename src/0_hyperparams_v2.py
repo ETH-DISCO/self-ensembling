@@ -1,5 +1,5 @@
 """
-improvement: single gpu implementation, without early stopping
+improvement: single gpu implementation, without early stopping, lots of memory usage optimizations
 """
 
 import itertools
