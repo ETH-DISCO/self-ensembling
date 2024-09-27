@@ -58,7 +58,7 @@ def train(config: dict):
     if torch.cuda.is_available():
         criterion = criterion.cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])  # safe bet (but adam-w is better)
-    scaler = GradScaler(device=device, enabled=True)
+    scaler = GradScaler(device="cuda", enabled=True)
     ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)
 
