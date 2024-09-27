@@ -85,7 +85,10 @@ def train(config: dict):
             if batch_idx % (train_size // 3) == 0:
                 print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses = [0.0] * ensemble_size
+
             free_mem()
+        
+        free_mem()
 
     #
     # validation loop
