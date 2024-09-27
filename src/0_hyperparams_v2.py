@@ -1,5 +1,5 @@
 """
-improvement: single gpu implementation without early stopping
+improvement: single gpu implementation, without early stopping
 """
 
 import itertools
@@ -8,6 +8,7 @@ from pathlib import Path
 
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from torch.cuda.amp import GradScaler
 from tqdm import tqdm
 
 import custom_torchvision
@@ -23,7 +24,7 @@ free_mem()
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 32  # lower vals increase perf (128 barely fits in gpu memory)
+batch_size = 16  # lower vals increase perf (128 barely fits in gpu memory)
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
@@ -40,32 +41,35 @@ def train(config: dict):
         trainloader = cifar100_trainloader
         valloader = cifar100_valloader
 
-    device = get_device(disable_mps=False)
-    net = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
-    custom_torchvision.set_imagenet_backbone(net)
-    custom_torchvision.freeze_backbone(net)
-    net = net.to(device)
+    device = get_device(disable_mps=True)
+    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
+    custom_torchvision.set_imagenet_backbone(model)
+    custom_torchvision.freeze_backbone(model)
+    model = model.to(device)
+    model = torch.compile(model, mode="reduce-overhead")
 
     #
     # train loop
     #
 
+    scaler = GradScaler(device_type=(device if "cuda" in str(device) else "cpu"), enabled=True)
     criterion = torch.nn.CrossEntropyLoss().to(device)
     if torch.cuda.is_available():
         criterion = criterion.cuda()
-    optimizer = torch.optim.Adam(net.parameters(), lr=config["lr"])  # safe bet
-    ensemble_size = len(net.fc_layers)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])  # safe bet (but adam-w is better)
+    ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)
 
     for epoch in range(config["num_epochs"]):
         # epoch train
-        net.train()
+        model.train()
         running_losses = [0.0] * ensemble_size
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
             optimizer.zero_grad()
-            outputs = net(inputs)
+            with torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))):
+                outputs = model(inputs)
 
             def training_step(outputs, labels):
                 losses = []
@@ -73,6 +77,11 @@ def train(config: dict):
                     loss = criterion(outputs[:, i, :], labels)
                     losses.append(loss)
                     running_losses[i] += loss.item()
+
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
+                    optimizer.zero_grad()
                 total_loss = sum(losses)
                 total_loss.backward()
                 optimizer.step()
@@ -87,7 +96,7 @@ def train(config: dict):
                 running_losses = [0.0] * ensemble_size
 
             free_mem()
-        
+
         free_mem()
 
     #
@@ -97,11 +106,11 @@ def train(config: dict):
     y_true = []
     y_pred = []
 
-    net.eval()
+    model.eval()
     with torch.no_grad(), torch.inference_mode(), torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))):
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
-            outputs = net(images)
+            outputs = model(images)
             predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
@@ -117,6 +126,23 @@ def train(config: dict):
     print(f"validation accuracy: {results['accuracy']:.3f}")
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
+
+    #
+    # saving
+    #
+
+    # Saving
+    # torch.save({
+    #     'model': model.state_dict(),
+    #     'optimizer': optimizer.state_dict(),
+    #     'scaler': scaler.state_dict(),
+    # }, 'checkpoint.pth')
+
+    # Loading
+    # checkpoint = torch.load('checkpoint.pth')
+    # model.load_state_dict(checkpoint['model'])
+    # optimizer.load_state_dict(checkpoint['optimizer'])
+    # scaler.load_state_dict(checkpoint['scaler'])
 
 
 if __name__ == "__main__":
