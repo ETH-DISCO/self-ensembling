@@ -11,6 +11,8 @@ alias ll="ls -alF"
 # clone and run script
 #
 
+# rm -rf .cd /scratch/$USER/* # start from scratch
+
 cd /scratch/$USER
 rm -rf /scratch/$USER/self-ensembling
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
