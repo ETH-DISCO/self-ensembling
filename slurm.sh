@@ -7,7 +7,6 @@ alias ll="ls -alF"
 #
 
 rm -rf .cd /scratch/$USER/* # start from scratch
-cd /scratch/$USER
 
 cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
