@@ -6,3 +6,4 @@ torchvision
 tqdm
 datasets
 filelock
+pynvml

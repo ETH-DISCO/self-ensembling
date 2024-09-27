@@ -88,6 +88,8 @@ pillow==10.4.0
     # via torchvision
 pyarrow==17.0.0
     # via datasets
+pynvml==11.5.3
+    # via -r requirements.in
 python-dateutil==2.9.0.post0
     # via pandas
 pytorch-lightning==2.4.0

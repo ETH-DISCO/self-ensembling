@@ -43,6 +43,7 @@ dependencies:
       - pandas==2.2.3
       - pillow==10.4.0
       - pyarrow==17.0.0
+      - pynvml==11.5.3
       - python-dateutil==2.9.0.post0
       - pytorch-lightning==2.4.0
       - pytz==2024.2
