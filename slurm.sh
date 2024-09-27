@@ -1,16 +1,15 @@
-grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
-
 srun --mem=150GB --gres=gpu:01 --nodelist tikgpu07 --pty bash -i
 
 alias ll="ls -alF"
 
 #
-# clone and choose script
+# clone and run script
 #
 
+rm -rf .cd /scratch/$USER/* # start from scratch
 cd /scratch/$USER
 
-rm -rf ./*
+cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
 FILEPATH="./src/0_hyperparams_v2.py"
 

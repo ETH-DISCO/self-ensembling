@@ -8,7 +8,7 @@ from pathlib import Path
 
 import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from torch.cuda.amp import GradScaler
+from torch.amp import GradScaler
 from tqdm import tqdm
 
 import custom_torchvision
@@ -17,6 +17,7 @@ from utils import free_mem, get_device, set_env
 
 set_env(seed=41)
 free_mem()
+assert torch.cuda.is_available(), "cuda is not available"
 
 #
 # config constants
@@ -52,7 +53,7 @@ def train(config: dict):
     # train loop
     #
 
-    scaler = GradScaler(device_type=(device if "cuda" in str(device) else "cpu"), enabled=True)
+    scaler = GradScaler(device="cuda", enabled=True)
     criterion = torch.nn.CrossEntropyLoss().to(device)
     if torch.cuda.is_available():
         criterion = criterion.cuda()
