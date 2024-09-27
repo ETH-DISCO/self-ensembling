@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 import custom_torchvision
 from dataloader import get_cifar10_loaders, get_cifar100_loaders
-from utils import free_mem, get_device, set_env
+from utils import free_mem, set_env
 
 set_env(seed=41)
 free_mem()
@@ -43,7 +43,63 @@ def train(config: dict):
         trainloader = cifar100_trainloader
         valloader = cifar100_valloader
 
-    device = get_device(disable_mps=True)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
+    custom_torchvision.set_imagenet_backbone(model)
+    custom_torchvision.freeze_backbone(model)
+    model = model.to(device)
+    model = torch.compile(model, mode="reduce-overhead")
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
+    scaler = GradScaler(enabled=torch.cuda.is_available())
+    ensemble_size = len(model.fc_layers)
+    train_size = len(trainloader)
+
+    for epoch in range(config["num_epochs"]):
+        model.train()
+        running_losses = [0.0] * ensemble_size
+
+        for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            with torch.amp.autocast(device_type='cuda' if torch.cuda.is_available() else 'cpu', enabled=True):
+                outputs = model(inputs)
+                losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
+                total_loss = sum(losses)
+
+            scaler.scale(total_loss).backward()
+
+            if (batch_idx + 1) % gradient_accumulation_steps == 0:
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
+
+            for i in range(ensemble_size):
+                running_losses[i] += losses[i].item()
+
+            if batch_idx % (train_size // 3) == 0:
+                print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
+                running_losses = [0.0] * ensemble_size
+
+            free_mem()
+
+        free_mem()
+
+
+
+
+def train(config: dict):
+    if config["dataset"] == "cifar10":
+        classes = cifar10_classes
+        trainloader = cifar10_trainloader
+        valloader = cifar10_valloader
+    elif config["dataset"] == "cifar100":
+        classes = cifar100_classes
+        trainloader = cifar100_trainloader
+        valloader = cifar100_valloader
+
+    device = torch.device("cuda")
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
     custom_torchvision.set_imagenet_backbone(model)
     custom_torchvision.freeze_backbone(model)
@@ -55,22 +111,19 @@ def train(config: dict):
     #
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    if torch.cuda.is_available():
-        criterion = criterion.cuda()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])  # safe bet (but adam-w is better)
     scaler = GradScaler(device="cuda", enabled=True)
     ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)
 
     for epoch in range(config["num_epochs"]):
-        # epoch train
         model.train()
         running_losses = [0.0] * ensemble_size
 
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
-            with torch.amp.autocast(device_type=device.type, enabled=True):
+            with torch.amp.autocast(device_type="cuda", enabled=True):
                 outputs = model(inputs)
                 losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
                 total_loss = sum(losses)
@@ -101,7 +154,7 @@ def train(config: dict):
     y_pred = []
 
     model.eval()
-    with torch.no_grad(), torch.inference_mode(), torch.amp.autocast(device_type=(device if "cuda" in str(device) else "cpu"), enabled=("cuda" in str(device))):
+    with torch.no_grad(), torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
