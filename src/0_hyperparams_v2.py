@@ -25,66 +25,12 @@ assert torch.cuda.is_available(), "cuda is not available"
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 32  # lower vals increase perf (128 barely fits in gpu memory)
-gradient_accumulation_steps = 4  # higher vals increase perf
+batch_size = 8  # lower vals increase perf (128 barely fits in gpu memory)
+gradient_accumulation_steps = 8  # higher vals increase perf
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
 cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_val_ratio)
-
-
-def train(config: dict):
-    if config["dataset"] == "cifar10":
-        classes = cifar10_classes
-        trainloader = cifar10_trainloader
-        valloader = cifar10_valloader
-    elif config["dataset"] == "cifar100":
-        classes = cifar100_classes
-        trainloader = cifar100_trainloader
-        valloader = cifar100_valloader
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
-    custom_torchvision.set_imagenet_backbone(model)
-    custom_torchvision.freeze_backbone(model)
-    model = model.to(device)
-    model = torch.compile(model, mode="reduce-overhead")
-
-    criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
-    scaler = GradScaler(enabled=torch.cuda.is_available())
-    ensemble_size = len(model.fc_layers)
-    train_size = len(trainloader)
-
-    for epoch in range(config["num_epochs"]):
-        model.train()
-        running_losses = [0.0] * ensemble_size
-
-        for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
-            inputs, labels = inputs.to(device), labels.to(device)
-
-            with torch.amp.autocast(device_type="cuda" if torch.cuda.is_available() else "cpu", enabled=True):
-                outputs = model(inputs)
-                losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
-                total_loss = sum(losses)
-
-            scaler.scale(total_loss).backward()
-
-            if (batch_idx + 1) % gradient_accumulation_steps == 0:
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad()
-
-            for i in range(ensemble_size):
-                running_losses[i] += losses[i].item()
-
-            if batch_idx % (train_size // 3) == 0:
-                print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
-                running_losses = [0.0] * ensemble_size
-
-            free_mem()
-
-        free_mem()
 
 
 def train(config: dict):
@@ -121,6 +67,8 @@ def train(config: dict):
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
+            free_mem()
+
             with torch.amp.autocast(device_type="cuda", enabled=True):
                 outputs = model(inputs)
                 losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
@@ -128,13 +76,19 @@ def train(config: dict):
 
             scaler.scale(total_loss).backward()
 
+            free_mem()
+
             if (batch_idx + 1) % gradient_accumulation_steps == 0:
                 scaler.step(optimizer)
                 scaler.update()
                 optimizer.zero_grad()
 
+            free_mem()
+
             for i in range(ensemble_size):
                 running_losses[i] += losses[i].item()
+
+            free_mem()
 
             if batch_idx % (train_size // 3) == 0:
                 print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")

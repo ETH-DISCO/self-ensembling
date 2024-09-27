@@ -45,7 +45,7 @@ def free_mem() -> None:
         torch.cuda.reset_accumulated_memory_stats()
 
 
-def timeit(func):
+def timeit(func) -> callable:
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         start = time.time()
