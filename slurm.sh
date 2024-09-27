@@ -1,3 +1,13 @@
+grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
+
+srun --mem=150GB --gres=gpu:01 --nodelist tikgpu07 --pty bash -i
+
+alias ll="ls -alF"
+
+#
+# clone and choose script
+#
+
 cd /scratch/$USER
 
 rm -rf ./*
