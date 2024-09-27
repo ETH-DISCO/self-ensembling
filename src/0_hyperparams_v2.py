@@ -26,7 +26,7 @@ assert torch.cuda.is_available(), "cuda is not available"
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
 batch_size = 32  # lower vals increase perf (128 barely fits in gpu memory)
-gradient_accumulation_steps = 4  # lower vals increase perf
+gradient_accumulation_steps = 4  # higher vals increase perf
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
