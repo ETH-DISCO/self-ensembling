@@ -101,15 +101,15 @@ def train(config: dict):
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
     custom_torchvision.set_imagenet_backbone(model)
     custom_torchvision.freeze_backbone(model)
-    model = model.to(device)
     model = torch.compile(model, mode="reduce-overhead")
+    model = model.to(device)
 
     #
     # train loop
     #
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])  # safe bet (but adam-w is better)
+    optimizer = torch.optim.adamw(model.parameters(), lr=config["lr"])  # safe bet
     scaler = GradScaler(device="cuda", enabled=True)
     ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)
