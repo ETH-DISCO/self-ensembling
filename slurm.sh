@@ -1,14 +1,18 @@
+# check node availability
+grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
+
+# attach to a node (assuming it's free)
 srun --mem=150GB --gres=gpu:01 --nodelist tikgpu07 --pty bash -i
 
+# convenience
 alias ll="ls -alF"
 
 #
 # clone and run script
 #
 
-rm -rf .cd /scratch/$USER/* # start from scratch
-
 cd /scratch/$USER
+rm -rf /scratch/$USER/self-ensembling
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
 FILEPATH="./src/0_hyperparams_v2.py"
 
