@@ -12,8 +12,8 @@ srun --mem=150GB --gres=gpu:01 --nodelist tikgpu07 --pty bash -i
 
 cd /scratch/$USER
 rm -rf ./*
-git clone https://github.com/ETH-DISCO/cluster-tutorial/ && cd cluster-tutorial
-FILEPATH="./mnist.py"
+git clone https://github.com/ETH-DISCO/self-ensembling && cd self-ensembling
+FILEPATH="./src/0_hyperparams_v2.py"
 
 # -----------------
 
