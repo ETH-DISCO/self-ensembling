@@ -10,7 +10,6 @@ import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.amp import GradScaler
 from tqdm import tqdm
-from torch.utils.checkpoint import checkpoint
 
 import custom_torchvision
 from dataloader import get_cifar10_loaders, get_cifar100_loaders
@@ -56,7 +55,7 @@ def train(config: dict):
     #
     # train loop
     #
-    
+
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], fused=True)
     scaler = GradScaler(device="cuda", enabled=True)
