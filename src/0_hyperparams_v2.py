@@ -10,6 +10,7 @@ import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.amp import GradScaler
 from tqdm import tqdm
+from torch.utils.checkpoint import checkpoint
 
 import custom_torchvision
 from dataloader import get_cifar10_loaders, get_cifar100_loaders
@@ -26,8 +27,8 @@ print_gpu_memory()
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 8  # lower vals increase perf (128 barely fits in gpu memory)
-gradient_accumulation_steps = 16  # higher vals increase perf
+batch_size = 4  # lower vals increase perf (128 barely fits in gpu memory)
+gradient_accumulation_steps = 64  # higher vals increase perf
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
@@ -48,6 +49,7 @@ def train(config: dict):
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
     custom_torchvision.set_imagenet_backbone(model)
     custom_torchvision.freeze_backbone(model)
+    model.use_checkpoint = True
     model = torch.compile(model, mode="reduce-overhead")
     model = model.to(device)
 
