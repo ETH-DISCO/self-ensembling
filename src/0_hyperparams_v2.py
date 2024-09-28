@@ -18,8 +18,6 @@ from utils import print_gpu_memory, set_env
 
 set_env(seed=41)
 assert torch.cuda.is_available(), "cuda is not available"
-print_gpu_memory()
-
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
@@ -148,7 +146,6 @@ def train(config: dict):
 
         gc.collect()
         torch.cuda.empty_cache()
-
         if (epoch + 1) % 5 == 0:
             print_gpu_memory()
 
