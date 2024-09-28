@@ -1,15 +1,9 @@
-#
-# dispatch job
-#
-
-# ----- config -----
-
 cd /scratch/$USER
 rm -rf ./*
 git clone https://github.com/ETH-DISCO/self-ensembling && cd self-ensembling
 FILEPATH="./src/0_hyperparams_v2.py"
 
-# -----------------
+# --------- end of config
 
 # convenience
 alias ll="ls -alF"
