@@ -33,6 +33,73 @@ cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader 
 
 def train(config: dict):
     if config["dataset"] == "cifar10":
+        classes, trainloader, valloader = cifar10_classes, cifar10_trainloader, cifar10_valloader
+    elif config["dataset"] == "cifar100":
+        classes, trainloader, valloader = cifar100_classes, cifar100_trainloader, cifar100_valloader
+
+    device = torch.device("cuda")
+    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
+    custom_torchvision.set_imagenet_backbone(model)
+    custom_torchvision.freeze_backbone(model)
+    model = torch.compile(model, mode="reduce-overhead")
+
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], fused=True)
+    scaler = GradScaler(device="cuda", enabled=True)
+    ensemble_size = len(model.fc_layers)
+    train_size = len(trainloader)
+
+    for epoch in range(config["num_epochs"]):
+        model.train()
+        running_loss = 0.0
+
+        for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
+            inputs, labels = inputs.to(device), labels.to(device)
+
+            with torch.amp.autocast(device_type="cuda", enabled=True):
+                outputs = model(inputs)
+                loss = criterion(outputs.view(-1, outputs.size(-1)), labels.repeat(ensemble_size))
+
+            scaler.scale(loss).backward()
+
+            if (batch_idx + 1) % gradient_accumulation_steps == 0:
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad(set_to_none=True)
+
+            running_loss += loss.item()
+
+            if batch_idx % (train_size // 3) == 0:
+                print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] loss: {running_loss:.3f}")
+                running_loss = 0.0
+
+        if (epoch + 1) % 5 == 0:
+            print_gpu_memory()
+
+    # validation
+    y_true, y_pred = [], []
+    model.eval()
+    with torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
+        for images, labels in valloader:
+            images, labels = images.to(device), labels.to(device)
+            outputs = model(images)
+            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
+            y_true.extend(labels.cpu().numpy())
+            y_pred.extend(predictions.cpu().numpy())
+    results = {
+        "config": config,
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, average="weighted"),
+        "recall": recall_score(y_true, y_pred, average="weighted"),
+        "f1_score": f1_score(y_true, y_pred, average="weighted"),
+    }
+    print(f"validation accuracy: {results['accuracy']:.3f}")
+    with open(output_path, "a") as f:
+        f.write(json.dumps(results) + "\n")
+
+
+def train(config: dict):
+    if config["dataset"] == "cifar10":
         classes = cifar10_classes
         trainloader = cifar10_trainloader
         valloader = cifar10_valloader
@@ -79,15 +146,16 @@ def train(config: dict):
                 print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
                 running_losses.zero_()
 
-            gc.collect()
-            torch.cuda.empty_cache()
+        gc.collect()
+        torch.cuda.empty_cache()
 
-        print_gpu_memory()
+        if (epoch + 1) % 5 == 0:
+            print_gpu_memory()
 
     # validation
     y_true, y_pred = [], []
     model.eval()
-    with torch.no_grad(), torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
+    with torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
