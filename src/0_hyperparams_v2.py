@@ -2,6 +2,7 @@
 improvement: single gpu implementation, without early stopping, lots of memory usage optimizations
 """
 
+import gc
 import itertools
 import json
 from pathlib import Path
@@ -13,22 +14,18 @@ from tqdm import tqdm
 
 import custom_torchvision
 from dataloader import get_cifar10_loaders, get_cifar100_loaders
-from utils import free_mem, print_gpu_memory, set_env
+from utils import print_gpu_memory, set_env
 
 set_env(seed=41)
-free_mem()
 assert torch.cuda.is_available(), "cuda is not available"
 print_gpu_memory()
 
-#
-# config constants
-#
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 1  # lower to reduce memory usage
-gradient_accumulation_steps = 16  # higher to reduce memory usage
-train_val_ratio = 0.8  # common default
+batch_size = 32
+gradient_accumulation_steps = 4
+train_val_ratio = 0.8
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
 cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_val_ratio)
@@ -45,16 +42,11 @@ def train(config: dict):
         valloader = cifar100_valloader
 
     device = torch.device("cuda")
-    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes))
+    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     custom_torchvision.set_imagenet_backbone(model)
     custom_torchvision.freeze_backbone(model)
     model.use_checkpoint = True
     model = torch.compile(model, mode="reduce-overhead")
-    model = model.to(device)
-
-    #
-    # train loop
-    #
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], fused=True)
@@ -64,53 +56,36 @@ def train(config: dict):
 
     for epoch in range(config["num_epochs"]):
         model.train()
-        running_losses = [0.0] * ensemble_size
+        running_losses = torch.zeros(ensemble_size, device=device)
 
         for batch_idx, (inputs, labels) in tqdm(enumerate(trainloader, 0), total=train_size):
             inputs, labels = inputs.to(device), labels.to(device)
 
-            free_mem()
-
             with torch.amp.autocast(device_type="cuda", enabled=True):
                 outputs = model(inputs)
-                losses = [criterion(outputs[:, i, :], labels) for i in range(ensemble_size)]
-                total_loss = sum(losses)
-
-            free_mem()
+                losses = torch.stack([criterion(outputs[:, i, :], labels) for i in range(ensemble_size)])
+                total_loss = losses.sum()
 
             scaler.scale(total_loss).backward()
-
-            free_mem()
 
             if (batch_idx + 1) % gradient_accumulation_steps == 0:
                 scaler.step(optimizer)
                 scaler.update()
-                optimizer.zero_grad()
+                optimizer.zero_grad(set_to_none=True)
 
-            free_mem()
-
-            for i in range(ensemble_size):
-                running_losses[i] += losses[i].item()
-
-            free_mem()
+            running_losses += losses.detach()
 
             if batch_idx % (train_size // 3) == 0:
                 print(f"[epoch {epoch + 1}/{config['num_epochs']}: {batch_idx + 1}/{train_size}] ensemble loss: {', '.join(f'{l:.3f}' for l in running_losses)}")
-                running_losses = [0.0] * ensemble_size
+                running_losses.zero_()
 
-            free_mem()
-            print_gpu_memory()
+            gc.collect()
+            torch.cuda.empty_cache()
 
-        free_mem()
         print_gpu_memory()
 
-    #
-    # validation loop
-    #
-
-    y_true = []
-    y_pred = []
-
+    # validation
+    y_true, y_pred = [], []
     model.eval()
     with torch.no_grad(), torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
         for images, labels in valloader:
@@ -119,8 +94,6 @@ def train(config: dict):
             predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
-            free_mem()
-
     results = {
         "config": config,
         "accuracy": accuracy_score(y_true, y_pred),
@@ -132,28 +105,9 @@ def train(config: dict):
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
 
-    #
-    # saving
-    #
-
-    # Saving
-    # torch.save({
-    #     'model': model.state_dict(),
-    #     'optimizer': optimizer.state_dict(),
-    #     'scaler': scaler.state_dict(),
-    # }, 'checkpoint.pth')
-
-    # Loading
-    # checkpoint = torch.load('checkpoint.pth')
-    # model.load_state_dict(checkpoint['model'])
-    # optimizer.load_state_dict(checkpoint['optimizer'])
-    # scaler.load_state_dict(checkpoint['scaler'])
-
 
 if __name__ == "__main__":
-    #
-    # grid search
-    #
+
     def is_cached(config: dict):
         if not output_path.exists():
             return False

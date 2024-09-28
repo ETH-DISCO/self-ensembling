@@ -1,5 +1,4 @@
 import functools
-import gc
 import os
 import random
 import secrets
@@ -35,14 +34,6 @@ def get_device(disable_mps=False) -> str:
         return "cuda"
     else:
         return "cpu"
-
-
-def free_mem() -> None:
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-        torch.cuda.reset_peak_memory_stats()
-        torch.cuda.reset_accumulated_memory_stats()
 
 
 def print_gpu_memory() -> None:
