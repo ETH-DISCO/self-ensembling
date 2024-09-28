@@ -56,9 +56,9 @@ def train(config: dict):
     #
     # train loop
     #
-
+    
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"])  # safe bet
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], fused=True)
     scaler = GradScaler(device="cuda", enabled=True)
     ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)

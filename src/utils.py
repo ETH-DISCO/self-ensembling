@@ -47,6 +47,7 @@ def free_mem() -> None:
 
 def print_gpu_memory() -> None:
     if torch.cuda.is_available():
+        print(f"Memory summary: {torch.cuda.memory_summary(device="cuda")}")
         print(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
         print(f"GPU memory cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
         print(f"GPU memory peak: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
