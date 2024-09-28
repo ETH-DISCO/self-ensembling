@@ -27,8 +27,8 @@ print_gpu_memory()
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 4  # lower to reduce memory usage
-gradient_accumulation_steps = 64  # higher to reduce memory usage
+batch_size = 1  # lower to reduce memory usage
+gradient_accumulation_steps = 128  # higher to reduce memory usage
 train_val_ratio = 0.8  # common default
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
