@@ -17,3 +17,16 @@
 {"config": {"dataset": "cifar10", "lr": 1e-07, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.6486, "precision": 0.6451835393663038, "recall": 0.6486, "f1_score": 0.6426771721118184}
 {"config": {"dataset": "cifar10", "lr": 1e-07, "num_epochs": 16, "crossmax_k": 3}, "accuracy": 0.6505, "precision": 0.6480963123871754, "recall": 0.6505, "f1_score": 0.6444968705856223}
 {"config": {"dataset": "cifar100", "lr": 0.1, "num_epochs": 4, "crossmax_k": 2}, "accuracy": 0.0319, "precision": 0.02291841761715782, "recall": 0.0319, "f1_score": 0.01171615845766824}
+{"config": {"dataset": "cifar100", "lr": 0.1, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.0105, "precision": 0.00011025000000000001, "recall": 0.0105, "f1_score": 0.0002182088075210292}
+{"config": {"dataset": "cifar100", "lr": 0.1, "num_epochs": 8, "crossmax_k": 2}, "accuracy": 0.0331, "precision": 0.03660625515834887, "recall": 0.0331, "f1_score": 0.009206178652320826}
+{"config": {"dataset": "cifar100", "lr": 0.1, "num_epochs": 8, "crossmax_k": 3}, "accuracy": 0.0294, "precision": 0.006759383380465164, "recall": 0.0294, "f1_score": 0.006059867958897823}
+{"config": {"dataset": "cifar100", "lr": 0.1, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.027, "precision": 0.007577901261180564, "recall": 0.027, "f1_score": 0.003794362511371496}
+{"config": {"dataset": "cifar100", "lr": 0.1, "num_epochs": 16, "crossmax_k": 3}, "accuracy": 0.0193, "precision": 0.02017453582495624, "recall": 0.0193, "f1_score": 0.004280586851898802}
+{"config": {"dataset": "cifar100", "lr": 0.0001, "num_epochs": 4, "crossmax_k": 2}, "accuracy": 0.5087, "precision": 0.626730694119204, "recall": 0.5087, "f1_score": 0.5033424514298699}
+{"config": {"dataset": "cifar100", "lr": 0.0001, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.511, "precision": 0.6133136862561153, "recall": 0.511, "f1_score": 0.5085997865747236}
+{"config": {"dataset": "cifar100", "lr": 0.0001, "num_epochs": 8, "crossmax_k": 2}, "accuracy": 0.5323, "precision": 0.644091667073477, "recall": 0.5323, "f1_score": 0.5320562784792109}
+{"config": {"dataset": "cifar100", "lr": 0.0001, "num_epochs": 8, "crossmax_k": 3}, "accuracy": 0.5229, "precision": 0.6534192870248902, "recall": 0.5229, "f1_score": 0.5294123679678739}
+{"config": {"dataset": "cifar100", "lr": 0.0001, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.5732, "precision": 0.6455824749528081, "recall": 0.5732, "f1_score": 0.5711079773233803}
+{"config": {"dataset": "cifar100", "lr": 0.0001, "num_epochs": 16, "crossmax_k": 3}, "accuracy": 0.5529, "precision": 0.6606449942663403, "recall": 0.5529, "f1_score": 0.5668403763474433}
+{"config": {"dataset": "cifar100", "lr": 1e-07, "num_epochs": 4, "crossmax_k": 2}, "accuracy": 0.0788, "precision": 0.056592465854220515, "recall": 0.0788, "f1_score": 0.05505033736912208}
+{"config": {"dataset": "cifar100", "lr": 1e-07, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.0795, "precision": 0.07017732710241001, "recall": 0.0795, "f1_score": 0.05831724830847717}
