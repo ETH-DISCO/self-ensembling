@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
     searchspace = {
         "dataset": ["cifar10", "cifar100"],  # paper used pretrained imagenet weights with cifar10, cifar100
-        "lr": [1e-1, 1e-4, 1.7e-5, 1e-7],  # paper found 1.7e-5 to be most robust
+        "lr": [1e-1, 1e-4, 1e-5, 1.7e-5, 1e-6, 1e-7],  # paper found 1.7e-5 to be most robust
         "num_epochs": [4, 8, 16],  # paper only used 1 epoch
         "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
     }
