@@ -21,8 +21,8 @@ assert torch.cuda.is_available(), "cuda is not available"
 
 output_path = Path.cwd() / "data" / "hyperparams.jsonl"
 
-batch_size = 32
-gradient_accumulation_steps = 4
+batch_size = 16
+gradient_accumulation_steps = 8
 train_val_ratio = 0.8
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
@@ -39,10 +39,11 @@ def train(config: dict):
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     custom_torchvision.set_imagenet_backbone(model)
     custom_torchvision.freeze_backbone(model)
+    model.use_checkpoint = True  # Enable gradient checkpointing
     model = torch.compile(model, mode="reduce-overhead")
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], fused=True)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], fused=True, foreach=True)
     scaler = GradScaler(device="cuda", enabled=True)
     ensemble_size = len(model.fc_layers)
     train_size = len(trainloader)
