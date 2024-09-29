@@ -32,3 +32,4 @@
 {"config": {"dataset": "cifar100", "lr": 1e-07, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.0795, "precision": 0.07017732710241001, "recall": 0.0795, "f1_score": 0.05831724830847717}
 {"config": {"dataset": "cifar100", "lr": 1e-07, "num_epochs": 8, "crossmax_k": 2}, "accuracy": 0.1143, "precision": 0.12632646446889978, "recall": 0.1143, "f1_score": 0.09501967094463595}
 {"config": {"dataset": "cifar100", "lr": 1e-07, "num_epochs": 8, "crossmax_k": 3}, "accuracy": 0.1117, "precision": 0.1324639959300728, "recall": 0.1117, "f1_score": 0.086225232262985}
+{"config": {"dataset": "cifar100", "lr": 1e-07, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.1951, "precision": 0.22756463758582735, "recall": 0.1951, "f1_score": 0.15851917932094123}
