@@ -51,3 +51,11 @@
 {"config": {"dataset": "cifar10", "lr": 1e-06, "num_epochs": 8, "crossmax_k": 3}, "accuracy": 0.6363, "precision": 0.6514824966783215, "recall": 0.6363, "f1_score": 0.6315385008987046}
 {"config": {"dataset": "cifar10", "lr": 1e-06, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.6742, "precision": 0.6732700116998045, "recall": 0.6742, "f1_score": 0.668772419920689}
 {"config": {"dataset": "cifar10", "lr": 1e-06, "num_epochs": 16, "crossmax_k": 3}, "accuracy": 0.6672, "precision": 0.666683319343064, "recall": 0.6672, "f1_score": 0.6629714797024214}
+{"config": {"dataset": "cifar100", "lr": 1e-05, "num_epochs": 4, "crossmax_k": 2}, "accuracy": 0.3498, "precision": 0.5361355606742634, "recall": 0.3498, "f1_score": 0.3336147954145197}
+{"config": {"dataset": "cifar100", "lr": 1e-05, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.3857, "precision": 0.5197354442750712, "recall": 0.3857, "f1_score": 0.35522386264033506}
+{"config": {"dataset": "cifar100", "lr": 1e-05, "num_epochs": 8, "crossmax_k": 2}, "accuracy": 0.4391, "precision": 0.5456898776898085, "recall": 0.4391, "f1_score": 0.4202465423225953}
+{"config": {"dataset": "cifar100", "lr": 1e-05, "num_epochs": 8, "crossmax_k": 3}, "accuracy": 0.4348, "precision": 0.5495370837211276, "recall": 0.4348, "f1_score": 0.4248686380667309}
+{"config": {"dataset": "cifar100", "lr": 1e-05, "num_epochs": 16, "crossmax_k": 2}, "accuracy": 0.519, "precision": 0.580292941527769, "recall": 0.519, "f1_score": 0.5158176331979685}
+{"config": {"dataset": "cifar100", "lr": 1e-05, "num_epochs": 16, "crossmax_k": 3}, "accuracy": 0.5089, "precision": 0.5671149797775716, "recall": 0.5089, "f1_score": 0.49879256995666954}
+{"config": {"dataset": "cifar100", "lr": 1.7e-05, "num_epochs": 4, "crossmax_k": 2}, "accuracy": 0.4153, "precision": 0.5624706592677107, "recall": 0.4153, "f1_score": 0.3903378064363246}
+{"config": {"dataset": "cifar100", "lr": 1.7e-05, "num_epochs": 4, "crossmax_k": 3}, "accuracy": 0.3667, "precision": 0.5757294406964888, "recall": 0.3667, "f1_score": 0.355549524857236}
