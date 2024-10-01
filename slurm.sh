@@ -1,7 +1,7 @@
 cd /scratch/$USER
 rm -rf ./*
 git clone https://github.com/ETH-DISCO/self-ensembling && cd self-ensembling
-FILEPATH="./src/0_hyperparams_v2.py"
+FILEPATH="./src/1_training.py"
 
 # --------- end of config
 
