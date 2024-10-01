@@ -143,6 +143,3 @@ def get_resnet152_cifar100_tuned_weights():
     file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar100_16epochs.safetensors", local_dir=weights_path, local_dir_use_symlinks=False)
     weights = load_file(file_path)
     return weights
-
-
-get_resnet152_cifar100_tuned_weights()
