@@ -356,7 +356,7 @@ preprocess = v2.Compose(
 
 
 """
-self ensemble resnet152 model with linear probes
+training: self ensembling resnet152 with linear probes
 """
 
 
