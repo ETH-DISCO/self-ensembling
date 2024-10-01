@@ -1,14 +1,9 @@
-"""
-improvement: single gpu implementation, without early stopping, lots of memory usage optimizations
-"""
-
 import gc
 import itertools
-import json
 from pathlib import Path
 
 import torch
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
+from safetensors.torch import save_file
 from torch.amp import GradScaler
 from tqdm import tqdm
 
@@ -78,55 +73,22 @@ def train(config: dict):
         if (epoch + 1) % 5 == 0:
             print_gpu_memory()
 
-    # validation
-    y_true, y_pred = [], []
-    model.eval()
-    with torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
-        for images, labels in valloader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
-            y_true.extend(labels.cpu().numpy())
-            y_pred.extend(predictions.cpu().numpy())
-    results = {
-        "config": config,
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, average="weighted"),
-        "recall": recall_score(y_true, y_pred, average="weighted"),
-        "f1_score": f1_score(y_true, y_pred, average="weighted"),
+    # save model
+    tensors = {
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "scaler": scaler.state_dict(),
     }
-    print(f"validation accuracy: {results['accuracy']:.3f}")
-    with open(output_path, "a") as f:
-        f.write(json.dumps(results) + "\n")
+    save_file(tensors, f"model_{config['dataset']}.safetensors")
 
 
 if __name__ == "__main__":
-
-    def is_cached(config: dict):
-        if not output_path.exists():
-            return False
-        content = output_path.read_text()
-        lines = content.split("\n")
-        for line in lines:
-            if not line:
-                continue
-            result = json.loads(line)
-            if result["config"] == config:
-                return True
-
     searchspace = {
-        "dataset": ["cifar10", "cifar100"],  # paper used pretrained imagenet weights with cifar10, cifar100
-        "lr": [1e-1, 1e-4, 1e-5, 1.7e-5, 1e-6, 1e-7],  # paper found 1.7e-5 to be most robust
-        "num_epochs": [4, 8, 16],  # paper only used 1 epoch
-        "crossmax_k": [2, 3],  # 2 is the classic vickery consensus
+        "dataset": ["cifar10", "cifar100"],
+        "lr": [1e-4],
+        "num_epochs": [16],
+        "crossmax_k": [2],
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
-    print(f"searching {len(combinations)} combinations")
-
     for combination in combinations:
-        if is_cached(combination):
-            print(f"skipping: {combination}")
-            continue
-
-        print(f"training: {combination}")
         train(config=combination)
