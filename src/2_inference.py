@@ -12,7 +12,7 @@ from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_
 from utils import get_device, set_env
 
 set_env(seed=41)
-output_path = Path.cwd() / "data" / "benchmark.jsonl"
+output_path = Path.cwd() / "data" / "inference.jsonl"
 
 batch_size = 512
 
@@ -35,6 +35,7 @@ def eval(config: dict):
         model = torch.compile(model, mode="reduce-overhead")
     model.eval()
 
+    # inference
     y_true, y_pred = [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
@@ -44,6 +45,7 @@ def eval(config: dict):
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
 
+    # dump results
     results = {
         "config": config,
         "accuracy": accuracy_score(y_true, y_pred),
@@ -52,22 +54,17 @@ def eval(config: dict):
         "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
     print(json.dumps(results, indent=4))
+    with open(output_path, "a") as f:
+        f.write(json.dumps(results) + "\n")
+
+    # free memory
+    del model, y_true, y_pred, results
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
-
-    # def is_cached(config: dict):
-    #     if not output_path.exists():
-    #         return False
-    #     content = output_path.read_text()
-    #     lines = content.split("\n")
-    #     for line in lines:
-    #         if not line:
-    #             continue
-    #         result = json.loads(line)
-    #         if result["config"] == config:
-    #             return True
-
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
     }
@@ -75,9 +72,5 @@ if __name__ == "__main__":
     print(f"combinations: {len(combinations)}")
 
     for combination in combinations:
-        # if is_cached(combination):
-        #     print(f"skipping: {combination}")
-        #     continue
-
         print(f"evaluating: {combination}")
         eval(config=combination)
