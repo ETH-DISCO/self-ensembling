@@ -1,4 +1,3 @@
-import gc
 import itertools
 import json
 from pathlib import Path
@@ -24,10 +23,9 @@ cifar100_weights = get_resnet152_cifar100_tuned_weights()
 
 def eval(config: dict):
     if config["dataset"] == "cifar10":
-        classes, testloader, weights = cifar10_classes, cifar100_testloader, cifar10_weights
+        classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
-    
     device = get_device(disable_mps=False)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=False)
@@ -56,12 +54,6 @@ def eval(config: dict):
     print(json.dumps(results, indent=4))
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
-
-    # free memory
-    del model, y_true, y_pred, results
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
