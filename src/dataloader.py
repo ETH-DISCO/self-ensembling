@@ -133,13 +133,13 @@ def get_resnet152_imagenet_weights():
 
 def get_resnet152_cifar10_tuned_weights():
     repo_id = "sueszli/self-ensembling-resnet152"
-    file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar10_16epochs.safetensors", local_dir=weights_path, local_dir_use_symlinks=False)
+    file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar10_16epochs.safetensors", local_dir=weights_path)
     weights = load_file(file_path)
     return weights
 
 
 def get_resnet152_cifar100_tuned_weights():
     repo_id = "sueszli/self-ensembling-resnet152"
-    file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar100_16epochs.safetensors", local_dir=weights_path, local_dir_use_symlinks=False)
+    file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar100_16epochs.safetensors", local_dir=weights_path)
     weights = load_file(file_path)
     return weights
