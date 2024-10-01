@@ -88,8 +88,7 @@ if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
         "lr": [1e-4],
-        # "num_epochs": [16],
-        "num_epochs": [2],
+        "num_epochs": [16],
         "crossmax_k": [2],
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
