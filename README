@@ -1,15 +1,5 @@
 reproducing and improving: "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" (arxiv.org/abs/2408.05446)
 
-# usage
-
-```bash
-git clone https://github.com/ETH-DISCO/self-ensembling
-cd self-ensembling
-pip install -r requirements.txt
-```
-
-# notes
-
 figures 5 and 6 in the paper show outputs from 54 layers. we only ended up with 53 layers, namely:
 
 - input layer
