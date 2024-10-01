@@ -11,7 +11,7 @@ import torch
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 import custom_torchvision
-from dataloader import CIFAR10DataModule, CIFAR100DataModule
+from dataloader import CIFAR10DataModule, CIFAR100DataModule, get_resnet152_imagenet_weights
 from utils import set_env
 
 set_env(seed=41)
@@ -27,7 +27,8 @@ class ResNetEnsemble(pl.LightningModule):
     def __init__(self, num_classes, lr, crossmax_k):
         super().__init__()
         net = custom_torchvision.get_custom_resnet152(num_classes=num_classes)
-        custom_torchvision.set_imagenet_backbone(net)
+        weights = get_resnet152_imagenet_weights()
+        custom_torchvision.set_backbone_weights(net, weights)
         custom_torchvision.freeze_backbone(net)
         self.lr = lr
         self.crossmax_k = crossmax_k

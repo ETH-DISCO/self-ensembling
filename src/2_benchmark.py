@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from tqdm import tqdm
 
 import custom_torchvision
-from dataloader import get_cifar10_loaders, get_cifar100_loaders
+from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_cifar10_tuned_weights, get_resnet152_cifar100_tuned_weights
 from utils import get_device, set_env
 
 set_env(seed=41)
@@ -20,26 +20,23 @@ train_val_ratio = 0.8
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_val_ratio)
 cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_val_ratio)
+cifar10_weights = get_resnet152_cifar10_tuned_weights()
+cifar100_weights = get_resnet152_cifar100_tuned_weights()
 
 
 def eval(config: dict):
     if config["dataset"] == "cifar10":
-        classes, testloader = cifar10_classes, cifar100_testloader
+        classes, testloader, weights = cifar10_classes, cifar100_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
-        classes, testloader = cifar100_classes, cifar100_testloader
-
+        classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
     device = get_device(disable_mps=False)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
-    # from safetensors.torch import load_file
-    # weights = load_file(f"model_{dataset}.safetensors") # store in ./weights
-    # model.load_state_dict(weights)
+    model.load_state_dict(torch.load(weights))
     model = torch.compile(model, mode="reduce-overhead")
-
-    ensemble_size = len(model.fc_layers)
-
-    # validation
-    y_true, y_pred = [], []
     model.eval()
+    # model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
+
+    y_true, y_pred = [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
@@ -80,7 +77,7 @@ if __name__ == "__main__":
         "dataset": ["cifar10", "cifar100"],
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
-    print(f"searching {len(combinations)} combinations")
+    print(f"combinations: {len(combinations)}")
 
     for combination in combinations:
         if is_cached(combination):

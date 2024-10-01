@@ -13,7 +13,7 @@ from torch.amp import GradScaler
 from tqdm import tqdm
 
 import custom_torchvision
-from dataloader import get_cifar10_loaders, get_cifar100_loaders
+from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_imagenet_weights
 from utils import print_gpu_memory, set_env
 
 set_env(seed=41)
@@ -37,7 +37,8 @@ def train(config: dict):
 
     device = torch.device("cuda")
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
-    custom_torchvision.set_imagenet_backbone(model)
+    weights = get_resnet152_imagenet_weights()
+    custom_torchvision.set_backbone_weights(model, weights)
     custom_torchvision.freeze_backbone(model)
     model.use_checkpoint = True
     model = torch.compile(model, mode="reduce-overhead")
@@ -98,6 +99,11 @@ def train(config: dict):
     print(f"validation accuracy: {results['accuracy']:.3f}")
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
+
+    # save model
+    # model_state_dict = model.state_dict()
+    # tensors = {k: v.cpu() for k, v in model_state_dict.items()}
+    # save_file(tensors, f"model_{config['dataset']}_{config['num_epochs']}epochs.safetensors")
 
 
 if __name__ == "__main__":

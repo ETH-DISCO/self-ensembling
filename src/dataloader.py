@@ -1,10 +1,14 @@
 import json
+import os
 from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
 import torchvision.datasets as datasets
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
 from torch.utils.data import DataLoader, random_split
+from torchvision import models
 from tqdm import tqdm
 
 import custom_torchvision
@@ -16,6 +20,11 @@ set_env(seed=41)
 classes_path = Path.cwd() / "data"
 dataset_path = Path.cwd() / "datasets"
 weights_path = Path.cwd() / "weights"
+
+os.makedirs(classes_path, exist_ok=True)
+os.makedirs(dataset_path, exist_ok=True)
+os.makedirs(weights_path, exist_ok=True)
+
 
 """
 datasets
@@ -109,3 +118,31 @@ class CIFAR100DataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return self.test_loader
+
+
+"""
+weights
+"""
+
+
+def get_resnet152_imagenet_weights():
+    weights = models.ResNet152_Weights.IMAGENET1K_V1
+    state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
+    return state_dict
+
+
+def get_resnet152_cifar10_tuned_weights():
+    repo_id = "sueszli/self-ensembling-resnet152"
+    file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar10_16epochs.safetensors", local_dir=weights_path, local_dir_use_symlinks=False)
+    weights = load_file(file_path)
+    return weights
+
+
+def get_resnet152_cifar100_tuned_weights():
+    repo_id = "sueszli/self-ensembling-resnet152"
+    file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar100_16epochs.safetensors", local_dir=weights_path, local_dir_use_symlinks=False)
+    weights = load_file(file_path)
+    return weights
+
+
+get_resnet152_cifar100_tuned_weights()

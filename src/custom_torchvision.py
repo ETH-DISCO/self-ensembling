@@ -1,19 +1,16 @@
-from typing import Callable, List, Optional, Type, Union
-
-import torch
-import torch.nn as nn
-import torchvision.transforms.v2 as v2
-from torch import Tensor
-from torchvision import models
-
-from dataloader import weights_path
-
 """
 modified torchvision.models.resnet
 
 based on: https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py
 but without the `_resnet` wrapper, pretrained weights, resnext models
 """
+
+from typing import Callable, List, Optional, Type, Union
+
+import torch
+import torch.nn as nn
+import torchvision.transforms.v2 as v2
+from torch import Tensor
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
@@ -369,7 +366,7 @@ class ResNet_conv(ResNet):
         del self.fc
 
     def _forward_impl(self, x: Tensor) -> Tensor:
-        # See note [TorchScript super()]
+        # see note [TorchScript super()]
         x_flat_outputs = [torch.flatten(x, 1)]
         x = self.conv1(x)
         x = self.bn1(x)
@@ -377,7 +374,7 @@ class ResNet_conv(ResNet):
         x = self.maxpool(x)
         x_flat_outputs.append(torch.flatten(x, 1))
 
-        # Changed from original
+        # changed from original
         for layer_group in [self.layer1, self.layer2, self.layer3, self.layer4]:
             for layer in layer_group:
                 x = layer(x)
@@ -416,7 +413,7 @@ class ResNet_conv_with_linear_probes(ResNet):
         x = self.maxpool(x)
         x_flat_output_lengths.append(torch.flatten(x, 1).shape[1])
 
-        # Changed from original
+        # changed from original
         for layer_group in [self.layer1, self.layer2, self.layer3, self.layer4]:
             for layer in layer_group:
                 x = layer(x)
@@ -438,7 +435,7 @@ class ResNet_conv_with_linear_probes(ResNet):
         x_outputs.append(self.fc_layers[counter](torch.flatten(x, 1)))
         counter += 1
 
-        # Changed from original
+        # changed from original
         for layer_group in [self.layer1, self.layer2, self.layer3, self.layer4]:
             for layer in layer_group:
                 x = layer(x)
@@ -455,9 +452,7 @@ def get_custom_resnet152(num_classes: int = 10) -> ResNet_conv_with_linear_probe
     return ResNet_conv_with_linear_probes(Bottleneck, [3, 8, 36, 3], num_classes=num_classes)
 
 
-def set_imagenet_backbone(model: torch.nn.Module):
-    weights = models.ResNet152_Weights.IMAGENET1K_V1
-    state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
+def set_backbone_weights(model: torch.nn.Module, state_dict: dict):
     for name, param in model.named_parameters():
         if "fc" not in name and name in state_dict:  # skip fully connected layers
             param.data.copy_(state_dict[name])
@@ -470,7 +465,7 @@ def freeze_backbone(model):
 
 
 def get_cross_max_consensus(outputs: torch.Tensor, k, self_assemble_mode=True):
-    # based on https://arxiv.org/pdf/2408.05446
+    # based on arxiv.org/abs/2408.05446
 
     # outputs shape: [batch_size, ensemble_size, num_classes]
     Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]  # subtract the max per-predictor over classes
