@@ -74,19 +74,22 @@ def train(config: dict):
             print_gpu_memory()
 
     # save model
-    tensors = {
-        "model": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "scaler": scaler.state_dict(),
-    }
-    save_file(tensors, f"model_{config['dataset']}.safetensors")
+    model_state_dict = model.state_dict()
+    tensors = {k: v.cpu() for k, v in model_state_dict.items()}
+    save_file(tensors, f"model_{config['dataset']}_{config['num_epochs']}epochs.safetensors")
+
+    # from safetensors.torch import load_file
+    # model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
+    # loaded_state_dict = load_file(f"model_{dataset}.safetensors")
+    # model.load_state_dict(loaded_state_dict)
 
 
 if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
         "lr": [1e-4],
-        "num_epochs": [16],
+        # "num_epochs": [16],
+        "num_epochs": [2],
         "crossmax_k": [2],
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
