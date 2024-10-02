@@ -11,8 +11,8 @@ from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_
 from utils import get_device, set_env
 
 set_env(seed=41)
-output_path = Path.cwd() / "data" / "benchmark.jsonl"
 
+output_path = Path.cwd() / "data" / "benchmark.jsonl"
 batch_size = 512
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio=0.8)
@@ -26,6 +26,8 @@ def eval(config: dict):
         classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
+
+    # ... apply attack on all images here, then measure drop in performance
 
     device = get_device(disable_mps=False)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
