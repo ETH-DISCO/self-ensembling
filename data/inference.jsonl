@@ -1,2 +1,0 @@
-{"config": {"dataset": "cifar10"}, "accuracy": 0.1025, "precision": 0.09885039800637745, "recall": 0.1025, "f1_score": 0.0797957898881334}
-{"config": {"dataset": "cifar100"}, "accuracy": 0.0096, "precision": 0.015581647474989952, "recall": 0.0096, "f1_score": 0.005543913981820274}

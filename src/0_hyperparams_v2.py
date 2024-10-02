@@ -101,6 +101,7 @@ def train(config: dict):
         f.write(json.dumps(results) + "\n")
 
     # save model
+    # from safetensors import save_file
     # model_state_dict = model.state_dict()
     # tensors = {k: v.cpu() for k, v in model_state_dict.items()}
     # save_file(tensors, f"model_{config['dataset']}_{config['num_epochs']}epochs.safetensors")

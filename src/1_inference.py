@@ -26,14 +26,12 @@ def eval(config: dict):
         classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
+
     device = get_device(disable_mps=False)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
-    model.load_state_dict(weights, strict=False)
-    if not torch.backends.mps.is_available():
-        model = torch.compile(model, mode="reduce-overhead")
+    model.load_state_dict(weights, strict=True)
     model.eval()
 
-    # inference
     y_true, y_pred = [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
@@ -43,7 +41,6 @@ def eval(config: dict):
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
 
-    # dump results
     results = {
         "config": config,
         "accuracy": accuracy_score(y_true, y_pred),
@@ -51,7 +48,6 @@ def eval(config: dict):
         "recall": recall_score(y_true, y_pred, average="weighted"),
         "f1_score": f1_score(y_true, y_pred, average="weighted"),
     }
-    print(json.dumps(results, indent=4))
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
 
@@ -61,8 +57,6 @@ if __name__ == "__main__":
         "dataset": ["cifar10", "cifar100"],
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
-    print(f"combinations: {len(combinations)}")
-
     for combination in combinations:
         print(f"evaluating: {combination}")
         eval(config=combination)

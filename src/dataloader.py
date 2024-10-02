@@ -135,6 +135,8 @@ def get_resnet152_cifar10_tuned_weights():
     repo_id = "sueszli/self-ensembling-resnet152"
     file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar10_16epochs.safetensors", local_dir=weights_path)
     weights = load_file(file_path)
+    # bugfix: https://discuss.pytorch.org/t/how-to-save-load-a-model-with-torch-compile/179739
+    weights = {k.replace("_orig_mod.", ""): v for k, v in weights.items()}
     return weights
 
 
@@ -142,4 +144,6 @@ def get_resnet152_cifar100_tuned_weights():
     repo_id = "sueszli/self-ensembling-resnet152"
     file_path = hf_hub_download(repo_id=repo_id, filename="model_cifar100_16epochs.safetensors", local_dir=weights_path)
     weights = load_file(file_path)
+    # bugfix: https://discuss.pytorch.org/t/how-to-save-load-a-model-with-torch-compile/179739
+    weights = {k.replace("_orig_mod.", ""): v for k, v in weights.items()}
     return weights
