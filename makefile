@@ -1,6 +1,6 @@
 # --------------------------------------------------------------- venv
 
-.PHONY: venv # infer dependencies, compile and install in venv
+.PHONY: venv # infer dependencies from code, compile and install in venv
 venv:
 	pip install pip --upgrade
 	pip install pipreqs
@@ -16,7 +16,7 @@ venv:
 	./.venv/bin/python3 -m pip install -r requirements.txt
 	@echo "to activate venv, run: source .venv/bin/activate"
 
-.PHONY: venv-lock # freeze venv
+.PHONY: venv-freeze # freeze venv into requirements.txt
 venv-lock:
 	./.venv/bin/python3 -m pip freeze > requirements.in
 

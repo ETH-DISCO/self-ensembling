@@ -14,6 +14,10 @@ aiosignal==1.3.1
     # via aiohttp
 attrs==24.2.0
     # via aiohttp
+autoattack @ git+https://github.com/fra31/auto-attack.git@a39220048b3c9f2cca9a4d3a54604793c68eca7e
+    # via robustbench
+beautifulsoup4==4.12.3
+    # via gdown
 certifi==2024.8.30
     # via requests
 charset-normalizer==3.3.2
@@ -27,6 +31,7 @@ dill==0.3.7
 filelock==3.16.1
     # via
     #   -r requirements.in
+    #   gdown
     #   huggingface-hub
     #   torch
 frozenlist==1.4.1
@@ -39,14 +44,22 @@ fsspec[http]==2024.9.0
     #   huggingface-hub
     #   pytorch-lightning
     #   torch
+gdown==5.1.0
+    # via robustbench
+geotorch==0.3.0
+    # via robustbench
 huggingface-hub==0.25.1
-    # via datasets
+    # via
+    #   datasets
+    #   timm
 idna==3.10
     # via
     #   requests
     #   yarl
 jinja2==3.1.4
-    # via torch
+    # via
+    #   robustbench
+    #   torch
 joblib==1.4.2
     # via scikit-learn
 lightning-utilities==0.11.7
@@ -71,6 +84,7 @@ numpy==2.1.1
     #   datasets
     #   pandas
     #   pyarrow
+    #   robustbench
     #   scikit-learn
     #   scipy
     #   torchmetrics
@@ -83,13 +97,17 @@ packaging==24.1
     #   pytorch-lightning
     #   torchmetrics
 pandas==2.2.3
-    # via datasets
+    # via
+    #   datasets
+    #   robustbench
 pillow==10.4.0
     # via torchvision
 pyarrow==17.0.0
     # via datasets
 pynvml==11.5.3
     # via -r requirements.in
+pysocks==1.7.1
+    # via requests
 python-dateutil==2.9.0.post0
     # via pandas
 pytorch-lightning==2.4.0
@@ -101,38 +119,63 @@ pyyaml==6.0.2
     #   datasets
     #   huggingface-hub
     #   pytorch-lightning
-requests==2.32.3
+    #   robustbench
+    #   timm
+requests[socks]==2.32.3
     # via
     #   datasets
+    #   gdown
     #   huggingface-hub
-safetensors==0.4.5
+    #   robustbench
+robustbench @ git+https://github.com/RobustBench/robustbench.git
     # via -r requirements.in
+safetensors==0.4.5
+    # via
+    #   -r requirements.in
+    #   timm
 scikit-learn==1.5.2
     # via -r requirements.in
 scipy==1.14.1
-    # via scikit-learn
+    # via
+    #   scikit-learn
+    #   torchdiffeq
 six==1.16.0
     # via python-dateutil
+soupsieve==2.6
+    # via beautifulsoup4
 sympy==1.13.3
     # via torch
 threadpoolctl==3.5.0
     # via scikit-learn
+timm==1.0.9
+    # via robustbench
 torch==2.4.1
     # via
     #   -r requirements.in
+    #   geotorch
     #   pytorch-lightning
+    #   robustbench
+    #   timm
+    #   torchdiffeq
     #   torchmetrics
     #   torchvision
+torchdiffeq==0.2.4
+    # via robustbench
 torchmetrics==1.4.2
     # via pytorch-lightning
 torchvision==0.19.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   robustbench
+    #   timm
 tqdm==4.66.5
     # via
     #   -r requirements.in
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   pytorch-lightning
+    #   robustbench
 typing-extensions==4.12.2
     # via
     #   huggingface-hub
