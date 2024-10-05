@@ -22,20 +22,34 @@ cifar10_weights = get_resnet152_cifar10_tuned_weights()
 cifar100_weights = get_resnet152_cifar100_tuned_weights()
 
 
+def get_cross_maxed_model(model: torch.nn.Module, k: int):
+    class SingleOutputModel(torch.nn.Module):
+        def __init__(self, model, k):
+            super().__init__()
+            self.model = model
+            self.k = k
+
+        def forward(self, x):
+            outputs = self.model(x)
+            consensus = custom_torchvision.get_cross_max_consensus(outputs, self.k)
+            return consensus.unsqueeze(1)  # ensure 2D output
+
+    return SingleOutputModel(model, k)
+
+
 def eval(config: dict):
     if config["dataset"] == "cifar10":
         classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
-    device = get_device(disable_mps=False)
+    device = get_device(disable_mps=True)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
     model.eval()
 
-    simple_model = custom_torchvision.get_cross_maxed_model(model=model, k=2)
+    simple_model = get_cross_maxed_model(model=model, k=2)
     simple_model.eval()
-
     adversary = AutoAttack(simple_model, norm="Linf", eps=8 / 255, version="standard", device=device)
 
     y_true, y_preds, y_final = [], [], []
@@ -44,7 +58,6 @@ def eval(config: dict):
             images, labels = images.to(device), labels.to(device)
 
             adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
-
             predictions = model(adv_images)
 
             y_true.extend(labels.cpu().numpy())

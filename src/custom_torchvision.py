@@ -476,18 +476,3 @@ def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: b
         Y = Y[:, -1, :]  # get k-th highest value
     _, predicted = torch.max(Y, 1)
     return predicted
-
-
-def get_cross_maxed_model(model: torch.nn.Module, k: int):
-    # wraps a model to return a single output based on the cross-max consensus
-    class SingleOutputModel(torch.nn.Module):
-        def __init__(self, model, k):
-            super().__init__()
-            self.model = model
-            self.k = k
-
-        def forward(self, x):
-            outputs = self.model(x)
-            return get_cross_max_consensus(outputs, self.k)
-
-    return SingleOutputModel(model, k)
