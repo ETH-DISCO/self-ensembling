@@ -8,3 +8,4 @@ datasets
 filelock
 pynvml
 safetensors
+git+https://github.com/RobustBench/robustbench.git

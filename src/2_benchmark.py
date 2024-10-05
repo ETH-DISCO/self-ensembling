@@ -11,8 +11,8 @@ from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_
 from utils import get_device, set_env
 
 set_env(seed=41)
-
 output_path = Path.cwd() / "data" / "benchmark.jsonl"
+
 batch_size = 512
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio=0.8)
@@ -27,7 +27,7 @@ def eval(config: dict):
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
-    # ... apply attack on all images here, then measure drop in performance
+    # ... apply attacks here
 
     device = get_device(disable_mps=False)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
@@ -38,7 +38,9 @@ def eval(config: dict):
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
+            
             outputs = model(images)
+            
             predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=2)
             y_true.extend(labels.cpu().numpy())
             y_pred.extend(predictions.cpu().numpy())
@@ -57,6 +59,7 @@ def eval(config: dict):
 if __name__ == "__main__":
     searchspace = {
         "dataset": ["cifar10", "cifar100"],
+        "attack": ["none"]
     }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:

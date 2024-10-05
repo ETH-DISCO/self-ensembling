@@ -1,6 +1,6 @@
 # --------------------------------------------------------------- venv
 
-.PHONY: venv # initialize .venv
+.PHONY: venv # infer dependencies, compile and install in venv
 venv:
 	pip install pip --upgrade
 	pip install pipreqs
@@ -16,9 +16,12 @@ venv:
 	./.venv/bin/python3 -m pip install -r requirements.txt
 	@echo "to activate venv, run: source .venv/bin/activate"
 
-.PHONY: venv-lock # freeze and dump .venv
+.PHONY: venv-lock # freeze venv
 venv-lock:
 	./.venv/bin/python3 -m pip freeze > requirements.in
+
+.PHONY: in-lock # compile requirements.in
+in-lock:
 	pip-compile requirements.in -o requirements.txt -vvv
 
 # --------------------------------------------------------------- docker
