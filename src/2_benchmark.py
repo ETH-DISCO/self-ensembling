@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import torch
+from autoattack import AutoAttack
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
 
@@ -27,40 +28,45 @@ def eval(config: dict):
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
-    # ... apply attacks here
-
     device = get_device(disable_mps=False)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
     model.eval()
 
-    y_true, y_pred = [], []
+    simple_model = custom_torchvision.get_cross_maxed_model(model=model, k=2)
+    simple_model.eval()
+
+    adversary = AutoAttack(simple_model, norm="Linf", eps=8 / 255, version="standard", device=device)
+
+    y_true, y_preds, y_final = [], [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
-            
-            outputs = model(images)
-            
-            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=2)
+
+            adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
+
+            predictions = model(adv_images)
+
             y_true.extend(labels.cpu().numpy())
-            y_pred.extend(predictions.cpu().numpy())
+            y_preds.extend(predictions.cpu().numpy())
+            y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
 
     results = {
-        "config": config,
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, average="weighted"),
-        "recall": recall_score(y_true, y_pred, average="weighted"),
-        "f1_score": f1_score(y_true, y_pred, average="weighted"),
+        **config,
+        "labels": y_true,
+        "predictions": y_preds,
+        "final_predictions": y_final,
+        "accuracy": accuracy_score(y_true, y_final),
+        "precision": precision_score(y_true, y_final, average="weighted"),
+        "recall": recall_score(y_true, y_final, average="weighted"),
+        "f1_score": f1_score(y_true, y_final, average="weighted"),
     }
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
 
 
 if __name__ == "__main__":
-    searchspace = {
-        "dataset": ["cifar10", "cifar100"],
-        "attack": ["none"]
-    }
+    searchspace = {"dataset": ["cifar10", "cifar100"]}
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
         print(f"evaluating: {combination}")

@@ -464,9 +464,8 @@ def freeze_backbone(model):
             param.requires_grad = False  # freeze
 
 
-def get_cross_max_consensus(outputs: torch.Tensor, k, self_assemble_mode=True):
+def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: bool = True):
     # based on arxiv.org/abs/2408.05446
-
     # outputs shape: [batch_size, ensemble_size, num_classes]
     Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]  # subtract the max per-predictor over classes
     Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]  # subtract the per-class max over predictors
@@ -475,6 +474,20 @@ def get_cross_max_consensus(outputs: torch.Tensor, k, self_assemble_mode=True):
         Y = torch.median(Z_hat, dim=1)[0]  # get median value
     else:
         Y = Y[:, -1, :]  # get k-th highest value
-
     _, predicted = torch.max(Y, 1)
     return predicted
+
+
+def get_cross_maxed_model(model: torch.nn.Module, k: int):
+    # wraps a model to return a single output based on the cross-max consensus
+    class SingleOutputModel(torch.nn.Module):
+        def __init__(self, model, k):
+            super().__init__()
+            self.model = model
+            self.k = k
+
+        def forward(self, x):
+            outputs = self.model(x)
+            return get_cross_max_consensus(outputs, self.k)
+
+    return SingleOutputModel(model, k)
