@@ -42,8 +42,6 @@ class AutoattackWrapper(torch.nn.Module):
         return one_hot
 
 
-
-
 def eval(config: dict):
     if config["dataset"] == "cifar10":
         classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
