@@ -80,20 +80,20 @@ def train(config: dict):
             print_gpu_memory()
 
     # validation
-    y_true, y_pred = [], []
+    y_true, y_preds = [], []
     model.eval()
     with torch.inference_mode(), torch.amp.autocast(device_type="cuda", enabled=True):
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             y_true.extend(labels.cpu().numpy())
-            y_pred.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
+            y_preds.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
     results = {
         "config": config,
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, average="weighted"),
-        "recall": recall_score(y_true, y_pred, average="weighted"),
-        "f1_score": f1_score(y_true, y_pred, average="weighted"),
+        "accuracy": accuracy_score(y_true, y_preds),
+        "precision": precision_score(y_true, y_preds, average="weighted"),
+        "recall": recall_score(y_true, y_preds, average="weighted"),
+        "f1_score": f1_score(y_true, y_preds, average="weighted"),
     }
     print(f"validation accuracy: {results['accuracy']:.3f}")
     with open(output_path, "a") as f:

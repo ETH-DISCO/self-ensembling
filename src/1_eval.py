@@ -1,3 +1,7 @@
+"""
+how well do we perform on the test set without any adversarial attacks?
+"""
+
 import itertools
 import json
 from pathlib import Path
@@ -32,19 +36,19 @@ def eval(config: dict):
     model.load_state_dict(weights, strict=True)
     model.eval()
 
-    y_true, y_pred = [], []
+    y_true, y_preds = [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
             y_true.extend(labels.cpu().numpy())
-            y_pred.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
+            y_preds.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
     results = {
         "config": config,
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, average="weighted"),
-        "recall": recall_score(y_true, y_pred, average="weighted"),
-        "f1_score": f1_score(y_true, y_pred, average="weighted"),
+        "accuracy": accuracy_score(y_true, y_preds),
+        "precision": precision_score(y_true, y_preds, average="weighted"),
+        "recall": recall_score(y_true, y_preds, average="weighted"),
+        "f1_score": f1_score(y_true, y_preds, average="weighted"),
     }
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")

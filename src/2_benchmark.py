@@ -1,8 +1,13 @@
+"""
+how well do we perform on the test set with adversarial attacks (compared against the baseline)?
+"""
+
 import itertools
 import json
 from pathlib import Path
 
 import torch
+import torchvision
 from autoattack import AutoAttack
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
@@ -40,42 +45,72 @@ class AutoattackWrapper(torch.nn.Module):
 
 
 def eval(config: dict):
+    #
+    # data
+    #
+
     if config["dataset"] == "cifar10":
         classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
+    #
+    # models
+    #
+
     device = utils.get_device(disable_mps=True)
+
+    # self-ensembling model
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
     model.eval()
+    # adversary
+    atk_model = AutoattackWrapper(model, k=2).to(device)
+    custom_torchvision.unfreeze_backbone(atk_model)
+    atk_model.eval()
+    model_adversary = AutoAttack(atk_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
-    autoattack_model = AutoattackWrapper(model, k=2).to(device)
-    custom_torchvision.unfreeze_backbone(autoattack_model)
-    autoattack_model.eval()
-    adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
+    # baseline model
+    baseline = torchvision.models.resnet152(pretrained=False, num_classes=len(classes)).to(device)
+    baseline.load_state_dict(weights, strict=True)
+    baseline.eval()
+    # adversary
+    baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
-    y_true, y_preds, y_final = [], [], []
-    for images, labels in tqdm(testloader):
-        images, labels = images.to(device), labels.to(device)
+    #
+    # benchmark
+    #
 
-        adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
-        adv_images = adv_images.detach()
-        with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
-            predictions = model(adv_images)
+    y_true, y_preds_model, y_preds_baseline = [], [], []
+    with torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
+        for images, labels in tqdm(testloader):
+            images, labels = images.to(device), labels.to(device)
 
-        y_true.extend(labels.cpu().numpy())
-        y_preds.extend(predictions.cpu().numpy())
-        y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
+            model_adv_images = model_adversary.run_standard_evaluation(images, labels, bs=batch_size)
+            model_adv_images = model_adv_images.detach()
+            with torch.inference_mode():
+                model_predictions = model(model_adv_images)
+
+            baseline_adv_images = baseline_adversary.run_standard_evaluation(images, labels, bs=batch_size)
+            baseline_adv_images = baseline_adv_images.detach()
+            with torch.inference_mode():
+                baseline_predictions = baseline(baseline_adv_images)
+
+            y_true.extend(labels.cpu().numpy())
+
+            y_preds_baseline.extend(baseline_predictions.cpu().numpy())
+            y_preds_model.extend(custom_torchvision.get_cross_max_consensus(model_predictions, k=2).cpu().numpy())
+
     results = {
         **config,
-        "labels": y_true,
-        "predictions": y_preds,
-        "final_predictions": y_final,
-        "accuracy": accuracy_score(y_true, y_final),
-        "precision": precision_score(y_true, y_final, average="weighted"),
-        "recall": recall_score(y_true, y_final, average="weighted"),
-        "f1_score": f1_score(y_true, y_final, average="weighted"),
+        "model_accuracy": accuracy_score(y_true, y_preds_model),
+        "model_precision": precision_score(y_true, y_preds_model, average="weighted"),
+        "model_recall": recall_score(y_true, y_preds_model, average="weighted"),
+        "model_f1_score": f1_score(y_true, y_preds_model, average="weighted"),
+        "baseline_accuracy": accuracy_score(y_true, y_preds_baseline),
+        "baseline_precision": precision_score(y_true, y_preds_baseline, average="weighted"),
+        "baseline_recall": recall_score(y_true, y_preds_baseline, average="weighted"),
+        "baseline_f1_score": f1_score(y_true, y_preds_baseline, average="weighted"),
     }
     with open(output_path, "a") as f:
         f.write(json.dumps(results) + "\n")
