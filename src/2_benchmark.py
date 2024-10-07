@@ -31,8 +31,6 @@ class AutoattackWrapper(torch.nn.Module):
         self.k = k
 
     def forward(self, x):
-        # crossmax consensus returns [batch_size] as output
-        # autoattack expects 2 dimensional [batch_size, num_classes] as output
         if not x.requires_grad:
             x = x.detach().requires_grad_(True)
 
