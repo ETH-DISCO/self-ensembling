@@ -464,7 +464,7 @@ def freeze_backbone(model):
             param.requires_grad = False  # freeze
 
 
-def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: bool = True):
+def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: bool = True) -> torch.Tensor:
     # based on arxiv.org/abs/2408.05446
     # outputs shape: [batch_size, ensemble_size, num_classes]
     Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]  # subtract the max per-predictor over classes
