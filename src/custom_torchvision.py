@@ -475,4 +475,8 @@ def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: b
     else:
         Y = Y[:, -1, :]  # get k-th highest value
     _, predicted = torch.max(Y, 1)
-    return predicted  # [batch_size]
+    assert predicted.shape == (outputs.shape[0],)  # assert [batch_size]
+    assert len(predicted.shape) == 1
+    assert torch.all(predicted >= 0) and torch.all(predicted < outputs.shape[2])  # assert [0, num_classes)
+    assert torch.all(predicted.dtype == torch.int64)  # assert integer
+    return predicted

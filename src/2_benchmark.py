@@ -23,21 +23,18 @@ cifar10_weights = get_resnet152_cifar10_tuned_weights()
 cifar100_weights = get_resnet152_cifar100_tuned_weights()
 
 
-def get_autoattack_warapper(model: torch.nn.Module, k: int):
-    class SingleOutputModel(torch.nn.Module):
-        def __init__(self, model, k):
-            super().__init__()
-            self.model = model
-            self.k = k
+class AutoattackWrapper(torch.nn.Module):
+    def __init__(self, model, k):
+        super().__init__()
+        self.model = model
+        self.k = k
 
-        def forward(self, x):
-            outputs = self.model(x)
-            preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
-            one_hot = torch.zeros(preds.size(0), outputs.size(-1), device=preds.device)
-            one_hot.scatter_(1, preds.unsqueeze(1), 1)
-            return one_hot
-
-    return SingleOutputModel(model, k)
+    def forward(self, x):
+        # autoattack expects 2 dimensional [batch_size, num_classes] as output
+        # crossmax consensus returns [batch_size] as output
+        outputs = self.model(x)
+        preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
+        return torch.nn.functional.one_hot(preds, num_classes=outputs.size(1)).float()
 
 
 def eval(config: dict):
@@ -51,7 +48,7 @@ def eval(config: dict):
     model.load_state_dict(weights, strict=True)
     model.eval()
 
-    autoattack_model = get_autoattack_warapper(model=model, k=2)
+    autoattack_model = AutoattackWrapper(model, k=2).to(device)
     autoattack_model.eval()
     adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device)
 
@@ -64,7 +61,7 @@ def eval(config: dict):
 
             y_true.extend(labels.cpu().numpy())
             y_preds.extend(predictions.cpu().numpy())
-            y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=config["crossmax_k"]).cpu().numpy())
+            y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
     results = {
         **config,
         "labels": y_true,
