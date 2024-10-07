@@ -1,7 +1,3 @@
-"""
-how well do we perform on the test set with adversarial attacks (compared against the baseline)?
-"""
-
 import itertools
 import json
 from pathlib import Path
@@ -39,7 +35,6 @@ class AutoattackWrapper(torch.nn.Module):
     def forward(self, x):
         if not x.requires_grad:
             x = x.detach().requires_grad_(True)
-
         outputs = self.model(x)
         preds = custom_torchvision.get_cross_max_consensus_logits(outputs, k=self.k)
         return preds
@@ -56,6 +51,7 @@ def eval(config: dict):
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
     model.eval()
+
     # adversary
     atk_model = AutoattackWrapper(model, k=2).to(device)
     custom_torchvision.unfreeze_backbone(atk_model)

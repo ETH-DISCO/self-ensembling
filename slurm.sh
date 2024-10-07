@@ -1,7 +1,8 @@
+rm -rf /scratch/$USER/*
+
 cd /scratch/$USER
-rm -rf ./*
 git clone https://github.com/ETH-DISCO/self-ensembling && cd self-ensembling
-FILEPATH="./src/1_training.py"
+FILEPATH="./src/2_benchmark.py"
 
 # --------- end of config
 
