@@ -15,7 +15,7 @@ set_env(seed=41)
 output_path = Path.cwd() / "data" / "benchmark.jsonl"
 assert torch.cuda.is_available(), "cuda is not available (infeasible to run on cpu)"
 
-batch_size = 512
+batch_size = 8
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio=0.8)
 cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_ratio=0.8)
@@ -59,8 +59,7 @@ def eval(config: dict):
     adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     y_true, y_preds, y_final = [], [], []
-    # with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
-    with torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
+    with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
 
