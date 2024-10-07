@@ -54,6 +54,7 @@ def eval(config: dict):
     model.eval()
 
     autoattack_model = AutoattackWrapper(model, k=2).to(device)
+    custom_torchvision.unfreeze_backbone(autoattack_model)
     adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device)
 
     y_true, y_preds, y_final = [], [], []
