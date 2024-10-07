@@ -30,11 +30,13 @@ class AutoattackWrapper(torch.nn.Module):
         self.k = k
 
     def forward(self, x):
-        # autoattack expects 2 dimensional [batch_size, num_classes] as output
         # crossmax consensus returns [batch_size] as output
+        # autoattack expects 2 dimensional [batch_size, num_classes] as output
         outputs = self.model(x)
         preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
-        return torch.nn.functional.one_hot(preds, num_classes=outputs.size(1)).float()
+        one_hot = torch.zeros(preds.size(0), outputs.size(-1), device=preds.device)
+        one_hot.scatter_(1, preds.unsqueeze(1), 1)
+        return one_hot
 
 
 def eval(config: dict):
@@ -49,13 +51,13 @@ def eval(config: dict):
     model.eval()
 
     autoattack_model = AutoattackWrapper(model, k=2).to(device)
-    autoattack_model.eval()
     adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device)
 
     y_true, y_preds, y_final = [], [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
+
             adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
             predictions = model(adv_images)
 
