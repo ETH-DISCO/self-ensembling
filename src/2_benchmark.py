@@ -33,7 +33,7 @@ class AutoattackWrapper(torch.nn.Module):
         # crossmax consensus returns [batch_size] as output
         # autoattack expects 2 dimensional [batch_size, num_classes] as output
         if not x.requires_grad:
-            x.requires_grad_(True)
+            x = x.detach().requires_grad_(True)
 
         outputs = self.model(x)
         preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
