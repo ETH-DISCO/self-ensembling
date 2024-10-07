@@ -475,11 +475,11 @@ def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: b
     # outputs shape: [batch_size, ensemble_size, num_classes]
     Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]  # subtract the max per-predictor over classes
     Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]  # subtract the per-class max over predictors
-    Y, _ = torch.topk(Z_hat, k, dim=1)  # choose the kth highest logit per class
+    Y, _ = torch.topk(Z_hat, k, dim=1)  # get highest k values per class
     if self_assemble_mode:
-        Y = torch.median(Z_hat, dim=1)[0]  # get median value
+        Y = torch.median(Z_hat, dim=1)[0]  # get median value per class
     else:
-        Y = Y[:, -1, :]  # get k-th highest value
+        Y = Y[:, -1, :]  # get the k-th highest value per class
     _, predicted = torch.max(Y, 1)  # get the index of the maximum value
     assert predicted.shape == (outputs.shape[0],)  # assert [batch_size]
     assert len(predicted.shape) == 1
@@ -489,7 +489,6 @@ def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: b
 
 
 def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int, self_assemble_mode: bool = False) -> torch.Tensor:
-    # same as above but returns logits instead of class indices
     Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]
     Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]
     Y, _ = torch.topk(Z_hat, k, dim=1)
@@ -497,7 +496,8 @@ def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int, self_assemble_
         Y = torch.median(Z_hat, dim=1)[0]
     else:
         Y = Y[:, -1, :]
+    # don't get maximum value, keep logits per class
     assert Y.shape == (outputs.shape[0], outputs.shape[2])  # assert [batch_size, num_classes]
     assert len(Y.shape) == 2
-    assert Y.dtype == torch.float32
+    assert Y.dtype == torch.float32  # assert float
     return Y

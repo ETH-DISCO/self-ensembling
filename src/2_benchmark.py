@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 
 import torch
-from torchvision import models
 from autoattack import AutoAttack
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
