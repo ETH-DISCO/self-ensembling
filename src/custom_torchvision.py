@@ -499,7 +499,5 @@ def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int, self_assemble_
     # don't get maximum value, keep logits per class
     assert Y.shape == (outputs.shape[0], outputs.shape[2])  # assert [batch_size, num_classes]
     assert len(Y.shape) == 2
-    print(Y.shape)
-    print(Y.dtype)
-    exit()
+    assert Y.dtype == torch.float16  # assert float
     return Y
