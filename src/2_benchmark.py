@@ -22,7 +22,7 @@ cifar10_weights = get_resnet152_cifar10_tuned_weights()
 cifar100_weights = get_resnet152_cifar100_tuned_weights()
 
 
-def get_cross_maxed_model(model: torch.nn.Module, k: int):
+def get_autoattack_warapper(model: torch.nn.Module, k: int):
     class SingleOutputModel(torch.nn.Module):
         def __init__(self, model, k):
             super().__init__()
@@ -32,7 +32,7 @@ def get_cross_maxed_model(model: torch.nn.Module, k: int):
         def forward(self, x):
             outputs = self.model(x)
             consensus = custom_torchvision.get_cross_max_consensus(outputs, self.k)
-            return consensus.unsqueeze(1)  # ensure 2D output
+            return consensus.unsqueeze(1).float()
 
     return SingleOutputModel(model, k)
 
@@ -48,21 +48,26 @@ def eval(config: dict):
     model.load_state_dict(weights, strict=True)
     model.eval()
 
-    simple_model = get_cross_maxed_model(model=model, k=2)
-    simple_model.eval()
-    adversary = AutoAttack(simple_model, norm="Linf", eps=8 / 255, version="standard", device=device)
+    autoattack_model = get_autoattack_warapper(model=model, k=2)
+    autoattack_model.eval()
+    adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device)
 
     y_true, y_preds, y_final = [], [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
-            images, labels = images.to(device), labels.to(device)
+            # images, labels = images.to(device), labels.to(device)
+            images, labels = images.float().to(device), labels.long().to(device)
 
+            print("reached 1")
             adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
+            print("reached 2")
             predictions = model(adv_images)
+            print("reached 3")
 
             y_true.extend(labels.cpu().numpy())
             y_preds.extend(predictions.cpu().numpy())
             y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
+            print("reached 4")
 
     results = {
         **config,
@@ -79,7 +84,9 @@ def eval(config: dict):
 
 
 if __name__ == "__main__":
-    searchspace = {"dataset": ["cifar10", "cifar100"]}
+    searchspace = {
+        "dataset": ["cifar10", "cifar100"],
+    }
     combinations = [dict(zip(searchspace.keys(), values)) for values in itertools.product(*searchspace.values())]
     for combination in combinations:
         print(f"evaluating: {combination}")
