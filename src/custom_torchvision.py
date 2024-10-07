@@ -463,10 +463,12 @@ def freeze_backbone(model):
         if "fc" not in name:  # skip fully connected layers
             param.requires_grad = False  # freeze
 
+
 def unfreeze_backbone(model):
     for name, param in model.named_parameters():
         if "fc" not in name:
             param.requires_grad = True
+
 
 def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: bool = True) -> torch.Tensor:
     # based on arxiv.org/abs/2408.05446

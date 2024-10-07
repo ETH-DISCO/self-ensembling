@@ -39,7 +39,7 @@ class AutoattackWrapper(torch.nn.Module):
         preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
         one_hot = torch.zeros(preds.size(0), outputs.size(-1), device=preds.device)
         one_hot.scatter_(1, preds.unsqueeze(1), 1)
-        return one_hot
+        return one_hot.requires_grad_(True)
 
 
 def eval(config: dict):
@@ -55,11 +55,12 @@ def eval(config: dict):
 
     autoattack_model = AutoattackWrapper(model, k=2).to(device)
     custom_torchvision.unfreeze_backbone(autoattack_model)
-    autoattack_model.train()
-    adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device)
+    autoattack_model.eval()
+    adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     y_true, y_preds, y_final = [], [], []
-    with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
+    # with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
+    with torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
 
