@@ -47,11 +47,11 @@ def eval(config: dict):
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
     device = utils.get_device(disable_mps=True)
+
     # self-ensembling model
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
     model.eval()
-
     # adversary
     atk_model = AutoattackWrapper(model, k=2).to(device)
     custom_torchvision.unfreeze_backbone(atk_model)
