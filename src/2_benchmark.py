@@ -62,12 +62,12 @@ def eval(config: dict):
     model_adversary = AutoAttack(atk_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     # baseline model
-    # baseline = models.resnet152().to(device)
-    # baseline.load_state_dict(baseline_weights, strict=True)
-    # baseline.fc = torch.nn.Linear(baseline.fc.in_features, len(classes))
-    # baseline.eval()
-    # # adversary
-    # baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
+    baseline = models.resnet152().to(device)
+    baseline.load_state_dict(baseline_weights, strict=True)
+    baseline.fc = torch.nn.Linear(baseline.fc.in_features, len(classes))
+    baseline.eval()
+    # adversary
+    baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     #
     # autoattack benchmark
@@ -83,13 +83,13 @@ def eval(config: dict):
             with torch.inference_mode():
                 model_predictions = model(model_adv_images)
 
-            # baseline_adv_images = baseline_adversary.run_standard_evaluation(images, labels, bs=batch_size)
-            # baseline_adv_images = baseline_adv_images.detach()
-            # with torch.inference_mode():
-            #     baseline_predictions = baseline(baseline_adv_images)
+            baseline_adv_images = baseline_adversary.run_standard_evaluation(images, labels, bs=batch_size)
+            baseline_adv_images = baseline_adv_images.detach()
+            with torch.inference_mode():
+                baseline_predictions = baseline(baseline_adv_images)
 
             y_true.extend(labels.cpu().numpy())
-            # y_preds_baseline.extend(baseline_predictions.cpu().numpy())
+            y_preds_baseline.extend(baseline_predictions.cpu().numpy())
             y_preds_model.extend(custom_torchvision.get_cross_max_consensus(model_predictions, k=2).cpu().numpy())
 
     results = {
