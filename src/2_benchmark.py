@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 import torch
-import torchvision
+from torchvision import models
 from autoattack import AutoAttack
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
@@ -63,8 +63,10 @@ def eval(config: dict):
     model_adversary = AutoAttack(atk_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     # baseline model
-    baseline = torchvision.models.resnet152(pretrained=False, num_classes=len(classes)).to(device)
+    baseline = models.resnet152().to(device)
     baseline.load_state_dict(baseline_weights, strict=True)
+    in_features = baseline.fc.in_features
+    baseline.fc = torch.nn.Linear(in_features, len(classes))
     baseline.eval()
     # adversary
     baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
