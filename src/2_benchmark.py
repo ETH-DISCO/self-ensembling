@@ -62,7 +62,7 @@ def eval(config: dict):
     model_adversary = AutoAttack(atk_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     # baseline model
-    baseline = models.resnet152().to(device)
+    baseline = model.resnet152().to(device)
     baseline.load_state_dict(baseline_weights, strict=True)
     baseline.fc = torch.nn.Linear(baseline.fc.in_features, len(classes))
     baseline.eval()
