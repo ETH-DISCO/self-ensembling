@@ -19,8 +19,8 @@ import utils
 assert torch.cuda.is_available(), "cuda is not available"
 
 utils.set_env(seed=41)
-output_path = Path.cwd() / "data" / "benchmark.jsonl"
 
+output_path = Path.cwd() / "data" / "benchmark.jsonl"
 batch_size = 8
 
 cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = dataloader.get_cifar10_loaders(batch_size, train_ratio=0.8)
@@ -28,6 +28,7 @@ cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader 
 cifar10_weights = dataloader.get_resnet152_cifar10_tuned_weights()
 cifar100_weights = dataloader.get_resnet152_cifar100_tuned_weights()
 baseline_weights = dataloader.get_resnet152_imagenet_weights()
+
 
 class AutoattackWrapper(torch.nn.Module):
     def __init__(self, model, k):
@@ -45,21 +46,12 @@ class AutoattackWrapper(torch.nn.Module):
 
 
 def eval(config: dict):
-    #
-    # data
-    #
-
     if config["dataset"] == "cifar10":
         classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
-    #
-    # models
-    #
-
     device = utils.get_device(disable_mps=True)
-
     # self-ensembling model
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
