@@ -33,7 +33,7 @@ def get_autoattack_warapper(model: torch.nn.Module, k: int):
         def forward(self, x):
             outputs = self.model(x)
             consensus = custom_torchvision.get_cross_max_consensus(outputs, self.k)
-            return consensus.unsqueeze(1).float()
+            return consensus.unsqueeze(1) # 2D output
 
     return SingleOutputModel(model, k)
 
@@ -56,19 +56,14 @@ def eval(config: dict):
     y_true, y_preds, y_final = [], [], []
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         for images, labels in tqdm(testloader):
-            # images, labels = images.to(device), labels.to(device)
-            images, labels = images.float().to(device), labels.long().to(device)
+            images, labels = images.to(device), labels.to(device)
 
-            print("reached 1")
             adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
-            print("reached 2")
             predictions = model(adv_images)
-            print("reached 3")
 
             y_true.extend(labels.cpu().numpy())
             y_preds.extend(predictions.cpu().numpy())
             y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
-            print("reached 4")
 
     results = {
         **config,
