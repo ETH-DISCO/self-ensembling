@@ -8,19 +8,20 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from tqdm import tqdm
 
 import custom_torchvision
-from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_cifar10_tuned_weights, get_resnet152_cifar100_tuned_weights
-from utils import get_device, set_env
+import dataloader
+import utils
 
-set_env(seed=41)
+assert torch.cuda.is_available(), "cuda is not available"
+
+utils.set_env(seed=41)
 output_path = Path.cwd() / "data" / "benchmark.jsonl"
-assert torch.cuda.is_available(), "cuda is not available (infeasible to run on cpu)"
 
 batch_size = 8
 
-cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = get_cifar10_loaders(batch_size, train_ratio=0.8)
-cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = get_cifar100_loaders(batch_size, train_ratio=0.8)
-cifar10_weights = get_resnet152_cifar10_tuned_weights()
-cifar100_weights = get_resnet152_cifar100_tuned_weights()
+cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = dataloader.get_cifar10_loaders(batch_size, train_ratio=0.8)
+cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = dataloader.get_cifar100_loaders(batch_size, train_ratio=0.8)
+cifar10_weights = dataloader.get_resnet152_cifar10_tuned_weights()
+cifar100_weights = dataloader.get_resnet152_cifar100_tuned_weights()
 
 
 class AutoattackWrapper(torch.nn.Module):
@@ -36,10 +37,8 @@ class AutoattackWrapper(torch.nn.Module):
             x = x.detach().requires_grad_(True)
 
         outputs = self.model(x)
-        preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
-        one_hot = torch.zeros(preds.size(0), outputs.size(-1), device=preds.device)
-        one_hot.scatter_(1, preds.unsqueeze(1), 1)
-        return one_hot.requires_grad_(True)
+        preds = custom_torchvision.get_cross_max_consensus_logits(outputs, k=self.k)
+        return preds
 
 
 def eval(config: dict):
@@ -48,7 +47,7 @@ def eval(config: dict):
     elif config["dataset"] == "cifar100":
         classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
 
-    device = get_device(disable_mps=True)
+    device = utils.get_device(disable_mps=True)
     model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
     model.load_state_dict(weights, strict=True)
     model.eval()

@@ -470,7 +470,7 @@ def unfreeze_backbone(model):
             param.requires_grad = True
 
 
-def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: bool = True) -> torch.Tensor:
+def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: bool = False) -> torch.Tensor:
     # based on arxiv.org/abs/2408.05446
     # outputs shape: [batch_size, ensemble_size, num_classes]
     Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]  # subtract the max per-predictor over classes
@@ -480,9 +480,25 @@ def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: b
         Y = torch.median(Z_hat, dim=1)[0]  # get median value
     else:
         Y = Y[:, -1, :]  # get k-th highest value
-    _, predicted = torch.max(Y, 1)
+    _, predicted = torch.max(Y, 1)  # get the index of the maximum value
     assert predicted.shape == (outputs.shape[0],)  # assert [batch_size]
     assert len(predicted.shape) == 1
     assert (predicted >= 0).all() and (predicted < outputs.shape[2]).all()  # assert [0, num_classes)
     assert predicted.dtype == torch.int64  # assert integer
     return predicted
+
+
+def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int, self_assemble_mode: bool = False) -> torch.Tensor:
+    # same as above but returns logits instead of class indices
+    Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]
+    Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]
+    Y, _ = torch.topk(Z_hat, k, dim=1)
+    if self_assemble_mode:
+        Y = torch.median(Z_hat, dim=1)[0]
+    else:
+        Y = Y[:, -1, :]
+    assert Y.shape == (outputs.shape[0], outputs.shape[2])  # assert [batch_size, num_classes]
+    assert len(Y.shape) == 2
+    assert (Y >= 0).all() and (Y <= 1).all()
+    assert Y.dtype == torch.float32
+    return Y
