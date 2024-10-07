@@ -13,6 +13,7 @@ from utils import get_device, set_env
 
 set_env(seed=41)
 output_path = Path.cwd() / "data" / "benchmark.jsonl"
+assert torch.cuda.is_available(), "cuda is not available (infeasible to run on cpu)"
 
 batch_size = 512
 
