@@ -59,17 +59,17 @@ def eval(config: dict):
     adversary = AutoAttack(autoattack_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     y_true, y_preds, y_final = [], [], []
-    with torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
-        for images, labels in tqdm(testloader):
-            images, labels = images.to(device), labels.to(device)
+    for images, labels in tqdm(testloader):
+        images, labels = images.to(device), labels.to(device)
 
-            adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
-            adv_images = adv_images.detach()
+        adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
+        adv_images = adv_images.detach()
+        with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
             predictions = model(adv_images)
 
-            y_true.extend(labels.cpu().numpy())
-            y_preds.extend(predictions.cpu().numpy())
-            y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
+        y_true.extend(labels.cpu().numpy())
+        y_preds.extend(predictions.cpu().numpy())
+        y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).cpu().numpy())
     results = {
         **config,
         "labels": y_true,
