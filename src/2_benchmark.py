@@ -75,25 +75,24 @@ def eval(config: dict):
     #
 
     y_true, y_preds_model, y_preds_baseline = [], [], []
-    with torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
-        for images, labels in tqdm(testloader):
-            images, labels = images.to(device), labels.to(device)
+    for images, labels in tqdm(testloader):
+        images, labels = images.to(device), labels.to(device)
 
-            print("\n" * 3, "model")
-            model_adv_images = model_adversary.run_standard_evaluation(images, labels, bs=batch_size)
-            model_adv_images = model_adv_images.detach()
-            with torch.inference_mode():
-                model_predictions = model(model_adv_images)
+        print("\n" * 3, "model")
+        model_adv_images = model_adversary.run_standard_evaluation(images, labels, bs=batch_size)
+        model_adv_images = model_adv_images.detach()
+        with torch.inference_mode():
+            model_predictions = model(model_adv_images)
 
-            print("\n" * 3, "baseline")
-            baseline_adv_images = baseline_adversary.run_standard_evaluation(images, labels, bs=batch_size)
-            baseline_adv_images = baseline_adv_images.detach()
-            with torch.inference_mode():
-                baseline_predictions = baseline(baseline_adv_images)
+        print("\n" * 3, "baseline")
+        baseline_adv_images = baseline_adversary.run_standard_evaluation(images, labels, bs=batch_size)
+        baseline_adv_images = baseline_adv_images.detach()
+        with torch.inference_mode():
+            baseline_predictions = baseline(baseline_adv_images)
 
-            y_true.extend(labels.cpu().numpy())
-            y_preds_baseline.extend(baseline_predictions.cpu().numpy())
-            y_preds_model.extend(custom_torchvision.get_cross_max_consensus(model_predictions, k=2).cpu().numpy())
+        y_true.extend(labels.cpu().numpy())
+        y_preds_baseline.extend(baseline_predictions.cpu().numpy())
+        y_preds_model.extend(custom_torchvision.get_cross_max_consensus(model_predictions, k=2).cpu().numpy())
 
     results = {
         **config,
