@@ -97,7 +97,6 @@ def eval(config: dict):
                 baseline_predictions = baseline(baseline_adv_images)
 
             y_true.extend(labels.cpu().numpy())
-
             y_preds_baseline.extend(baseline_predictions.cpu().numpy())
             y_preds_model.extend(custom_torchvision.get_cross_max_consensus(model_predictions, k=2).cpu().numpy())
 
