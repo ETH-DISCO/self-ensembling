@@ -78,7 +78,7 @@ def eval(config: dict):
     baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     #
-    # benchmark
+    # autoattack benchmark
     #
 
     y_true, y_preds_model, y_preds_baseline = [], [], []
