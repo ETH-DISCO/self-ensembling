@@ -63,9 +63,10 @@ def eval(config: dict):
     model_adversary = AutoAttack(atk_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     # baseline model
-    baseline = torchvision.models.resnet152(pretrained=False).to(device)
+    baseline = torchvision.models.resnet152(pretrained=False)
     baseline.fc = torch.nn.Linear(baseline.fc.in_features, len(classes))
     custom_torchvision.set_backbone_weights(baseline, baseline_weights)
+    baseline = baseline.to(device)
     baseline.eval()
     # adversary
     baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
@@ -75,7 +76,6 @@ def eval(config: dict):
     #
 
     y_true, y_preds_model, y_preds_baseline = [], [], []
-    # with torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
     for images, labels in tqdm(testloader):
         images, labels = images.to(device), labels.to(device)
 
