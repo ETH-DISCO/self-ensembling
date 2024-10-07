@@ -58,8 +58,11 @@ def eval(config: dict):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
 
-            images.requires_grad = True
+            images.requires_grad_(True)
             adv_images = adversary.run_standard_evaluation(images, labels, bs=batch_size)
+            images.requires_grad_(False)
+            adv_images = adv_images.detach()
+
             predictions = model(adv_images)
 
             y_true.extend(labels.cpu().numpy())
