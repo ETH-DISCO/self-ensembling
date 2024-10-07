@@ -27,7 +27,7 @@ cifar10_classes, cifar10_trainloader, cifar10_valloader, cifar10_testloader = da
 cifar100_classes, cifar100_trainloader, cifar100_valloader, cifar100_testloader = dataloader.get_cifar100_loaders(batch_size, train_ratio=0.8)
 cifar10_weights = dataloader.get_resnet152_cifar10_tuned_weights()
 cifar100_weights = dataloader.get_resnet152_cifar100_tuned_weights()
-
+baseline_weights = dataloader.get_resnet152_imagenet_weights()
 
 class AutoattackWrapper(torch.nn.Module):
     def __init__(self, model, k):
@@ -72,7 +72,7 @@ def eval(config: dict):
 
     # baseline model
     baseline = torchvision.models.resnet152(pretrained=False, num_classes=len(classes)).to(device)
-    baseline.load_state_dict(weights, strict=True)
+    baseline.load_state_dict(baseline_weights, strict=True)
     baseline.eval()
     # adversary
     baseline_adversary = AutoAttack(baseline, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
