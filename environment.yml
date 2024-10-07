@@ -17,11 +17,11 @@ dependencies:
   - xz=5.4.6
   - zlib=1.2.13
   - pip:
+      - git+https://github.com/fra31/auto-attack.git@a39220048b3c9f2cca9a4d3a54604793c68eca7e
       - aiohappyeyeballs==2.4.0
       - aiohttp==3.10.6
       - aiosignal==1.3.1
       - attrs==24.2.0
-      - autoattack==0.1
       - beautifulsoup4==4.12.3
       - certifi==2024.8.30
       - charset-normalizer==3.3.2
