@@ -475,4 +475,4 @@ def get_cross_max_consensus(outputs: torch.Tensor, k: int, self_assemble_mode: b
     else:
         Y = Y[:, -1, :]  # get k-th highest value
     _, predicted = torch.max(Y, 1)
-    return predicted
+    return predicted  # [batch_size]

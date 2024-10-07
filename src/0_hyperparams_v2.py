@@ -86,9 +86,8 @@ def train(config: dict):
         for images, labels in valloader:
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
-            predictions = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"])
             y_true.extend(labels.cpu().numpy())
-            y_pred.extend(predictions.cpu().numpy())
+            y_pred.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
     results = {
         "config": config,
         "accuracy": accuracy_score(y_true, y_pred),

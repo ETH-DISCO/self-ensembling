@@ -37,10 +37,8 @@ def eval(config: dict):
         for images, labels in tqdm(testloader):
             images, labels = images.to(device), labels.to(device)
             outputs = model(images)
-            prediction = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=2)
             y_true.extend(labels.cpu().numpy())
-            y_pred.extend(prediction.cpu().numpy())
-
+            y_pred.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
     results = {
         "config": config,
         "accuracy": accuracy_score(y_true, y_pred),

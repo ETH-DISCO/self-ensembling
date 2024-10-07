@@ -32,8 +32,8 @@ def get_autoattack_warapper(model: torch.nn.Module, k: int):
 
         def forward(self, x):
             outputs = self.model(x)
-            consensus_pred: int = custom_torchvision.get_cross_max_consensus(outputs, self.k).item()
-            return outputs[:, consensus_pred, :]
+            preds = custom_torchvision.get_cross_max_consensus(outputs=outputs, k=self.k)
+            return preds
 
     return SingleOutputModel(model, k)
 
@@ -62,7 +62,7 @@ def eval(config: dict):
 
             y_true.extend(labels.cpu().numpy())
             y_preds.extend(predictions.cpu().numpy())
-            y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=predictions, k=2).item())
+            y_final.extend(custom_torchvision.get_cross_max_consensus(outputs=outputs, k=config["crossmax_k"]).cpu().numpy())
     results = {
         **config,
         "labels": y_true,
