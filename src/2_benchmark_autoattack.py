@@ -1,3 +1,11 @@
+"""
+aborted experiment:
+
+processing each image took ~70-100 seconds, so multiple days are needed to finish the benchmark.
+
+autoattack lacks documentation and it's unclear how to speed up the process.
+"""
+
 import itertools
 import json
 from pathlib import Path
