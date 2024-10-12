@@ -1,4 +1,4 @@
-reproducing: "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" (arxiv.org/abs/2408.05446)
+reproducing "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" (arxiv.org/abs/2408.05446)
 
 weights: https://huggingface.co/sueszli/self-ensembling-resnet152
 
