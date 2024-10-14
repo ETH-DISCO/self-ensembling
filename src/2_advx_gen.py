@@ -67,22 +67,25 @@ def eval(config: dict):
     l = [y for (x, y) in testloader]
     y_test = torch.cat(l, 0)
 
-    # paper only uses these two attacks
-    adversary.attacks_to_run = ["apgd-ce", "apgd-t"]
-    adversary.apgd.n_restarts = 2
-    adversary.fab.n_restarts = 2
+    if run_cheap:
+        # paper only uses these two attacks
+        adversary.attacks_to_run = ["apgd-ce", "apgd-t"]
+        adversary.apgd.n_restarts = 2
+        adversary.fab.n_restarts = 2
+    else:
+        adversary.version = "plus"
 
     # run attack and save images
     # with torch.no_grad():
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
-        if not run_cheap:
-            # complete version
-            adv_complete = adversary.run_standard_evaluation(x_test, y_test, bs=batch_size, state_path=weights_path / "restnet152_advx_state.pth")
-            torch.save({"adv_complete": adv_complete}, output_path / "restnet152_advx.pth")
-        else:
+        if run_cheap:
             # individual version
             adv_complete = adversary.run_standard_evaluation_individual(x_test, y_test, bs=batch_size)
             torch.save(adv_complete, output_path / "restnet152_advx_individual.pth")
+        else:
+            # complete version
+            adv_complete = adversary.run_standard_evaluation(x_test, y_test, bs=batch_size, state_path=weights_path / "restnet152_advx_state.pth")
+            torch.save({"adv_complete": adv_complete}, output_path / "restnet152_advx.pth")
 
 
 if __name__ == "__main__":
