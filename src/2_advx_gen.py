@@ -79,7 +79,6 @@ def eval(config: dict):
         adversary.version = "plus"
 
     # run attack and save images
-    # with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
     with torch.no_grad():
         if run_cheap:
             # individual version
