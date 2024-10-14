@@ -1,5 +1,5 @@
 """
-improvement: single gpu implementation, without early stopping, lots of memory usage optimizations
+improvement: single gpu implementation, without early stopping and lots of memory usage optimizations
 """
 
 import gc

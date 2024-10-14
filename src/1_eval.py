@@ -1,5 +1,5 @@
 """
-how well do we perform on the test set without any adversarial attacks?
+sanity check to see if the self-ensembled model still works as expected
 """
 
 import itertools
