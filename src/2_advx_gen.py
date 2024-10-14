@@ -29,7 +29,7 @@ cifar100_weights = dataloader.get_resnet152_cifar100_tuned_weights()
 baseline_weights = dataloader.get_resnet152_imagenet_weights()
 
 
-def wrap_model(model: torch.nn.Module, device: torch.device):
+def wrap(model: torch.nn.Module, device: torch.device):
     class AutoattackWrapper(torch.nn.Module):
         def __init__(self, model, k):
             super().__init__()
@@ -60,7 +60,7 @@ def eval(config: dict):
     model.load_state_dict(weights, strict=True)
     model.eval()
 
-    adversary = AutoAttack(wrap_model(model=model, device=device), norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
+    adversary = AutoAttack(wrap(model=model, device=device), norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
