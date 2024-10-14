@@ -1,5 +1,7 @@
 """
-improvement: single gpu implementation, without early stopping and lots of memory usage optimizations
+find hyperparams
+
+single gpu implementation, without early stopping and lots of memory usage optimizations
 """
 
 import gc

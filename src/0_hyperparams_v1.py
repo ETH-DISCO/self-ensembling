@@ -1,4 +1,6 @@
 """
+find hyperparams using torchlightning
+
 too memory consuming (even without early stopping)
 """
 
