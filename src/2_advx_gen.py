@@ -1,5 +1,8 @@
 """
-see: https://github.com/fra31/auto-attack/blob/master/autoattack/examples/eval.py
+generate adversarial images using AutoAttack library
+
+tutorial: https://github.com/fra31/auto-attack/blob/master/autoattack/examples/eval.py
+modes: https://github.com/fra31/auto-attack/blob/master/autoattack/autoattack.py
 """
 
 import itertools
@@ -20,7 +23,7 @@ utils.set_env(seed=41)
 
 output_path = Path.cwd() / "data" / "advx"
 batch_size = 8
-run_cheap = False
+individual = False
 
 cifar10_classes, _, _, cifar10_testloader = dataloader.get_cifar10_loaders(batch_size, train_ratio=0.8)
 cifar100_classes, _, _, cifar100_testloader = dataloader.get_cifar100_loaders(batch_size, train_ratio=0.8)
@@ -61,6 +64,7 @@ def eval(config: dict):
     model.eval()
 
     adversary = AutoAttack(wrap(model=model, device=device), norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
+    adversary.attacks_to_run = ["apgd-ce", "apgd-t"]  # paper only runs these two attacks
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -70,22 +74,11 @@ def eval(config: dict):
     l = [y for (x, y) in testloader]
     y_test = torch.cat(l, 0)
 
-    if run_cheap:
-        # paper only uses these two attacks
-        adversary.attacks_to_run = ["apgd-ce", "apgd-t"]
-        adversary.apgd.n_restarts = 2
-        adversary.fab.n_restarts = 2
-    else:
-        adversary.version = "plus"
-
-    # run attack and save images
     with torch.no_grad():
-        if run_cheap:
-            # individual version
+        if individual:
             adv_complete = adversary.run_standard_evaluation_individual(x_test, y_test, bs=batch_size)
             torch.save(adv_complete, output_path / "restnet152_advx_individual.pth")
         else:
-            # complete version
             adv_complete = adversary.run_standard_evaluation(x_test, y_test, bs=batch_size, state_path=weights_path / "restnet152_advx_state.pth")
             torch.save({"adv_complete": adv_complete}, output_path / "restnet152_advx.pth")
 
