@@ -49,6 +49,7 @@ def wrap(model: torch.nn.Module, device: torch.device):
     atk_model = AutoattackWrapper(model, k=2).to(device)
     custom_torchvision.unfreeze_backbone(atk_model)
     atk_model.eval()
+    return atk_model
 
 
 def eval(config: dict):
