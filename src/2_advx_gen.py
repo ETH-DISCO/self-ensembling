@@ -76,11 +76,11 @@ def eval(config: dict):
     # with torch.no_grad():
     with torch.inference_mode(), torch.amp.autocast(device_type=("cuda" if torch.cuda.is_available() else "cpu"), enabled=(torch.cuda.is_available())):
         if not run_cheap:
-            # run attack on all test points at once
+            # complete version
             adv_complete = adversary.run_standard_evaluation(x_test, y_test, bs=batch_size, state_path=weights_path / "restnet152_advx_state.pth")
             torch.save({"adv_complete": adv_complete}, output_path / "restnet152_advx.pth")
         else:
-            # individual version, each attack is run on all test points
+            # individual version
             adv_complete = adversary.run_standard_evaluation_individual(x_test, y_test, bs=batch_size)
             torch.save(adv_complete, output_path / "restnet152_advx_individual.pth")
 
