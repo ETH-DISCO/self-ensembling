@@ -30,8 +30,6 @@ baseline_weights = dataloader.get_resnet152_imagenet_weights()
 
 
 def wrap_model(model: torch.nn.Module, device: torch.device):
-    # autattack wants logits and not a single class
-
     class AutoattackWrapper(torch.nn.Module):
         def __init__(self, model, k):
             super().__init__()
