@@ -354,6 +354,13 @@ preprocess = v2.Compose(
 
 """
 self ensembling resnet152 with linear probes
+
+figures 5 and 6 in the paper show outputs from 54 layers. we only ended up with 53 layers, namely:
+
+- input layer
+- conv1 + batchnorm1 + relu + maxpool (combined as one layer)
+- 50 layers after each block (see: `resnet._make_layer`)
+- average pooling layer
 """
 
 

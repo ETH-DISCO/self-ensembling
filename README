@@ -1,16 +1,4 @@
-reproducing "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" (arxiv.org/abs/2408.05446)
+reproducing "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness"
 
-weights: https://huggingface.co/sueszli/self-ensembling-resnet152
-
-# about
-
-figures 5 and 6 in the paper show outputs from 54 layers. we only ended up with 53 layers, namely:
-
-- input layer
-- conv1 + batchnorm1 + relu + maxpool (combined as one layer)
-- 50 layers after each block (see: `resnet._make_layer`)
-- average pooling layer
-
-# thanks
-
-thanks to @aplesner for the initial implementation of the self-ensembling model: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+- fork source: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+- weights: https://huggingface.co/sueszli/self-ensembling-resnet152
