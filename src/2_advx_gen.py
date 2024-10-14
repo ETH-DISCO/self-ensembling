@@ -23,7 +23,7 @@ utils.set_env(seed=41)
 
 output_path = Path.cwd() / "data" / "advx"
 batch_size = 8
-individual = False
+individual = True
 
 cifar10_classes, _, _, cifar10_testloader = dataloader.get_cifar10_loaders(batch_size, train_ratio=0.8)
 cifar100_classes, _, _, cifar100_testloader = dataloader.get_cifar100_loaders(batch_size, train_ratio=0.8)
