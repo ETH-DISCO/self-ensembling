@@ -29,17 +29,8 @@ cifar100_weights = dataloader.get_resnet152_cifar100_tuned_weights()
 baseline_weights = dataloader.get_resnet152_imagenet_weights()
 
 
-def eval(config: dict):
-    if config["dataset"] == "cifar10":
-        classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
-    elif config["dataset"] == "cifar100":
-        classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
-
-    device = utils.get_device(disable_mps=True)
-
-    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
-    model.load_state_dict(weights, strict=True)
-    model.eval()
+def wrap_model(model: torch.nn.Module, device: torch.device):
+    # autattack wants logits and not a single class
 
     class AutoattackWrapper(torch.nn.Module):
         def __init__(self, model, k):
@@ -57,7 +48,21 @@ def eval(config: dict):
     atk_model = AutoattackWrapper(model, k=2).to(device)
     custom_torchvision.unfreeze_backbone(atk_model)
     atk_model.eval()
-    adversary = AutoAttack(atk_model, norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
+
+
+def eval(config: dict):
+    if config["dataset"] == "cifar10":
+        classes, testloader, weights = cifar10_classes, cifar10_testloader, cifar10_weights
+    elif config["dataset"] == "cifar100":
+        classes, testloader, weights = cifar100_classes, cifar100_testloader, cifar100_weights
+
+    device = utils.get_device(disable_mps=True)
+
+    model = custom_torchvision.get_custom_resnet152(num_classes=len(classes)).to(device)
+    model.load_state_dict(weights, strict=True)
+    model.eval()
+
+    adversary = AutoAttack(wrap_model(model=model, device=device), norm="Linf", eps=8 / 255, version="standard", device=device, verbose=True)
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
