@@ -76,12 +76,13 @@ def eval(config: dict):
     y_test = torch.cat(l, 0)
 
     with torch.no_grad():
+        datasetname = config["dataset"]
         if individual:
             adv_complete = adversary.run_standard_evaluation_individual(x_test, y_test, bs=batch_size)
-            torch.save(adv_complete, output_path / "restnet152_advx_individual.pth")
+            torch.save(adv_complete, output_path / f"restnet152_advx_individual_{datasetname}.pth")
         else:
             adv_complete = adversary.run_standard_evaluation(x_test, y_test, bs=batch_size, state_path=weights_path / "restnet152_advx_state.pth")
-            torch.save({"adv_complete": adv_complete}, output_path / "restnet152_advx.pth")
+            torch.save({"adv_complete": adv_complete}, output_path / f"restnet152_advx_{datasetname}.pth")
 
 
 if __name__ == "__main__":
