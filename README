@@ -1,4 +1,4 @@
 reproducing "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness"
 
+- huggingface: https://huggingface.co/sueszli/self-ensembling-resnet152
 - fork source: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
-- weights: https://huggingface.co/sueszli/self-ensembling-resnet152
