@@ -2,7 +2,7 @@ rm -rf /scratch/$USER/*
 
 cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling && cd self-ensembling
-FILEPATH="./src/2_advx_gen.py"
+FILEPATH="./src/2_autoattack.py"
 
 # --------- end of config
 
