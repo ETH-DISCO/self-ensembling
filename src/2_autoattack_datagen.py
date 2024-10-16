@@ -21,7 +21,7 @@ assert torch.cuda.is_available(), "cuda is not available"
 
 utils.set_env(seed=41)
 
-output_path = Path.cwd() / "data" / "advx"
+output_path = Path.cwd() / "datasets"
 batch_size = 8
 individual = True
 
