@@ -155,19 +155,23 @@ def get_imagenet_loaders(batch_size: int, train_ratio: int):
     return classes_imagenet, trainloader_imagenet, valloader_imagenet, testloader_imagenet
 
 
-def get_cifar10_advx_testloader(batch_size: int):
+def get_cifar10_apgdce_apgdt():
     # ~12GB of data
     # takes ~15min to download, which is slightly faster than generating the data
     repo_id = "sueszli/self-ensembling-resnet152"
     filename = "restnet152_advx_individual_cifar10.pth"
     file_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir=dataset_path)
+    data = torch.load(file_path, weights_only=True)
+    return data["apgd-ce"], data["apgd-t"]
 
 
-def get_cifar100_advx_testloader(batch_size: int):
+def get_cifar100_apgdce_apgdt():
     # ~12GB of data
     repo_id = "sueszli/self-ensembling-resnet152"
     filename = "restnet152_advx_individual_cifar100.pth"
     file_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir=dataset_path)
+    data = torch.load(file_path, weights_only=True)
+    return data["apgd-ce"], data["apgd-t"]
 
 
 """
