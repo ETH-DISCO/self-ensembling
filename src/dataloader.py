@@ -163,9 +163,6 @@ def get_cifar10_advx_testloader(batch_size: int):
     file_path = hf_hub_download(repo_id=repo_id, filename=filename, local_dir=dataset_path)
 
 
-get_cifar10_advx_testloader(8)
-
-
 def get_cifar100_advx_testloader(batch_size: int):
     # ~12GB of data
     repo_id = "sueszli/self-ensembling-resnet152"
