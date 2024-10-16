@@ -1,10 +1,4 @@
-from pathlib import Path
+from dataloader import get_cifar10_apgdce_apgdt, get_cifar100_apgdce_apgdt
 
-import torch
-
-cifar10_path = Path.cwd() / "datasets" / "restnet152_advx_individual_cifar10.pth"
-data = torch.load(cifar10_path, weights_only=True)
-apgd_ce = data["apgd-ce"]
-apgd_t = data["apgd-t"]
-
-print(apgd_ce)
+cifar10_apgdce, cifar10_apgdt = get_cifar10_apgdce_apgdt()
+cifar100_apgdce, cifar100_apgdt = get_cifar100_apgdce_apgdt()
