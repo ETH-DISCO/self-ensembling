@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 
+import custom_torchvision
 import pytorch_lightning as pl
 import torch
 import torchvision.datasets as datasets
@@ -10,10 +11,9 @@ from safetensors.torch import load_file
 from torch.utils.data import DataLoader, random_split
 from torchvision import models
 from tqdm import tqdm
-
-import custom_torchvision
-from datasets import load_dataset
 from utils import set_env
+
+from datasets import load_dataset
 
 set_env(seed=41)
 

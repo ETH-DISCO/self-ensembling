@@ -9,12 +9,11 @@ import itertools
 import os
 from pathlib import Path
 
-import torch
-from autoattack import AutoAttack
-
 import custom_torchvision
 import dataloader
+import torch
 import utils
+from autoattack import AutoAttack
 from dataloader import weights_path
 
 assert torch.cuda.is_available(), "cuda is not available"
