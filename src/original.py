@@ -189,11 +189,7 @@ def eval_model(model, images_in, labels_in, batch_size=128):
     return np.sum(all_preds == labels_in), all_preds.shape[0], all_logits
 
 
-weights = models.ResNet152_Weights.IMAGENET1K_V1
-state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
-
-
-imported_model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
-
+state_dict = models.ResNet152_Weights.IMAGENET1K_V1.get_state_dict(progress=True, model_dir=weights_path)
+imported_model = resnet152(weights=state_dict)
 
 # how did i do the weight thingy again?
