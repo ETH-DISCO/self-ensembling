@@ -1,20 +1,3 @@
-import numpy as np
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision
-
-import random
-import hashlib
-import time
-import copy
-
-import matplotlib.pyplot as plt
-
-from contextlib import contextmanager
-from tqdm import tqdm
 import os
 import random
 from contextlib import contextmanager
@@ -26,6 +9,7 @@ import torch
 import torch.nn.functional as F
 import torchvision
 from torchvision import datasets
+from tqdm import tqdm
 
 assert torch.cuda.is_available()
 
@@ -33,9 +17,7 @@ assert torch.cuda.is_available()
 # config
 #
 
-args = SimpleNamespace(
-    classes=100
-)
+args = SimpleNamespace(classes=100)
 
 classes_path = Path.cwd() / "data"
 dataset_path = Path.cwd() / "datasets"
@@ -78,6 +60,7 @@ def isolated_environment():
             torch.cuda.set_rng_state_all(cuda_random_state)
         np.set_printoptions(**numpy_print_options)
 
+
 #
 # data
 #
@@ -105,7 +88,7 @@ labels_train_np = original_labels_train_np
 labels_test_np = original_labels_test_np
 
 #
-# preprocessing & image augmentation
+# preprocessing
 #
 
 
@@ -121,10 +104,7 @@ resolutions = [32, 16, 8, 4]  # pretty arbitrary
 down_noise = 0.2  # noise standard deviation to be added at the low resolution
 up_noise = 0.2  # noise stadard deviation to be added at the high resolution
 jit_size = 3  # max size of the x-y jit in each axis, sampled uniformly from -jit_size to +jit_size inclusive
-
-# to shuffle randomly which image is which in the multi-res stack
-# False for all experiments in the paper, good for ablations
-shuffle_image_versions_randomly = False
+shuffle_image_versions_randomly = False  # random shuffling of multi-res images (false in paper but good for experiments)
 
 
 def default_make_multichannel_input(images):
@@ -170,34 +150,32 @@ def make_multichannel_input(images):
         shuffled_tensor_list = [all_channels[i] for i in indices]
         return torch.concatenate(shuffled_tensor_list, axis=1)
 
-sample_images = images_test_np[:5]
 
-for j in [0, 1]:
-    multichannel_images = (
-        make_multichannel_input(
-            torch.Tensor(sample_images.transpose([0, 3, 1, 2])).to("cuda")
-        )
-        .detach()
-        .cpu()
-        .numpy()
-        .transpose([0, 2, 3, 1])
-    )
+#
+# eval
+#
 
-    N = 1 + multichannel_images.shape[3] // 3
 
-    plt.figure(figsize=(N * 5.5, 5))
+def eval_model(model, images_in, labels_in, batch_size=128):
+    all_preds = []
+    all_logits = []
 
-    plt.subplot(1, N, 1)
-    plt.title("original")
-    plt.imshow(sample_images[j])
-    plt.xticks([], [])
-    plt.yticks([], [])
+    with torch.no_grad():
+        its = int(np.ceil(float(len(images_in)) / float(batch_size)))
+        pbar = tqdm(range(its), desc="Eval", ncols=100)
 
-    for i in range(N - 1):
-        plt.subplot(1, N, i + 2)
-        plt.title(f"res={resolutions[i]}")
-        plt.imshow(multichannel_images[j, :, :, 3 * i : 3 * (i + 1)])
-        plt.xticks([], [])
-        plt.yticks([], [])
+        for it in pbar:
+            i1 = it * batch_size
+            i2 = min([(it + 1) * batch_size, len(images_in)])
 
-    plt.show()
+        inputs = torch.Tensor(images_in[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
+        outputs = model(inputs)
+
+        all_logits.append(outputs.detach().cpu().numpy())
+        preds = torch.argmax(outputs, axis=-1)
+        all_preds.append(preds.detach().cpu().numpy())
+
+    all_preds = np.concatenate(all_preds, axis=0)
+    all_logits = np.concatenate(all_logits, axis=0)
+
+    return np.sum(all_preds == labels_in), all_preds.shape[0], all_logits
