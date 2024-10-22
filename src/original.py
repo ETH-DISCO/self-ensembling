@@ -1,18 +1,3 @@
-import json
-import os
-from pathlib import Path
-
-import pytorch_lightning as pl
-import torch
-import torchvision.datasets as datasets
-from huggingface_hub import hf_hub_download
-from safetensors.torch import load_file
-from torch.utils.data import DataLoader, random_split
-from torchvision import models
-from tqdm import tqdm
-
-from datasets import load_dataset
-from torchvision.models import resnet152, ResNet152_Weights
 import os
 import random
 from contextlib import contextmanager
@@ -23,14 +8,19 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision
-from torchvision import datasets
+import torchvision.datasets as datasets
+from torchvision import datasets, models
+from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
 
+
 assert torch.cuda.is_available()
+
 
 #
 # config
 #
+
 
 args = SimpleNamespace(classes=100)
 
@@ -42,9 +32,11 @@ os.makedirs(classes_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 
+
 #
 # seed
 #
+
 
 seed = 41
 random.seed(seed)
@@ -75,9 +67,11 @@ def isolated_environment():
             torch.cuda.set_rng_state_all(cuda_random_state)
         np.set_printoptions(**numpy_print_options)
 
+
 #
 # data
 #
+
 
 if args.classes == 10:
     trainset = datasets.CIFAR10(root=dataset_path, train=True, download=True)
@@ -101,9 +95,11 @@ images_test_np = original_images_test_np / 255.0
 labels_train_np = original_labels_train_np
 labels_test_np = original_labels_test_np
 
+
 #
 # preprocessing
 #
+
 
 def custom_rand(input_tensor, size):
     return torch.Tensor(np.random.rand(*size)).to("cuda")
@@ -163,17 +159,19 @@ def make_multichannel_input(images):
         shuffled_tensor_list = [all_channels[i] for i in indices]
         return torch.concatenate(shuffled_tensor_list, axis=1)
 
+
 #
 # eval
 #
+
 
 def eval_model(model, images_in, labels_in, batch_size=128):
     all_preds = []
     all_logits = []
 
     with torch.no_grad():
-        its = int(np.ceil(float(len(images_in)) / float(batch_size))) # iterations
-        pbar = tqdm(range(its), desc="evaluation", ncols=100) # progress bar
+        its = int(np.ceil(float(len(images_in)) / float(batch_size)))  # iterations
+        pbar = tqdm(range(its), desc="evaluation", ncols=100)  # progress bar
         for it in pbar:
             i1 = it * batch_size
             i2 = min([(it + 1) * batch_size, len(images_in)])
@@ -182,13 +180,14 @@ def eval_model(model, images_in, labels_in, batch_size=128):
         outputs = model(inputs)
 
         all_logits.append(outputs.detach().cpu().numpy())
-        preds = torch.argmax(outputs, axis=-1) # get the index of the max logit from self ensemble
+        preds = torch.argmax(outputs, axis=-1)  # get the index of the max logit from self ensemble
         all_preds.append(preds.detach().cpu().numpy())
 
     all_preds = np.concatenate(all_preds, axis=0)
     all_logits = np.concatenate(all_logits, axis=0)
 
     return np.sum(all_preds == labels_in), all_preds.shape[0], all_logits
+
 
 weights = models.ResNet152_Weights.IMAGENET1K_V1
 state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
