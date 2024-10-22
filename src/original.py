@@ -194,3 +194,6 @@ state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
 
 
 imported_model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
+
+
+# how did i do the weight thingy again?
