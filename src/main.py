@@ -1,3 +1,4 @@
+import json
 import copy
 import hashlib
 import os
@@ -84,6 +85,7 @@ if classes == 10:
     original_labels_train_np = np.array(trainset.targets)
     original_images_test_np = np.array(testset.data)
     original_labels_test_np = np.array(testset.targets)
+    classes_cifar10 = json.loads((classes_path / "cifar10_classes.json").read_text())
 elif classes == 100:
     trainset = datasets.CIFAR100(root=dataset_path, train=True, download=True)
     testset = datasets.CIFAR100(root=dataset_path, train=False, download=True)
@@ -91,6 +93,7 @@ elif classes == 100:
     original_labels_train_np = np.array(trainset.targets)
     original_images_test_np = np.array(testset.data)
     original_labels_test_np = np.array(testset.targets)
+    classes_cifar100 = json.loads((classes_path / "cifar100_classes.json").read_text())
 else:
     assert False
 
@@ -686,7 +689,7 @@ print(f"test={test_hits}/{test_count}={test_hits/test_count}")
 self_ensemble_test_acc = test_hits / test_count
 
 # %%
-!pip install git+https://github.com/RobustBench/robustbench.git
+# !pip install git+https://github.com/RobustBench/robustbench.git
 
 # %% [markdown]
 # ## Modified RobustBench AutoAttack method to accommodation randomness
@@ -865,118 +868,13 @@ print(f"Time taken = {int(t2-t1)} seconds")
 
 # %% [markdown]
 # ## Visualizing successful attacks
-
-# %%
 def cifar100_class_to_description(class_num):
-    classes = [
-        "apple",
-        "aquarium fish",
-        "baby",
-        "bear",
-        "beaver",
-        "bed",
-        "bee",
-        "beetle",
-        "bicycle",
-        "bottle",
-        "bowl",
-        "boy",
-        "bridge",
-        "bus",
-        "butterfly",
-        "camel",
-        "can",
-        "castle",
-        "caterpillar",
-        "cattle",
-        "chair",
-        "chimpanzee",
-        "clock",
-        "cloud",
-        "cockroach",
-        "couch",
-        "crab",
-        "crocodile",
-        "cup",
-        "dinosaur",
-        "dolphin",
-        "elephant",
-        "flatfish",
-        "forest",
-        "fox",
-        "girl",
-        "hamster",
-        "house",
-        "kangaroo",
-        "keyboard",
-        "lamp",
-        "lawn mower",
-        "leopard",
-        "lion",
-        "lizard",
-        "lobster",
-        "man",
-        "maple tree",
-        "motorcycle",
-        "mountain",
-        "mouse",
-        "mushroom",
-        "oak tree",
-        "orange",
-        "orchid",
-        "otter",
-        "palm tree",
-        "pear",
-        "pickup truck",
-        "pine tree",
-        "plain",
-        "plate",
-        "poppy",
-        "porcupine",
-        "possum",
-        "rabbit",
-        "raccoon",
-        "ray",
-        "road",
-        "rocket",
-        "rose",
-        "sea",
-        "seal",
-        "shark",
-        "shrew",
-        "skunk",
-        "skyscraper",
-        "snail",
-        "snake",
-        "spider",
-        "squirrel",
-        "streetcar",
-        "sunflower",
-        "sweet pepper",
-        "table",
-        "tank",
-        "telephone",
-        "television",
-        "tiger",
-        "tractor",
-        "train",
-        "trout",
-        "tulip",
-        "turtle",
-        "wardrobe",
-        "whale",
-        "willow tree",
-        "wolf",
-        "woman",
-        "worm",
-    ]
-
-    if 0 <= class_num < len(classes):
-        return classes[class_num]
+    if 0 <= class_num < len(classes_cifar100):
+        return classes_cifar100[class_num]
     else:
         return "Invalid class number"
 
-# %%
+
 from collections import Counter
 
 
@@ -1074,7 +972,7 @@ def hard_to_soft_targets(hard_targets, num_classes=classes):
 
 hard_to_soft_targets([0, 0, 2], num_classes=3)
 
-# %%
+
 import torch.optim as optim
 
 """
@@ -1087,7 +985,6 @@ adversarial_attack_specification = [
     (model, images, perturbation_ids, soft_targets),
 ]
 """
-
 
 def get_complex_specification_adversaries(
     attack_specifications,
@@ -1254,117 +1151,12 @@ for i in range(25):
         # plt.imshow(composite_image)
         # plt.show()
 
-# %%
 def cifar100_class_to_description(class_num):
-    classes = [
-        "apple",
-        "aquarium fish",
-        "baby",
-        "bear",
-        "beaver",
-        "bed",
-        "bee",
-        "beetle",
-        "bicycle",
-        "bottle",
-        "bowl",
-        "boy",
-        "bridge",
-        "bus",
-        "butterfly",
-        "camel",
-        "can",
-        "castle",
-        "caterpillar",
-        "cattle",
-        "chair",
-        "chimpanzee",
-        "clock",
-        "cloud",
-        "cockroach",
-        "couch",
-        "crab",
-        "crocodile",
-        "cup",
-        "dinosaur",
-        "dolphin",
-        "elephant",
-        "flatfish",
-        "forest",
-        "fox",
-        "girl",
-        "hamster",
-        "house",
-        "kangaroo",
-        "keyboard",
-        "lamp",
-        "lawn mower",
-        "leopard",
-        "lion",
-        "lizard",
-        "lobster",
-        "man",
-        "maple tree",
-        "motorcycle",
-        "mountain",
-        "mouse",
-        "mushroom",
-        "oak tree",
-        "orange",
-        "orchid",
-        "otter",
-        "palm tree",
-        "pear",
-        "pickup truck",
-        "pine tree",
-        "plain",
-        "plate",
-        "poppy",
-        "porcupine",
-        "possum",
-        "rabbit",
-        "raccoon",
-        "ray",
-        "road",
-        "rocket",
-        "rose",
-        "sea",
-        "seal",
-        "shark",
-        "shrew",
-        "skunk",
-        "skyscraper",
-        "snail",
-        "snake",
-        "spider",
-        "squirrel",
-        "streetcar",
-        "sunflower",
-        "sweet pepper",
-        "table",
-        "tank",
-        "telephone",
-        "television",
-        "tiger",
-        "tractor",
-        "train",
-        "trout",
-        "tulip",
-        "turtle",
-        "wardrobe",
-        "whale",
-        "willow tree",
-        "wolf",
-        "woman",
-        "worm",
-    ]
-
-    if 0 <= class_num < len(classes):
-        return classes[class_num]
+    if 0 <= class_num < len(classes_cifar100):
+        return classes_cifar100[class_num]
     else:
         return "Invalid class number"
 
-# %%
 plt.figure(figsize=(4 * 9, 4 * 12), dpi=125)
 for i in range(100):
     plt.subplot(12, 9, i + 1)
