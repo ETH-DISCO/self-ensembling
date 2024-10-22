@@ -180,8 +180,7 @@ weights
 
 
 def get_resnet152_imagenet_weights():
-    weights = models.ResNet152_Weights.IMAGENET1K_V1
-    state_dict = weights.get_state_dict(progress=True, model_dir=weights_path)
+    state_dict = models.ResNet152_Weights.IMAGENET1K_V1.get_state_dict(progress=True, model_dir=weights_path)
     return state_dict
 
 
