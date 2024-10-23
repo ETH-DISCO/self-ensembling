@@ -1,12 +1,11 @@
-from types import SimpleNamespace
-import json
 import copy
-import hashlib
+import json
 import os
 import random
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,23 +17,6 @@ import torchvision
 import torchvision.datasets as datasets
 from torchvision import datasets, models
 from torchvision.models import resnet152
-from tqdm import tqdm
-import numpy as np
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torchvision
-
-import random
-import hashlib
-import time
-import copy
-
-import matplotlib.pyplot as plt
-
-from contextlib import contextmanager
 from tqdm import tqdm
 
 assert torch.cuda.is_available()
@@ -187,37 +169,6 @@ def make_multichannel_input(images):  # channel wise image stack + natural noise
         shuffled_tensor_list = [all_channels[i] for i in indices]
         return torch.concatenate(shuffled_tensor_list, axis=1)
 
-# sample_images = images_test_np[:5]
-
-# for j in [0, 1]:
-#     multichannel_images = (
-#         make_multichannel_input(
-#             torch.Tensor(sample_images.transpose([0, 3, 1, 2])).to("cuda"),
-#         )
-#         .detach()
-#         .cpu()
-#         .numpy()
-#         .transpose([0, 2, 3, 1])
-#     )
-
-#     N = 1 + multichannel_images.shape[3] // 3
-
-#     plt.figure(figsize=(N * 5.5, 5))
-
-#     plt.subplot(1, N, 1)
-#     plt.title("original")
-#     plt.imshow(sample_images[j])
-#     plt.xticks([], [])
-#     plt.yticks([], [])
-
-#     for i in range(N - 1):
-#         plt.subplot(1, N, i + 2)
-#         plt.title(f"res={resolutions[i]}")
-#         plt.imshow(multichannel_images[j, :, :, 3 * i : 3 * (i + 1)])
-#         plt.xticks([], [])
-#         plt.yticks([], [])
-
-#     plt.show()
 
 #
 # vanilla resnet: train batch eval
@@ -313,7 +264,7 @@ def train_model(
     for epoch in range(epochs):
         randomized_ids = np.random.permutation(range(len(images_in)))
 
-        if mode == "train": # sometimes switches due to black-box evals
+        if mode == "train":  # sometimes switches due to black-box evals
             model_in.train()
         elif mode == "eval":
             model_in.eval()
@@ -461,25 +412,14 @@ model = train_model(
 )
 
 
-# 
+#
 # self ensembling
-# 
-
-
-
-
-
-
-
-
-
-
-
-
+#
 
 
 # %% [markdown]
 # ## Getting intermediate layer read outs
+
 
 # %%
 class BatchNormLinear(nn.Module):
@@ -580,6 +520,7 @@ class WrapModelForResNet152(torch.nn.Module):
 
         return outputs
 
+
 # %% [markdown]
 # ## Testing intermediate layers
 
@@ -598,6 +539,7 @@ for layer_i in range(53):
 # %% [markdown]
 # ## Wrapper for a single intermediate-layer output model
 
+
 # %%
 class LinearNet(nn.Module):
     def __init__(self, model, layer_i):
@@ -607,6 +549,7 @@ class LinearNet(nn.Module):
 
     def forward(self, inputs):
         return self.model.predict_from_layer(inputs, self.layer_i)
+
 
 # %% [markdown]
 # ## Training intermediate layer linear heads (takes around 20 mins on A100)
@@ -712,6 +655,7 @@ plt.show()
 # %% [markdown]
 # # Self-ensemble robustness evaluation
 
+
 # %%
 class WrappedCombinedModel(torch.nn.Module):
     def __init__(self, model):
@@ -731,6 +675,7 @@ class WrappedCombinedModel(torch.nn.Module):
         logits = torch.topk(all_logits, 3, axis=1).values[:, 2]
         return logits
 
+
 # %%
 wrapped_combined_model = WrappedCombinedModel(linear_model)
 wrapped_combined_model(torch.Tensor(np.zeros((1, 3, 32, 32))).cuda()).shape
@@ -745,27 +690,23 @@ self_ensemble_test_acc = test_hits / test_count
 
 # %% [markdown]
 # ## Modified RobustBench AutoAttack method to accommodation randomness
-# 
+#
 # Taking the code from the https://github.com/RobustBench/robustbench repository and modifying it slightly to easily accommodate the `rand` flag call
 
 import random
+
 # %%
 import warnings
-from argparse import Namespace
 from pathlib import Path
-from typing import Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Callable, Optional, Sequence, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import torch
 from autoattack import AutoAttack
 from autoattack.state import EvaluationState
-from robustbench.data import (CORRUPTION_DATASET_LOADERS, CORRUPTIONS_DICT,
-                              get_preprocessing, load_clean_dataset)
-from robustbench.model_zoo import model_dicts as all_models
+from robustbench.data import CORRUPTIONS_DICT, get_preprocessing, load_clean_dataset
 from robustbench.model_zoo.enums import BenchmarkDataset, ThreatModel
-from robustbench.utils import (clean_accuracy, load_model, parse_args,
-                               update_json)
+from robustbench.utils import clean_accuracy, update_json
 from torch import nn
 from tqdm import tqdm
 
@@ -890,9 +831,10 @@ def benchmark(
     data = (clean_x_test, clean_y_test, x_adv)
     return accuracy, adv_accuracy, data
 
+
 # %% [markdown]
 # ## Adversarial accuracy evaluation (16 min to eval on 32 test images)
-# 
+#
 # You should get something like ~45% adversarial accuracy. The SOTA is 42.67% as of October 2024 and with tons of adversarial training on top! Congrats!
 
 # %%
@@ -918,6 +860,7 @@ with isolated_environment():
 t2 = time.time()
 print(f"Time taken = {int(t2-t1)} seconds")
 
+
 # %% [markdown]
 # ## Visualizing successful attacks
 def cifar100_class_to_description(class_num):
@@ -940,6 +883,7 @@ def count_and_sort_frequencies(lst):
     # Print the sorted items
     for number, frequency in sorted_items:
         print(f"{number}: {frequency}")
+
 
 # %%
 reps = 10
@@ -1010,6 +954,7 @@ for clean_xs, clean_ys, adv_xs in [data_out]:
 # %% [markdown]
 # # Visualizing all classes starting from a uniform grey picture
 
+
 # %%
 def random_class_without_list(excluded_lists, classes=classes):
     available_classes = [[c for c in range(classes) if c not in excluded_lists[i]] for i in range(len(excluded_lists))]
@@ -1037,6 +982,7 @@ adversarial_attack_specification = [
     (model, images, perturbation_ids, soft_targets),
 ]
 """
+
 
 def get_complex_specification_adversaries(
     attack_specifications,
@@ -1125,6 +1071,7 @@ def get_complex_specification_adversaries(
     else:
         return attack_Linfty_limit * torch.tanh(image_perturbations).detach().cpu().numpy(), collect_images
 
+
 # %% [markdown]
 # ## 4 samples for each of the 100 classes of CIFAR-100
 
@@ -1203,11 +1150,13 @@ for i in range(25):
         # plt.imshow(composite_image)
         # plt.show()
 
+
 def cifar100_class_to_description(class_num):
     if 0 <= class_num < len(classes_cifar100):
         return classes_cifar100[class_num]
     else:
         return "Invalid class number"
+
 
 plt.figure(figsize=(4 * 9, 4 * 12), dpi=125)
 for i in range(100):
@@ -1219,5 +1168,3 @@ for i in range(100):
 plt.tight_layout()
 
 plt.show()
-
-
