@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 import json
 import copy
 import hashlib
@@ -18,6 +19,23 @@ import torchvision.datasets as datasets
 from torchvision import datasets, models
 from torchvision.models import resnet152
 from tqdm import tqdm
+import numpy as np
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+import torchvision
+
+import random
+import hashlib
+import time
+import copy
+
+import matplotlib.pyplot as plt
+
+from contextlib import contextmanager
+from tqdm import tqdm
 
 assert torch.cuda.is_available()
 
@@ -26,6 +44,7 @@ assert torch.cuda.is_available()
 # config
 #
 
+args = SimpleNamespace()
 
 classes_path = Path.cwd() / "data"
 dataset_path = Path.cwd() / "datasets"
@@ -41,14 +60,14 @@ os.makedirs(weights_path, exist_ok=True)
 #
 
 
-seed = 41
-random.seed(seed)
-np.random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-torch.cuda.manual_seed_all(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = True
+# seed = 41
+# random.seed(seed)
+# np.random.seed(seed)
+# torch.manual_seed(seed)
+# torch.cuda.manual_seed(seed)
+# torch.cuda.manual_seed_all(seed)
+# torch.backends.cudnn.deterministic = True
+# torch.backends.cudnn.benchmark = True
 
 
 @contextmanager
@@ -138,6 +157,8 @@ def make_multichannel_input(images):  # channel wise image stack + natural noise
         color_amounts = contrasts = custom_choices(np.linspace(0.5, 1.0, 100), 5 + 7 * images + 8 * i + 2 * r)  # change in color amount
 
         def apply_transformations(images, down_res=224, up_res=224, jit_x=0, jit_y=0, down_noise=0.0, up_noise=0.0, contrast=1.0, color_amount=1.0):
+            # images = torch.mean(images,axis=1,keepdims=True) # for mnist
+
             images_collected = []
             for i in range(images.shape[0]):
                 image = images[i]
@@ -166,6 +187,37 @@ def make_multichannel_input(images):  # channel wise image stack + natural noise
         shuffled_tensor_list = [all_channels[i] for i in indices]
         return torch.concatenate(shuffled_tensor_list, axis=1)
 
+# sample_images = images_test_np[:5]
+
+# for j in [0, 1]:
+#     multichannel_images = (
+#         make_multichannel_input(
+#             torch.Tensor(sample_images.transpose([0, 3, 1, 2])).to("cuda"),
+#         )
+#         .detach()
+#         .cpu()
+#         .numpy()
+#         .transpose([0, 2, 3, 1])
+#     )
+
+#     N = 1 + multichannel_images.shape[3] // 3
+
+#     plt.figure(figsize=(N * 5.5, 5))
+
+#     plt.subplot(1, N, 1)
+#     plt.title("original")
+#     plt.imshow(sample_images[j])
+#     plt.xticks([], [])
+#     plt.yticks([], [])
+
+#     for i in range(N - 1):
+#         plt.subplot(1, N, i + 2)
+#         plt.title(f"res={resolutions[i]}")
+#         plt.imshow(multichannel_images[j, :, :, 3 * i : 3 * (i + 1)])
+#         plt.xticks([], [])
+#         plt.yticks([], [])
+
+#     plt.show()
 
 #
 # vanilla resnet: train batch eval
