@@ -3,6 +3,7 @@ import gc
 import os
 import random
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -16,21 +17,21 @@ def get_current_dir() -> Path:
         return Path(os.getcwd())
 
 
-def set_env(seed: int = -1) -> None:
-    if seed == -1:
-        seed = 42
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = True
+def timeit(func) -> callable:
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__} executed in {end - start:.2f}s")
+        return result
 
-        # perf
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"  # (range: 16-512)
+    return wrapper
+
+
+#
+# performance
+#
 
 
 def free_mem():
@@ -59,13 +60,41 @@ def print_gpu_memory() -> None:
         print(f"gpu memory peak cached: {torch.cuda.max_memory_reserved() / 1e9:.2f} GB")
 
 
-def timeit(func) -> callable:
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        print(f"{func.__name__} executed in {end - start:.2f}s")
-        return result
+#
+# reproducibility
+#
 
-    return wrapper
+
+def set_env(seed: int = -1) -> None:
+    if seed == -1:
+        seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = True
+
+        # perf
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"  # (range: 16-512)
+
+
+@contextmanager
+def isolated_environment():
+    np_random_state = np.random.get_state()
+    python_random_state = random.getstate()
+    torch_random_state = torch.get_rng_state()
+    cuda_random_state = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
+    numpy_print_options = np.get_printoptions()
+    try:
+        yield  # execute, then restore the saved state of random seeds and numpy precision
+    finally:
+        np.random.set_state(np_random_state)
+        random.setstate(python_random_state)
+        torch.set_rng_state(torch_random_state)
+        if cuda_random_state:
+            torch.cuda.set_rng_state_all(cuda_random_state)
+        np.set_printoptions(**numpy_print_options)
