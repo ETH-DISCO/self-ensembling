@@ -12,9 +12,10 @@ from pathlib import Path
 import custom_torchvision
 import dataloader
 import torch
-import utils
 from autoattack import AutoAttack
 from dataloader import weights_path
+
+import utils
 
 assert torch.cuda.is_available(), "cuda is not available"
 

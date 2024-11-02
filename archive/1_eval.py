@@ -11,6 +11,7 @@ import torch
 from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_cifar10_tuned_weights, get_resnet152_cifar100_tuned_weights
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from tqdm import tqdm
+
 from utils import get_device, set_env
 
 set_env(seed=41)
