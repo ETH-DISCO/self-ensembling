@@ -1,4 +1,4 @@
-cifar100, preprocessing enabled:
+# cifar100, preprocessing enabled
 
 ```csv
 layer,test_acc
