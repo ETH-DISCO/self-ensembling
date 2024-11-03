@@ -300,5 +300,5 @@ if __name__ == "__main__":
         num_polygons_concentric=5,
         hcaptcha_colors=True,
     )
-    img.save("mask.png")
-    img.show()
+    img.save(get_current_dir() / "mask.png")
+    # img.show()
