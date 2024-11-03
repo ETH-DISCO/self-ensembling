@@ -6,13 +6,13 @@ import custom_torchvision
 import pytorch_lightning as pl
 import torch
 import torchvision.datasets as datasets
+from datasets import load_dataset
 from huggingface_hub import hf_hub_download
 from safetensors.torch import load_file
 from torch.utils.data import DataLoader, random_split
 from torchvision import models
 from tqdm import tqdm
 
-from datasets import load_dataset
 from utils import set_env
 
 set_env(seed=41)
