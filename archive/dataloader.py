@@ -32,7 +32,7 @@ datasets
 
 
 def get_cifar10_loaders(batch_size: int, train_ratio: int):
-    classes_cifar10 = json.loads((classes_path / "cifar10_classes.json").read_text())
+    classes_cifar10 = json.loads((classes_path / "classes_cifar10.json").read_text())
 
     full_dataset_cifar10 = datasets.CIFAR10(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
     train_size = int(train_ratio * len(full_dataset_cifar10))
@@ -48,7 +48,7 @@ def get_cifar10_loaders(batch_size: int, train_ratio: int):
 
 
 def get_cifar100_loaders(batch_size: int, train_ratio: int):
-    classes_cifar100 = json.loads((classes_path / "cifar100_classes.json").read_text())
+    classes_cifar100 = json.loads((classes_path / "classes_cifar100.json").read_text())
 
     full_dataset_cifar100 = datasets.CIFAR100(root=dataset_path, train=True, transform=custom_torchvision.preprocess, download=True)
     train_size = int(train_ratio * len(full_dataset_cifar100))
@@ -64,7 +64,7 @@ def get_cifar100_loaders(batch_size: int, train_ratio: int):
 
 
 def get_imagenette_loaders(batch_size: int, train_ratio: int):
-    classes_imagenette = json.loads((classes_path / "imagenette_classes.json").read_text())
+    classes_imagenette = json.loads((classes_path / "classes_imagenette.json").read_text())
 
     full_dataset_imagenette = datasets.Imagenette(root=dataset_path, split="train", transform=custom_torchvision.preprocess, download=True)
     train_size = int(train_ratio * len(full_dataset_imagenette))
@@ -138,7 +138,7 @@ class ImagenetteDataModule(pl.LightningDataModule):
 
 def get_imagenet_loaders(batch_size: int, train_ratio: int):
     # really slow: data loading takes ~1h, preprocessing takes ~1h, use only for final evaluation
-    classes_imagenet = json.loads((classes_path / "imagenet_classes.json").read_text())
+    classes_imagenet = json.loads((classes_path / "classes_imagenet.json").read_text())
 
     full_dataset_imagenet = load_dataset("visual-layer/imagenet-1k-vl-enriched", split="train", streaming=False, cache_dir=dataset_path)
     full_dataset_imagenet = [(custom_torchvision.preprocess(x["image"].convert("RGB")), x["label"]) for x in tqdm(full_dataset_imagenet)]

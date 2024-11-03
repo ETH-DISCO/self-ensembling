@@ -2,6 +2,19 @@
 find hyperparams
 
 single gpu implementation, without early stopping and lots of memory usage optimizations
+
+best results:
+
+{
+    "dataset": ["cifar10", "cifar100"],
+    "lr": [1e-4],
+    "num_epochs": [16],
+    "crossmax_k": [2],
+}
+
+more epochs would probably increase perf by just <1%. so this should be fine.
+
+k=2 is the best value for both datasets (cifar10 k=3 is just better by 0.1% so it's not too important).
 """
 
 import gc
