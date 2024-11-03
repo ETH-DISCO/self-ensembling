@@ -1,6 +1,6 @@
 # default
 
-### cifar10, preprocessing disabled
+### cifar10, noise disabled
 
 ensemble: 0.9417
 
@@ -15,7 +15,7 @@ layer,test_acc
 52,0.9472
 ```
 
-### cifar10, preprocessing enabled
+### cifar10, noise enabled
 
 ensemble: 0.8973
 
@@ -30,7 +30,7 @@ layer,test_acc
 52,0.8874
 ```
 
-### cifar100, preprocessing disabled
+### cifar100, noise disabled
 
 ensemble: 0.7894
 
@@ -45,7 +45,7 @@ layer,test_acc
 52,0.7976
 ```
 
-### cifar100, preprocessing enabled
+### cifar100, noise enabled
 
 ensemble: 0.6336
 
@@ -60,6 +60,6 @@ layer,test_acc
 52,0.6251
 ```
 
-### imagenette, preprocessing disabled
+### imagenette, noise disabled
 
-### imagenette, preprocessing enabled
+### imagenette, noise enabled
