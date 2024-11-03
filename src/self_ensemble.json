@@ -16,7 +16,9 @@
     },
     {
         "dataset": "cifar10",
-        "train_mods": ["noise"],
+        "train_mods": [
+            "noise"
+        ],
         "eval_mods": [],
         "ensemble_acc": 0.8973,
         "layer_acc": {
@@ -46,7 +48,9 @@
     },
     {
         "dataset": "cifar100",
-        "train_mods": ["noise"],
+        "train_mods": [
+            "noise"
+        ],
         "eval_mods": [],
         "ensemble_acc": 0.6336,
         "layer_acc": {
@@ -76,7 +80,9 @@
     },
     {
         "dataset": "imagenette",
-        "train_mods": ["noise"],
+        "train_mods": [
+            "noise"
+        ],
         "eval_mods": [],
         "ensemble_acc": 0.7928662420382165,
         "layer_acc": {
@@ -88,5 +94,22 @@
             "50": 0.7577070063694268,
             "52": 0.7518471337579617
         }
-    }
+    },
+    {
+        "dataset": "imagenette",
+        "train_mods": [],
+        "eval_mods": [
+            "fgsm_ensemble"
+        ],
+        "ensemble_acc": 0.36280254777070065,
+        "layer_acc": {
+            "20": 0.47821656050955413,
+            "30": 0.3212738853503185,
+            "35": 0.2886624203821656,
+            "40": 0.3115923566878981,
+            "45": 0.3301910828025478,
+            "50": 0.36636942675159234,
+            "52": 0.3946496815286624
+        }
+    }    
 ]
