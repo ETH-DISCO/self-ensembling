@@ -289,8 +289,16 @@ def get_current_dir() -> Path:
 
 
 if __name__ == "__main__":
-    width, height = 224, 224
-
-    img = get_polygon_mask(width, height)
-    # img.save("mask.png")
+    img = get_polygon_mask(
+        # resnet152 expects 224x224
+        width=224,
+        height=224,
+        # arbitrary values
+        num_sides=6,
+        num_polygons_per_row=4,
+        num_polygons_per_col=4,
+        num_polygons_concentric=5,
+        hcaptcha_colors=True,
+    )
+    img.save("mask.png")
     img.show()
