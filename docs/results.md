@@ -17,7 +17,18 @@ layer,test_acc
 
 ### cifar10, preprocessing enabled
 
+ensemble: 0.8973
 
+```csv
+layer,test_acc
+20,0.6902
+30,0.7674
+35,0.8102
+40,0.8351
+45,0.8504
+50,0.8561
+52,0.8874
+```
 
 ### cifar100, preprocessing disabled
 
@@ -48,3 +59,7 @@ layer,test_acc
 50,0.6072
 52,0.6251
 ```
+
+### imagenette, preprocessing disabled
+
+### imagenette, preprocessing enabled
