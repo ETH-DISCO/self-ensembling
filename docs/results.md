@@ -1,12 +1,27 @@
 # default
 
-## cifar10, preprocessing disabled
+### cifar10, preprocessing disabled
 
-## cifar10, preprocessing enabled
+ensemble: 0.9417
 
-## cifar100, preprocessing disabled
+```csv
+layer,test_acc
+20,0.8187
+30,0.8691
+35,0.9099
+40,0.9262
+45,0.9331
+50,0.9381
+52,0.9472
+```
 
-ensemble:0.7894
+### cifar10, preprocessing enabled
+
+
+
+### cifar100, preprocessing disabled
+
+ensemble: 0.7894
 
 ```csv
 layer,test_acc
@@ -19,7 +34,7 @@ layer,test_acc
 52,0.7976
 ```
 
-## cifar100, preprocessing enabled
+### cifar100, preprocessing enabled
 
 ensemble: 0.6336
 
