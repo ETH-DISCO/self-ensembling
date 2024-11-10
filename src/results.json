@@ -1,5 +1,5 @@
 [
-    { "COMMENT": "----------------------------------------- no perturbations" },
+    { "-": "----------------------------------------- no perturbations" },
     {
         "dataset": "cifar100",
         "train_mods": [],
@@ -15,7 +15,7 @@
             "52": 0.7968
         }
     },
-    { "COMMENT": "----------------------------------------- layer specific fgsm" },
+    { "-": "----------------------------------------- layer specific fgsm" },
     {
         "dataset": "cifar100",
         "train_mods": [],
