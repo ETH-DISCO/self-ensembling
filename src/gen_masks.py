@@ -2,7 +2,6 @@
 `pycairo` binary needs admin privileges to be installed on the cluster - so we generate the masks locally
 """
 
-import requests
 import math
 import os
 import random
@@ -11,6 +10,7 @@ from typing import Optional
 
 import cairo
 import numpy as np
+import requests
 from PIL import Image
 
 
@@ -299,7 +299,6 @@ def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> 
     return result
 
 
-
 if __name__ == "__main__":
     height = 224
     width = 224
@@ -320,7 +319,7 @@ if __name__ == "__main__":
     img = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
     img = img.crop((0, img.height - img.width, img.width, img.height))
     img = img.resize((height, width))
-    
+
     opacity = 40
     img = add_overlay(img, Image.open(get_current_dir().parent / "data" / "masks" / "mask.png"), opacity=opacity)
     img.show()
