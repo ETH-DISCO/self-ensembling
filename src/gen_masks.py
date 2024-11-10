@@ -2,6 +2,7 @@
 `pycairo` binary needs admin privileges to be installed on the cluster - so we generate the masks locally
 """
 
+import requests
 import math
 import os
 import random
@@ -288,11 +289,24 @@ def get_current_dir() -> Path:
         return Path(os.getcwd())
 
 
+def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
+    # opacity range: 0 (transparent) to 255 (opaque)
+    overlay = overlay.resize(background.size)
+    result = Image.new("RGBA", background.size)
+    result.paste(background, (0, 0))
+    mask = Image.new("L", overlay.size, opacity)
+    result.paste(overlay, (0, 0), mask)
+    return result
+
+
+
 if __name__ == "__main__":
+    height = 224
+    width = 224
+
     img = get_polygon_mask(
-        # resnet152 expects 224x224
-        width=224,
-        height=224,
+        width=height,
+        height=width,
         # arbitrary values
         num_sides=6,
         num_polygons_per_row=4,
@@ -301,4 +315,12 @@ if __name__ == "__main__":
         hcaptcha_colors=True,
     )
     img.save(get_current_dir().parent / "data" / "masks" / "mask.png")
-    # img.show()
+
+    url = "https://sueszli.github.io/datasets/cat_1966.jpeg"
+    img = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
+    img = img.crop((0, img.height - img.width, img.width, img.height))
+    img = img.resize((height, width))
+    
+    opacity = 40
+    img = add_overlay(img, Image.open(get_current_dir().parent / "data" / "masks" / "mask.png"), opacity=opacity)
+    img.show()
