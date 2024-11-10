@@ -178,6 +178,48 @@
         "test_mods": [
             {
                 "hcaptcha_mask": {
+                    "opacity": 50
+                }
+            }
+        ],
+        "ensemble_acc": 0.0125,
+        "layer_acc": {
+            "20": 0.0102,
+            "30": 0.0101,
+            "35": 0.0109,
+            "40": 0.0101,
+            "45": 0.0104,
+            "50": 0.0085,
+            "52": 0.01
+        }
+    },    
+    {
+        "dataset": "cifar100",
+        "train_mods": [],
+        "test_mods": [
+            {
+                "hcaptcha_mask": {
+                    "opacity": 100
+                }
+            }
+        ],
+        "ensemble_acc": 0.0111,
+        "layer_acc": {
+            "20": 0.0101,
+            "30": 0.01,
+            "35": 0.0101,
+            "40": 0.01,
+            "45": 0.0102,
+            "50": 0.0084,
+            "52": 0.01
+        }
+    },    
+    {
+        "dataset": "cifar100",
+        "train_mods": [],
+        "test_mods": [
+            {
+                "hcaptcha_mask": {
                     "opacity": 128
                 }
             }
