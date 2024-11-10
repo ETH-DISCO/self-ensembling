@@ -1,5 +1,5 @@
 """
-`pycairo` binary needs admin privileges to install on cluster - so we generate the masks locally
+`pycairo` binary needs admin privileges to be installed on the cluster - so we generate the masks locally
 """
 
 import math
@@ -300,5 +300,5 @@ if __name__ == "__main__":
         num_polygons_concentric=5,
         hcaptcha_colors=True,
     )
-    img.save(get_current_dir() / "mask.png")
+    img.save(get_current_dir().parent / "data" / "masks" / "mask.png")
     # img.show()
