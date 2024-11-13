@@ -302,6 +302,7 @@ def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> 
 if __name__ == "__main__":
     height = 224
     width = 224
+    opacity = 40
 
     img = get_polygon_mask(
         width=height,
@@ -320,6 +321,5 @@ if __name__ == "__main__":
     img = img.crop((0, img.height - img.width, img.width, img.height))
     img = img.resize((height, width))
 
-    opacity = 40
     img = add_overlay(img, Image.open(get_current_dir().parent / "data" / "masks" / "mask.png"), opacity=opacity)
     img.show()
