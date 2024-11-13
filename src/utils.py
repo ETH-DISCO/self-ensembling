@@ -40,6 +40,8 @@ def free_mem():
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
         torch.cuda.ipc_collect()
+    if torch.backends.mps.is_available():
+        torch.mps.empty_cache()
 
 
 def get_device(disable_mps=False) -> str:
