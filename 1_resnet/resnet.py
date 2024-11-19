@@ -215,12 +215,11 @@ def eval_model(
 
 
 def is_cached(filepath, combination):
-    if filepath.exists():
+    if filepath.exists() and filepath.stat().st_size > 0:
         lines = filepath.read_text().strip().split("\n")
         lines = [json.loads(line) for line in lines]
         for line in lines:
-            if line["combination"] == combination:
-                print(f"cached: {combination}")
+            if all(line[k] == v for k, v in combination.items()):
                 return True
     return False
 
@@ -239,6 +238,7 @@ if __name__ == "__main__":
     print(f"total combinations: {len(combs)}")
 
     for comb in tqdm(combs, desc="combinations", ncols=100):
+        comb = {k: v for k, v in zip(combinations.keys(), comb)}
         if is_cached(fpath, comb):
             continue
 
