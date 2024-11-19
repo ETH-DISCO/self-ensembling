@@ -106,6 +106,7 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
 
 
 def get_model(
+    dataset,
     num_classes,
     images_train_np,
     labels_train_np,
@@ -128,8 +129,7 @@ def get_model(
         return model
 
     # check if cached
-    serializable_locals = {k: v.tolist() if isinstance(v, np.ndarray) else v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict, np.ndarray))}
-    args_hash = hashlib.md5(json.dumps(serializable_locals, sort_keys=True).encode()).hexdigest()
+    args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
     if (weights_path / cache_name).exists():
         print(f"loading cached model: {cache_name}")
@@ -243,6 +243,7 @@ if __name__ == "__main__":
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
         model = get_model(
+            comb["dataset"],
             num_classes,
             images_train_np.copy(),
             labels_train_np.copy(),
