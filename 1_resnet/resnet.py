@@ -9,7 +9,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 from PIL import Image
-from plotnine import *
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
