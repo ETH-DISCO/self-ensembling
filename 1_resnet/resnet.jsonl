@@ -18,3 +18,16 @@
 {"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 0.5, "opacity": 64, "accuracy": 0.0827}
 {"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 0.5, "opacity": 128, "accuracy": 0.121}
 {"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 0.5, "opacity": 255, "accuracy": 0.0794}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 0, "accuracy": 0.0947}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 1, "accuracy": 0.0861}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 2, "accuracy": 0.0975}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 4, "accuracy": 0.0906}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 8, "accuracy": 0.0963}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 16, "accuracy": 0.1066}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 32, "accuracy": 0.1093}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 64, "accuracy": 0.1287}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 128, "accuracy": 0.0812}
+{"dataset": "cifar10", "tune_epochs": 0, "tune_hcaptcha_ratio": 1.0, "opacity": 255, "accuracy": 0.0694}
+{"dataset": "cifar10", "tune_epochs": 2, "tune_hcaptcha_ratio": 0.0, "opacity": 0, "accuracy": 0.8359}
+{"dataset": "cifar10", "tune_epochs": 2, "tune_hcaptcha_ratio": 0.0, "opacity": 1, "accuracy": 0.839}
+{"dataset": "cifar10", "tune_epochs": 2, "tune_hcaptcha_ratio": 0.0, "opacity": 2, "accuracy": 0.8144}
