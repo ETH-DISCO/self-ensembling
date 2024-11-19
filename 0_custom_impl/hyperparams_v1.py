@@ -13,7 +13,6 @@ import pytorch_lightning as pl
 import torch
 from dataloader import CIFAR10DataModule, CIFAR100DataModule, get_resnet152_imagenet_weights
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-
 from utils import set_env
 
 set_env(seed=41)

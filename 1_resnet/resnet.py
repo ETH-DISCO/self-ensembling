@@ -1,23 +1,19 @@
-from types import SimpleNamespace
-from itertools import product
 import json
-from pathlib import Path
-from PIL import Image
-import copy
 import os
-from plotnine import *
-import pandas as pd
+from itertools import product
+from types import SimpleNamespace
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 import torchvision
-import matplotlib.pyplot as plt
+from PIL import Image
+from plotnine import *
 from torch.utils.data import DataLoader, TensorDataset
+from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
 from utils import *
-
 
 assert torch.cuda.is_available()
 set_env()
@@ -57,13 +53,18 @@ def get_dataset(dataset: str):
     elif dataset == "imagenette":
         num_classes = 10
         imgpath = dataset_path / "imagenette"
-        transform = torchvision.transforms.Compose([torchvision.transforms.Resize((224, 224)), torchvision.transforms.ToTensor(),])
+        transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.Resize((224, 224)),
+                torchvision.transforms.ToTensor(),
+            ]
+        )
         trainset = torchvision.datasets.Imagenette(root=dataset_path, split="train", download=(not (imgpath / "train").exists()), transform=transform)
         testset = torchvision.datasets.Imagenette(root=dataset_path, split="val", download=(not (imgpath / "val").exists()), transform=transform)
 
         num_train = len(trainset)
         num_test = len(testset)
-        original_images_train_np = np.empty((num_train, 224, 224, 3), dtype=np.uint8) # preallocate
+        original_images_train_np = np.empty((num_train, 224, 224, 3), dtype=np.uint8)  # preallocate
         original_labels_train_np = np.empty(num_train, dtype=np.int64)
         original_images_test_np = np.empty((num_test, 224, 224, 3), dtype=np.uint8)
         original_labels_test_np = np.empty(num_test, dtype=np.int64)
@@ -105,26 +106,34 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
     return np.array(all_perturbed_images)
 
 
-def tune_model(
-    model,
-    # tuning to dataset
+def get_model(
+    num_classes,
     images_train_np,
     labels_train_np,
     images_test_np,
     labels_test_np,
-    # adv training
+    # tuning to dataset
     num_epochs=0,
+    # adv training
     use_hcaptcha_ratio=0.0,
     use_hcaptcha_opacity=128,
 ):
+    # load backbone
+    model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
+    model.fc = nn.Linear(2048, num_classes)
+    model = model.to("cuda")
+    model.train()
+    free_mem()
+
+    if num_epochs == 0:
+        return model
+
+    # check if cached
     args_hash = hash(str(SimpleNamespace(**locals())))
     cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
     if (weights_path / cache_name).exists():
         print(f"loading cached model: {cache_name}")
         model.load_state_dict(torch.load(weights_path / cache_name))
-        return model
-
-    if num_epochs == 0:
         return model
 
     if use_hcaptcha_ratio > 0.0:
@@ -179,7 +188,8 @@ def tune_model(
         test_acc = 100.0 * correct / total
         print(f"epoch [{epoch+1}/{num_epochs}]: train loss: {train_loss:.4f} | train acc: {train_acc:.2f}% | test loss: {test_loss:.4f} | test acc: {test_acc:.2f}%")
 
-    print("cached model")
+    modelsize = sum(p.numel() for p in model.parameters())
+    print(f"cached model {cache_name} ({modelsize / 1e6:.2f} MB)")
     torch.save(model.state_dict(), weights_path / cache_name)
     return model
 
@@ -204,6 +214,16 @@ def eval_model(
     return correct / total
 
 
+def is_cached(filepath, combination):
+    if filepath.exists():
+        lines = filepath.read_text().strip().split("\n")
+        lines = [json.loads(line) for line in lines]
+        for line in lines:
+            if line["combination"] == combination:
+                print(f"cached: {combination}")
+                return True
+    return False
+
 
 if __name__ == "__main__":
     fpath = output_path / "resnet.jsonl"
@@ -212,45 +232,31 @@ if __name__ == "__main__":
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
         "tune_epochs": [0, 2, 4, 6, 8, 10],
-        "tune_hcaptcha_ratio": [0.0, 0.5], # either none or half
-        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255], # both for tune and eval
+        "tune_hcaptcha_ratio": [0.0, 0.5],  # no advertarial training vs. 50% of training data is perturbed
+        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],  # same oopacity both for training and eval
     }
     combs = list(product(*combinations.values()))
     print(f"total combinations: {len(combs)}")
+
     for comb in tqdm(combs, desc="combinations", ncols=100):
-        # cache
-        if fpath.exists():
-            lines = fpath.read_text().strip().split("\n")
-            lines = [json.loads(line) for line in lines]
-            for line in lines:
-                if line["combination"] == comb:
-                    print(f"cached: {comb}")
-                    continue
+        if is_cached(fpath, comb):
+            continue
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
-
-        # backbone
-        from torchvision.models import resnet152, ResNet152_Weights
-        model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
-        model.fc = nn.Linear(2048, num_classes)
-        model = model.to("cuda")
-        model.train()
-        free_mem()
-
-        # tuning / adv training
-        model = tune_model(
-            model,
+        model = get_model(
+            num_classes,
             images_train_np.copy(),
             labels_train_np.copy(),
             images_test_np.copy(),
             labels_test_np.copy(),
             num_epochs=comb["tune_epochs"],
-            use_hcaptcha_ratio=0.5,
+            use_hcaptcha_ratio=comb["tune_hcaptcha_ratio"],
             use_hcaptcha_opacity=comb["opacity"],
         )
-        free_mem()
-
-
-        output = {}
+        acc = eval_model(model, images_test_np.copy(), labels_test_np.copy())
+        output = {
+            **comb,
+            "accuracy": acc,
+        }
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")

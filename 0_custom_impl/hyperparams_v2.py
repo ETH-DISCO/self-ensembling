@@ -28,7 +28,6 @@ from dataloader import get_cifar10_loaders, get_cifar100_loaders, get_resnet152_
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.amp import GradScaler
 from tqdm import tqdm
-
 from utils import print_gpu_memory, set_env
 
 set_env(seed=41)

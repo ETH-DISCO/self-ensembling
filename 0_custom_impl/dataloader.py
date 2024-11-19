@@ -11,9 +11,9 @@ from safetensors.torch import load_file
 from torch.utils.data import DataLoader, random_split
 from torchvision import models
 from tqdm import tqdm
+from utils import set_env
 
 from datasets import load_dataset
-from utils import set_env
 
 set_env(seed=41)
 
