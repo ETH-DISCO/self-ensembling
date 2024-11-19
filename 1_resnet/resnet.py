@@ -128,7 +128,8 @@ def get_model(
         return model
 
     # check if cached
-    args_hash = hashlib.md5(json.dumps(locals(), sort_keys=True).encode()).hexdigest()
+    serializable_locals = {k: v.tolist() if isinstance(v, np.ndarray) else v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict, np.ndarray))}
+    args_hash = hashlib.md5(json.dumps(serializable_locals, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
     if (weights_path / cache_name).exists():
         print(f"loading cached model: {cache_name}")
@@ -237,7 +238,7 @@ if __name__ == "__main__":
     print(f"total combinations: {len(combs)}")
 
     for idx, comb in enumerate(combs):
-        print(f"total progress: {idx+1}/{len(combs)}")
+        print(f"progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
         if is_cached(fpath, comb):
             continue
