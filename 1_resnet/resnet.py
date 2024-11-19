@@ -88,12 +88,11 @@ def get_dataset(dataset: str):
 
 
 def hcaptcha_mask(images, mask: Image.Image, opacity: int):
-    # opacity: [0 (transparent); 255 (opaque)]
     def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
         overlay = overlay.resize(background.size)
         result = Image.new("RGBA", background.size)
         result.paste(background, (0, 0))
-        mask = Image.new("L", overlay.size, opacity)
+        mask = Image.new("L", overlay.size, opacity) # opacity: [0 (transparent); 255 (opaque)]
         result.paste(overlay, (0, 0), mask)
         return result
 
@@ -112,11 +111,11 @@ def get_model(
     labels_train_np,
     images_test_np,
     labels_test_np,
-    # tuning to dataset
+    # epochs
     num_epochs=0,
-    # adv training
+    # ratio of adversarial training
     use_hcaptcha_ratio=0.0,
-    use_hcaptcha_opacity=128,
+    use_hcaptcha_opacity=0,
 ):
     # load backbone
     model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
