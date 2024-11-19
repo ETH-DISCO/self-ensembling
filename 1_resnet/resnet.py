@@ -119,8 +119,8 @@ def get_model(
     args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
     if (weights_path / cache_name).exists():
-        print(f"loading cached model: {cache_name}")
         model.load_state_dict(torch.load(weights_path / cache_name))
+        print(f"loaded cached model: {cache_name}")
         return model
 
     if use_hcaptcha_ratio > 0.0:
