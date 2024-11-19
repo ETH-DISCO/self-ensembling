@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from itertools import product
 import json
 from pathlib import Path
@@ -113,14 +114,20 @@ def tune_model(
     labels_test_np,
     # adv training
     num_epochs=0,
-    use_hcaptcha=False,
     use_hcaptcha_ratio=0.0,
     use_hcaptcha_opacity=128,
 ):
+    args_hash = hash(str(SimpleNamespace(**locals())))
+    cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
+    if (weights_path / cache_name).exists():
+        print(f"loading cached model: {cache_name}")
+        model.load_state_dict(torch.load(weights_path / cache_name))
+        return model
+
     if num_epochs == 0:
         return model
 
-    if use_hcaptcha:
+    if use_hcaptcha_ratio > 0.0:
         num_total = len(labels_train_np)
         num_perturbed = int(use_hcaptcha_ratio * num_total)
         perturbed_indices = np.random.choice(num_total, num_perturbed, replace=False)
@@ -172,6 +179,8 @@ def tune_model(
         test_acc = 100.0 * correct / total
         print(f"epoch [{epoch+1}/{num_epochs}]: train loss: {train_loss:.4f} | train acc: {train_acc:.2f}% | test loss: {test_loss:.4f} | test acc: {test_acc:.2f}%")
 
+    print("cached model")
+    torch.save(model.state_dict(), weights_path / cache_name)
     return model
 
 
@@ -197,62 +206,51 @@ def eval_model(
 
 
 if __name__ == "__main__":
+    fpath = output_path / "resnet.jsonl"
+    fpath.touch(exist_ok=True)
+
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
         "tune_epochs": [0, 2, 4, 6, 8, 10],
-        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],
+        "tune_hcaptcha_ratio": [0.0, 0.5], # either none or half
+        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255], # both for tune and eval
     }
-    all_combinations = list(product(*combinations.values()))
+    combs = list(product(*combinations.values()))
+    print(f"total combinations: {len(combs)}")
+    for comb in tqdm(combs, desc="combinations", ncols=100):
+        # cache
+        if fpath.exists():
+            lines = fpath.read_text().strip().split("\n")
+            lines = [json.loads(line) for line in lines]
+            for line in lines:
+                if line["combination"] == comb:
+                    print(f"cached: {comb}")
+                    continue
+
+        images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
+
+        # backbone
+        from torchvision.models import resnet152, ResNet152_Weights
+        model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
+        model.fc = nn.Linear(2048, num_classes)
+        model = model.to("cuda")
+        model.train()
+        free_mem()
+
+        # tuning / adv training
+        model = tune_model(
+            model,
+            images_train_np.copy(),
+            labels_train_np.copy(),
+            images_test_np.copy(),
+            labels_test_np.copy(),
+            num_epochs=comb["tune_epochs"],
+            use_hcaptcha_ratio=0.5,
+            use_hcaptcha_opacity=comb["opacity"],
+        )
+        free_mem()
 
 
-    dataset = "cifar10"
-    images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(dataset)
-
-    free_mem()
-
-    # backbone
-    from torchvision.models import resnet152, ResNet152_Weights
-    model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
-    model.fc = nn.Linear(2048, num_classes)
-    model = model.to("cuda")
-    model.train()
-
-    # tuning / adv training
-    num_epochs = 10
-    use_hcaptcha = True
-    use_hcaptcha_ratio = 0.1
-    use_hcaptcha_opacity = 128
-    model = tune_model(
-        model,
-        images_train_np.copy(),
-        labels_train_np.copy(),
-        images_test_np.copy(),
-        labels_test_np.copy(),
-        num_epochs=num_epochs,
-        use_hcaptcha=use_hcaptcha,
-        use_hcaptcha_ratio=use_hcaptcha_ratio,
-        use_hcaptcha_opacity=use_hcaptcha_opacity,
-    )
-
-    free_mem()
-
-    opacity_range = [255, 128, 64, 32, 16, 8, 4, 2, 1]
-
-    opacity = 128
-    mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
-    images_test_np_copy = hcaptcha_mask(images_test_np, mask, opacity)
-
-    output = {
-        "model": "resnet152",
-        "dataset": dataset,
-        "num_tuning_epochs": num_epochs,
-        "accuracy": acc,
-    }
-
-    fpath = output_path / "resnet.jsonl"
-    fpath.touch(exist_ok=True)
-    with fpath.open("a") as f:
-        f.write(json.dumps(output) + "\n")
-
-    print(json.dumps(output, indent=4))
-
+        output = {}
+        with fpath.open("a") as f:
+            f.write(json.dumps(output) + "\n")
