@@ -1,3 +1,4 @@
+from itertools import product
 import json
 from pathlib import Path
 from PIL import Image
@@ -85,7 +86,7 @@ def get_dataset(dataset: str):
 
 
 def hcaptcha_mask(images, mask: Image.Image, opacity: int):
-    # opacity range: 0 (transparent) to 255 (opaque)
+    # opacity: [0 (transparent); 255 (opaque)]
     def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
         overlay = overlay.resize(background.size)
         result = Image.new("RGBA", background.size)
@@ -95,13 +96,11 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
         return result
 
     all_perturbed_images = []
-
     to_pil = lambda x: Image.fromarray((x * 255).astype(np.uint8))
     to_np = lambda x: np.array(x) / 255.0
     for i in tqdm(range(len(images)), desc="adding overlay", ncols=100):
         perturbed_image = to_np(add_overlay(to_pil(images[i]), mask, opacity).convert("RGB"))
         all_perturbed_images.append(perturbed_image)
-
     return np.array(all_perturbed_images)
 
 
@@ -176,7 +175,36 @@ def tune_model(
     return model
 
 
-def main():
+def eval_model(
+    model,
+    images_test_np,
+    labels_test_np,
+):
+    model.eval()
+    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
+    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for inputs, labels in tqdm(test_loader, desc="evaluating", ncols=100):
+            inputs, labels = inputs.to("cuda"), labels.to("cuda")
+            outputs = model(inputs)
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+    return correct / total
+
+
+
+if __name__ == "__main__":
+    combinations = {
+        "dataset": ["cifar10", "cifar100", "imagenette"],
+        "tune_epochs": [0, 2, 4, 6, 8, 10],
+        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],
+    }
+    all_combinations = list(product(*combinations.values()))
+
+
     dataset = "cifar10"
     images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(dataset)
 
@@ -184,7 +212,6 @@ def main():
 
     # backbone
     from torchvision.models import resnet152, ResNet152_Weights
-import hashlib
     model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
     model.fc = nn.Linear(2048, num_classes)
     model = model.to("cuda")
@@ -197,53 +224,29 @@ import hashlib
     use_hcaptcha_opacity = 128
     model = tune_model(
         model,
-        images_train_np,
-        labels_train_np,
-        images_test_np,
-        labels_test_np,
+        images_train_np.copy(),
+        labels_train_np.copy(),
+        images_test_np.copy(),
+        labels_test_np.copy(),
         num_epochs=num_epochs,
         use_hcaptcha=use_hcaptcha,
         use_hcaptcha_ratio=use_hcaptcha_ratio,
         use_hcaptcha_opacity=use_hcaptcha_opacity,
     )
 
-    # eval
-    test_mods = []
     free_mem()
 
-    images_test_np_copy = images_test_np.copy()
-    labels_test_np_copy = labels_test_np.copy()
+    opacity_range = [255, 128, 64, 32, 16, 8, 4, 2, 1]
 
-    if True:
-        args = {
-            # [255, 128, 64, 32, 16, 8, 4, 2, 1]
-            "opacity": 4,
-        }
-        test_mods.append({"hcaptcha_mask": args})
-        mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
-        images_test_np_copy = hcaptcha_mask(images_test_np_copy, mask, args["opacity"])
-
-
-    # eval
-    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
-    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
-    correct = 0
-    total = 0
-    model.eval()
-    with torch.no_grad():
-        for inputs, labels in tqdm(test_loader, desc="evaluating", ncols=100):
-            inputs, labels = inputs.to("cuda"), labels.to("cuda")
-            outputs = model(inputs)
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
+    opacity = 128
+    mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
+    images_test_np_copy = hcaptcha_mask(images_test_np, mask, opacity)
 
     output = {
         "model": "resnet152",
         "dataset": dataset,
         "num_tuning_epochs": num_epochs,
-        "test_mods": test_mods,
-        "accuracy": correct / total,
+        "accuracy": acc,
     }
 
     fpath = output_path / "resnet.jsonl"
@@ -253,6 +256,3 @@ import hashlib
 
     print(json.dumps(output, indent=4))
 
-
-if __name__ == "__main__":
-    main()
