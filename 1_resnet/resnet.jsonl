@@ -58,3 +58,9 @@
 {"dataset": "cifar10", "tune_epochs": 2, "tune_hcaptcha_ratio": 1.0, "opacity": 64, "accuracy": 0.7544}
 {"dataset": "cifar10", "tune_epochs": 2, "tune_hcaptcha_ratio": 1.0, "opacity": 128, "accuracy": 0.5703}
 {"dataset": "cifar10", "tune_epochs": 2, "tune_hcaptcha_ratio": 1.0, "opacity": 255, "accuracy": 0.1}
+{"dataset": "cifar10", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 0, "accuracy": 0.7144}
+{"dataset": "cifar10", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 1, "accuracy": 0.818}
+{"dataset": "cifar10", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 2, "accuracy": 0.8313}
+{"dataset": "cifar10", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 4, "accuracy": 0.8396}
+{"dataset": "cifar10", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 8, "accuracy": 0.8392}
+{"dataset": "cifar10", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 16, "accuracy": 0.8034}
