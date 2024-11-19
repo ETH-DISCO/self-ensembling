@@ -175,9 +175,8 @@ def get_model(
         test_acc = 100.0 * correct / total
         print(f"epoch [{epoch+1}/{num_epochs}]: train loss: {train_loss:.4f}, train acc: {train_acc:.2f}%, test loss: {test_loss:.4f}, test acc: {test_acc:.2f}%")
 
-    modelsize = sum(p.numel() for p in model.parameters())
-    print(f"cached model {cache_name} ({modelsize / 1e6:.2f} MB)")
     torch.save(model.state_dict(), weights_path / cache_name)
+    print(f"cached model {cache_name} ({sum(p.numel() for p in model.parameters()) / 1e6:.2f} MB)")
     return model
 
 
