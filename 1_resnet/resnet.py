@@ -1,3 +1,5 @@
+import hashlib
+import json
 import json
 import os
 from itertools import product
@@ -129,7 +131,7 @@ def get_model(
         return model
 
     # check if cached
-    args_hash = hash(str(SimpleNamespace(**locals())))
+    args_hash = hashlib.md5(json.dumps(locals(), sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
     if (weights_path / cache_name).exists():
         print(f"loading cached model: {cache_name}")
@@ -231,13 +233,14 @@ if __name__ == "__main__":
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
         "tune_epochs": [0, 2, 4, 6, 8, 10],
-        "tune_hcaptcha_ratio": [0.0, 0.5],  # no advertarial training vs. 50% of training data is perturbed
+        "tune_hcaptcha_ratio": [0.0, 0.5, 1.0],  # no adv training, 50% adv training, 100% adv training
         "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],  # same oopacity both for training and eval
     }
     combs = list(product(*combinations.values()))
     print(f"total combinations: {len(combs)}")
 
-    for comb in tqdm(combs, desc="combinations", ncols=100):
+    for idx, comb in enumerate(combs):
+        print(f"total progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
         if is_cached(fpath, comb):
             continue
