@@ -40,7 +40,6 @@ def get_dataset(dataset: str):
         original_labels_train_np = np.array(trainset.targets)
         original_images_test_np = np.array(testset.data)
         original_labels_test_np = np.array(testset.targets)
-
     elif dataset == "cifar100":
         num_classes = 100
         trainset = torchvision.datasets.CIFAR100(root=dataset_path, train=True, download=True, transform=torchvision.transforms.ToTensor())
@@ -49,41 +48,31 @@ def get_dataset(dataset: str):
         original_labels_train_np = np.array(trainset.targets)
         original_images_test_np = np.array(testset.data)
         original_labels_test_np = np.array(testset.targets)
-
     elif dataset == "imagenette":
         num_classes = 10
         imgpath = dataset_path / "imagenette"
-        transform = torchvision.transforms.Compose(
-            [
-                torchvision.transforms.Resize((224, 224)),
-                torchvision.transforms.ToTensor(),
-            ]
-        )
+        transform = torchvision.transforms.Compose([torchvision.transforms.Resize((224, 224)), torchvision.transforms.ToTensor()])
         trainset = torchvision.datasets.Imagenette(root=dataset_path, split="train", download=(not (imgpath / "train").exists()), transform=transform)
         testset = torchvision.datasets.Imagenette(root=dataset_path, split="val", download=(not (imgpath / "val").exists()), transform=transform)
-
         num_train = len(trainset)
         num_test = len(testset)
-        original_images_train_np = np.empty((num_train, 224, 224, 3), dtype=np.uint8)  # preallocate
+        original_images_train_np = np.empty((num_train, 224, 224, 3), dtype=np.uint8)
         original_labels_train_np = np.empty(num_train, dtype=np.int64)
         original_images_test_np = np.empty((num_test, 224, 224, 3), dtype=np.uint8)
         original_labels_test_np = np.empty(num_test, dtype=np.int64)
-
         for idx, (image, label) in tqdm(enumerate(trainset), total=num_train, desc="preprocessing trainset", ncols=100):
             original_images_train_np[idx] = (np.transpose(image.numpy(), (1, 2, 0)) * 255).astype(np.uint8)
             original_labels_train_np[idx] = label
         for idx, (image, label) in tqdm(enumerate(testset), total=num_test, desc="preprocessing testset", ncols=100):
             original_images_test_np[idx] = (np.transpose(image.numpy(), (1, 2, 0)) * 255).astype(np.uint8)
             original_labels_test_np[idx] = label
-
     else:
         assert False
 
-    images_train_np = original_images_train_np / 255.0  # map to [0, 1]
+    images_train_np = original_images_train_np / 255.0
     images_test_np = original_images_test_np / 255.0
     labels_train_np = original_labels_train_np
     labels_test_np = original_labels_test_np
-
     return images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes
 
 
@@ -92,7 +81,7 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
         overlay = overlay.resize(background.size)
         result = Image.new("RGBA", background.size)
         result.paste(background, (0, 0))
-        mask = Image.new("L", overlay.size, opacity) # opacity: [0 (transparent); 255 (opaque)]
+        mask = Image.new("L", overlay.size, opacity) # 0=transparent; 255=opaque
         result.paste(overlay, (0, 0), mask)
         return result
 
@@ -106,19 +95,18 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
 
 
 def get_model(
-    dataset,
+    dataset, # used by hash
     num_classes,
     images_train_np,
     labels_train_np,
     images_test_np,
     labels_test_np,
-    # epochs
+    # dataset tuning epochs
     num_epochs=0,
     # ratio of adversarial training
     use_hcaptcha_ratio=0.0,
     use_hcaptcha_opacity=0,
 ):
-    # load backbone
     model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
     model.fc = nn.Linear(2048, num_classes)
     model = model.to("cuda")
@@ -128,7 +116,6 @@ def get_model(
     if num_epochs == 0:
         return model
 
-    # check if cached
     args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}_{num_epochs}.pth"
     if (weights_path / cache_name).exists():
