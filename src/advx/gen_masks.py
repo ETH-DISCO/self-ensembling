@@ -314,12 +314,12 @@ if __name__ == "__main__":
         num_polygons_concentric=5,
         hcaptcha_colors=True,
     )
-    img.save(get_current_dir().parent / "data" / "masks" / "mask.png")
+    img.save(get_current_dir().parent.parent / "data" / "masks" / "mask.png")
 
     url = "https://sueszli.github.io/datasets/cat_1966.jpeg"
     img = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
     img = img.crop((0, img.height - img.width, img.width, img.height))
     img = img.resize((height, width))
 
-    img = add_overlay(img, Image.open(get_current_dir().parent / "data" / "masks" / "mask.png"), opacity=opacity)
+    img = add_overlay(img, Image.open(get_current_dir().parent.parent / "data" / "masks" / "mask.png"), opacity=opacity)
     img.show()
