@@ -17,6 +17,7 @@ from tqdm import tqdm
 from utils import *
 
 
+assert torch.cuda.is_available()
 set_env()
 
 data_path = get_current_dir().parent / "data"
@@ -28,6 +29,9 @@ os.makedirs(data_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
+
+prerendered_mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
+
 
 def get_dataset(dataset: str):
     if dataset == "cifar10":
@@ -80,93 +84,6 @@ def get_dataset(dataset: str):
     return images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes
 
 
-def tune_model()
-
-
-
-#
-# tuning backbone
-#
-
-dataset = "cifar10"
-images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(dataset)
-
-free_mem()
-
-from torchvision.models import resnet152, ResNet152_Weights
-model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
-model.fc = nn.Linear(2048, num_classes)
-device = get_device(disable_mps=False)
-model = model.to(device)
-model.train()
-
-num_epochs = 0
-use_hcaptcha = False
-use_hcaptcha_ratio = 0.0
-
-if num_epochs > 0:
-    learning_rate = 0.001
-    batch_size = 128
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    train_dataset = TensorDataset(torch.FloatTensor(images_train_np).permute(0, 3, 1, 2), torch.LongTensor(labels_train_np))
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    for epoch in range(num_epochs):
-        model.train()
-        running_loss = 0.0
-        correct = 0
-        total = 0
-
-        # train
-        for inputs, labels in tqdm(train_loader, desc=f"epoch {epoch+1}/{num_epochs}", ncols=100):
-            inputs, labels = inputs.to(device), labels.to(device)
-
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-            running_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-
-        train_loss = running_loss / len(train_loader)
-        train_acc = 100.0 * correct / total
-
-        # eval
-        model.eval()
-        test_loss = 0.0
-        correct = 0
-        total = 0
-
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-
-                test_loss += loss.item()
-                _, predicted = outputs.max(1)
-                total += labels.size(0)
-                correct += predicted.eq(labels).sum().item()
-
-        test_loss = test_loss / len(test_loader)
-        test_acc = 100.0 * correct / total
-
-        print(f"epoch [{epoch+1}/{num_epochs}]: train loss: {train_loss:.4f} | train acc: {train_acc:.2f}% | test loss: {test_loss:.4f} | test acc: {test_acc:.2f}%")
-
-
-#
-# perturbing test set
-#
-
-
 def hcaptcha_mask(images, mask: Image.Image, opacity: int):
     # opacity range: 0 (transparent) to 255 (opaque)
     def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
@@ -188,51 +105,154 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
     return np.array(all_perturbed_images)
 
 
-test_mods = []
-free_mem()
+def tune_model(
+    model,
+    # tuning to dataset
+    images_train_np,
+    labels_train_np,
+    images_test_np,
+    labels_test_np,
+    # adv training
+    num_epochs=0,
+    use_hcaptcha=False,
+    use_hcaptcha_ratio=0.0,
+    use_hcaptcha_opacity=128,
+):
+    if num_epochs == 0:
+        return model
 
-images_test_np_copy = images_test_np.copy()
-labels_test_np_copy = labels_test_np.copy()
+    if use_hcaptcha:
+        num_total = len(labels_train_np)
+        num_perturbed = int(use_hcaptcha_ratio * num_total)
+        perturbed_indices = np.random.choice(num_total, num_perturbed, replace=False)
+        images_train_np[perturbed_indices] = hcaptcha_mask(images_train_np[perturbed_indices], prerendered_mask, opacity=use_hcaptcha_opacity)
 
-if True:
-    args = {
-        # [255, 128, 64, 32, 16, 8, 4, 2, 1]
-        "opacity": 4,
+    learning_rate = 0.001
+    batch_size = 128
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    train_dataset = TensorDataset(torch.FloatTensor(images_train_np).permute(0, 3, 1, 2), torch.LongTensor(labels_train_np))
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    for epoch in range(num_epochs):
+        running_loss = 0.0
+        correct = 0
+        total = 0
+        model.train()
+        for inputs, labels in tqdm(train_loader, desc=f"epoch {epoch+1}/{num_epochs}", ncols=100):
+            inputs, labels = inputs.to("cuda"), labels.to("cuda")
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+        train_loss = running_loss / len(train_loader)
+        train_acc = 100.0 * correct / total
+
+        model.eval()
+        test_loss = 0.0
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for inputs, labels in test_loader:
+                inputs, labels = inputs.to("cuda"), labels.to("cuda")
+                outputs = model(inputs)
+                loss = criterion(outputs, labels)
+                test_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += labels.size(0)
+                correct += predicted.eq(labels).sum().item()
+        test_loss = test_loss / len(test_loader)
+        test_acc = 100.0 * correct / total
+        print(f"epoch [{epoch+1}/{num_epochs}]: train loss: {train_loss:.4f} | train acc: {train_acc:.2f}% | test loss: {test_loss:.4f} | test acc: {test_acc:.2f}%")
+
+    return model
+
+
+def main():
+    dataset = "cifar10"
+    images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(dataset)
+
+    free_mem()
+
+    # backbone
+    from torchvision.models import resnet152, ResNet152_Weights
+import hashlib
+    model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
+    model.fc = nn.Linear(2048, num_classes)
+    model = model.to("cuda")
+    model.train()
+
+    # tuning / adv training
+    num_epochs = 10
+    use_hcaptcha = True
+    use_hcaptcha_ratio = 0.1
+    use_hcaptcha_opacity = 128
+    model = tune_model(
+        model,
+        images_train_np,
+        labels_train_np,
+        images_test_np,
+        labels_test_np,
+        num_epochs=num_epochs,
+        use_hcaptcha=use_hcaptcha,
+        use_hcaptcha_ratio=use_hcaptcha_ratio,
+        use_hcaptcha_opacity=use_hcaptcha_opacity,
+    )
+
+    # eval
+    test_mods = []
+    free_mem()
+
+    images_test_np_copy = images_test_np.copy()
+    labels_test_np_copy = labels_test_np.copy()
+
+    if True:
+        args = {
+            # [255, 128, 64, 32, 16, 8, 4, 2, 1]
+            "opacity": 4,
+        }
+        test_mods.append({"hcaptcha_mask": args})
+        mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
+        images_test_np_copy = hcaptcha_mask(images_test_np_copy, mask, args["opacity"])
+
+
+    # eval
+    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
+    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    correct = 0
+    total = 0
+    model.eval()
+    with torch.no_grad():
+        for inputs, labels in tqdm(test_loader, desc="evaluating", ncols=100):
+            inputs, labels = inputs.to("cuda"), labels.to("cuda")
+            outputs = model(inputs)
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+
+    output = {
+        "model": "resnet152",
+        "dataset": dataset,
+        "num_tuning_epochs": num_epochs,
+        "test_mods": test_mods,
+        "accuracy": correct / total,
     }
-    test_mods.append({"hcaptcha_mask": args})
-    mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
-    images_test_np_copy = hcaptcha_mask(images_test_np_copy, mask, args["opacity"])
+
+    fpath = output_path / "resnet.jsonl"
+    fpath.touch(exist_ok=True)
+    with fpath.open("a") as f:
+        f.write(json.dumps(output) + "\n")
+
+    print(json.dumps(output, indent=4))
 
 
-#
-# eval
-#
-
-
-model.eval()
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-correct = 0
-total = 0
-with torch.no_grad():
-    for inputs, labels in tqdm(test_loader, desc="evaluating", ncols=100):
-        inputs, labels = inputs.to(device), labels.to(device)
-        outputs = model(inputs)
-        _, predicted = outputs.max(1)
-        total += labels.size(0)
-        correct += predicted.eq(labels).sum().item()
-
-output = {
-    "model": "resnet152",
-    "dataset": dataset,
-    "num_tuning_epochs": num_epochs,
-    "test_mods": test_mods,
-    "accuracy": correct / total,
-}
-
-fpath = output_path / "resnet.jsonl"
-fpath.touch(exist_ok=True)
-with fpath.open("a") as f:
-    f.write(json.dumps(output) + "\n")
-
-print(json.dumps(output, indent=4))
+if __name__ == "__main__":
+    main()

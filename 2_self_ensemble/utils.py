@@ -29,11 +29,6 @@ def timeit(func) -> callable:
     return wrapper
 
 
-#
-# performance
-#
-
-
 def free_mem():
     gc.collect()
     if torch.cuda.is_available():
@@ -60,11 +55,6 @@ def print_gpu_memory() -> None:
         print(f"gpu memory cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
         print(f"gpu memory peak: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
         print(f"gpu memory peak cached: {torch.cuda.max_memory_reserved() / 1e9:.2f} GB")
-
-
-#
-# reproducibility
-#
 
 
 def set_env(seed: int = -1) -> None:
