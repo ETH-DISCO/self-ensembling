@@ -1,9 +1,7 @@
 import hashlib
 import json
-import json
 import os
 from itertools import product
-from types import SimpleNamespace
 
 import numpy as np
 import torch
