@@ -235,8 +235,6 @@ if __name__ == "__main__":
         "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],  # same oopacity both for training and eval
     }
     combs = list(product(*combinations.values()))
-    print(f"total combinations: {len(combs)}")
-
     for idx, comb in enumerate(combs):
         print(f"progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
