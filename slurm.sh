@@ -1,6 +1,7 @@
 # 
 # 1. generate a conda environment
-# 2. copy this into the scratch directory
+# 2. follow tutorial to attach to a shell
+# 3. run this in the terminal
 # 
 
 rm -rf /scratch/$USER/* # will also clean slurm results! 
@@ -25,9 +26,11 @@ conda env create --file environment.yml
 
 # dispatch job
 git clone https://github.com/ETH-DISCO/cluster-tutorial/ && mv cluster-tutorial/job.sh . && rm -rf cluster-tutorial # get job.sh
-sed -i 's/{{USERNAME}}/'$USER'/g' job.sh # update username in template
-sed -i 's/{{NODE}}/'tikgpu07'/g' job.sh # update node in template
+sed -i 's/{{USERNAME}}/'$USER'/g' job.sh
+sed -i 's/{{NODE}}/'tikgpu08'/g' job.sh
 sbatch job.sh $FILEPATH
+
+# ---
 
 # check status
 watch -n 0.5 "squeue -u $USER --states=R"
