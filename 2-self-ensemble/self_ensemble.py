@@ -11,7 +11,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 from PIL import Image
-from plotnine import *
 from tqdm import tqdm
 from utils import *
 
