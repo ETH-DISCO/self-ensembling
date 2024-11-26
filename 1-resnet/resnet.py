@@ -80,7 +80,7 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
         overlay = overlay.resize(background.size)
         result = Image.new("RGBA", background.size)
         result.paste(background, (0, 0))
-        mask = Image.new("L", overlay.size, opacity) # 0=transparent; 255=opaque
+        mask = Image.new("L", overlay.size, opacity)  # 0=transparent; 255=opaque
         result.paste(overlay, (0, 0), mask)
         return result
 
@@ -94,7 +94,7 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
 
 
 def get_model(
-    dataset, # used by hash
+    dataset,  # used by hash
     num_classes,
     images_train_np,
     labels_train_np,
