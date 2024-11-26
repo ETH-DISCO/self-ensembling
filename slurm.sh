@@ -4,7 +4,7 @@
 # 3. run this in the terminal
 # 
 
-rm -rf /scratch/$USER/* # will also clean slurm results! 
+rm -rf /scratch/$USER/*
 
 cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
