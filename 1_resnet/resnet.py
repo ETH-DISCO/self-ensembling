@@ -49,7 +49,7 @@ def get_dataset(dataset: str):
         original_labels_test_np = np.array(testset.targets)
     elif dataset == "imagenette":
         num_classes = 10
-        imgpath = dataset_path / "imagenette"
+        imgpath = dataset_path / "imagenette2"
         transform = torchvision.transforms.Compose([torchvision.transforms.Resize((224, 224)), torchvision.transforms.ToTensor()])
         trainset = torchvision.datasets.Imagenette(root=dataset_path, split="train", download=(not (imgpath / "train").exists()), transform=transform)
         testset = torchvision.datasets.Imagenette(root=dataset_path, split="val", download=(not (imgpath / "val").exists()), transform=transform)
