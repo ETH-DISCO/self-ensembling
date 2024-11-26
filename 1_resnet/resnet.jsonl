@@ -420,3 +420,4 @@
 {"dataset": "imagenette", "tune_epochs": 2, "tune_hcaptcha_ratio": 1.0, "opacity": 255, "accuracy": 0.09630573248407644}
 {"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 0, "accuracy": 0.8848407643312102}
 {"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 1, "accuracy": 0.9205095541401274}
+{"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 2, "accuracy": 0.8856050955414013}
