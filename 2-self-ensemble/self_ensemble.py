@@ -424,7 +424,7 @@ def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, 
         adversarial_epsilon=8 / 255,
         skip_test_set_eval=False,
     )
-    print(f"trained backbone model - train accs: {train_accs}, test accs: {test_accs}")
+    print(f"trained backbone model - avg train acc: {np.mean(train_accs)}, avg test acc: {np.mean(test_accs)}")
 
     #
     # training linear layers of self-ensemble
@@ -460,7 +460,7 @@ def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, 
             skip_test_set_eval=False,
         )
         linear_layers_collected_dict[layer_i] = copy.deepcopy(backbone_model.linear_layers[layer_i])
-        print(f"trained layer={layer_i} - train accs: {train_accs}, test accs: {test_accs}")
+        print(f"trained layer={layer_i} - avg train acc: {np.mean(train_accs)}, avg test acc: {np.mean(test_accs)}")
 
     # copy dict back to backbone
     for layer_i in layers_to_use:
