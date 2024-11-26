@@ -359,3 +359,5 @@
 {"dataset": "cifar100", "tune_epochs": 10, "tune_hcaptcha_ratio": 1.0, "opacity": 128, "accuracy": 0.2563}
 {"dataset": "cifar100", "tune_epochs": 10, "tune_hcaptcha_ratio": 1.0, "opacity": 255, "accuracy": 0.01}
 {"dataset": "imagenette", "tune_epochs": 0, "tune_hcaptcha_ratio": 0.0, "opacity": 0, "accuracy": 0.08917197452229299}
+{"dataset": "imagenette", "tune_epochs": 0, "tune_hcaptcha_ratio": 0.0, "opacity": 1, "accuracy": 0.190828025477707}
+{"dataset": "imagenette", "tune_epochs": 0, "tune_hcaptcha_ratio": 0.0, "opacity": 2, "accuracy": 0.08789808917197452}
