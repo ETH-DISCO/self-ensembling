@@ -421,3 +421,6 @@
 {"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 0, "accuracy": 0.8848407643312102}
 {"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 1, "accuracy": 0.9205095541401274}
 {"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 2, "accuracy": 0.8856050955414013}
+{"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 4, "accuracy": 0.9044585987261147}
+{"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 8, "accuracy": 0.9345222929936305}
+{"dataset": "imagenette", "tune_epochs": 4, "tune_hcaptcha_ratio": 0.0, "opacity": 16, "accuracy": 0.8907006369426752}
