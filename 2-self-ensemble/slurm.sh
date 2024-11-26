@@ -1,3 +1,5 @@
+# srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i
+
 # 
 # 1. generate a conda environment
 # 2. follow tutorial to attach to a shell
@@ -27,7 +29,7 @@ conda env create --file environment.yml
 # dispatch job
 git clone https://github.com/ETH-DISCO/cluster-tutorial/ && mv cluster-tutorial/job.sh . && rm -rf cluster-tutorial # get job.sh
 sed -i 's/{{USERNAME}}/'$USER'/g' job.sh
-sed -i 's/{{NODE}}/'tikgpu08'/g' job.sh
+sed -i 's/{{NODE}}/'tikgpu10'/g' job.sh
 sbatch job.sh $FILEPATH
 
 # ---

@@ -1,3 +1,5 @@
+# srun --mem=100GB --gres=gpu:01 --nodelist tikgpu08 --pty bash -i
+
 # 
 # 1. generate a conda environment
 # 2. follow tutorial to attach to a shell
