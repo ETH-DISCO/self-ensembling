@@ -217,7 +217,7 @@ if __name__ == "__main__":
         "dataset": ["cifar10", "cifar100", "imagenette"],
         "tune_epochs": [0, 2, 4, 6, 8, 10],
         "tune_hcaptcha_ratio": [0.0, 0.5, 1.0],  # no adv training, 50% adv training, 100% adv training
-        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],  # same oopacity both for training and eval
+        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],  # same opacity both for training and eval
     }
     combs = list(product(*combinations.values()))
     for idx, comb in enumerate(combs):
