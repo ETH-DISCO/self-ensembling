@@ -18,7 +18,7 @@ from utils import set_env
 set_env(seed=41)
 pl.seed_everything(seed=41)
 
-output_path = Path.cwd() / "data" / "hyperparams.jsonl"
+output_path = Path.cwd() / "hyperparams.jsonl"
 
 batch_size = 32  # lower always better, but slower
 train_ratio = 0.8  # common default
