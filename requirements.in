@@ -1,0 +1,11 @@
+huggingface_hub
+matplotlib
+numpy
+Pillow
+pytorch_lightning
+Requests
+safetensors
+scikit_learn
+torch
+torchvision
+tqdm
