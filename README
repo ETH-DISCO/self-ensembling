@@ -1,6 +1,10 @@
-based on:
+Reproducing the results of the paper "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" by Fort et al. (2024)
 
-- official repository by authors: https://github.com/stanislavfort/ensemble-everything-everywhere
-- aplesner reproduction: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+Based on:
 
-weights: https://huggingface.co/sueszli/self-ensembling-resnet152
+- Official repository by authors: https://github.com/stanislavfort/ensemble-everything-everywhere
+- Aplesner reproduction: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+
+File tree:
+
+- .../ - archive of a custom implementation and hyperparam tuning before the authors shared their code
