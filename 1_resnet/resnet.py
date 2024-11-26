@@ -245,3 +245,19 @@ if __name__ == "__main__":
         }
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
+
+
+"""
+yjabary@tikgpu08:/scratch/yjabary/self-ensembling/1_resnet $ tail -f $(ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 300)
+    images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
+                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/yjabary/self-ensembling/./1_resnet/resnet.py", line 55, in get_dataset
+    testset = torchvision.datasets.Imagenette(root=dataset_path, split="val", download=(not (imgpath / "val").exists()), transform=transform)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/itet-stor/yjabary/net_scratch/conda_envs/con/lib/python3.11/site-packages/torchvision/datasets/imagenette.py", line 68, in __init__
+    self._download()
+  File "/itet-stor/yjabary/net_scratch/conda_envs/con/lib/python3.11/site-packages/torchvision/datasets/imagenette.py", line 84, in _download
+    raise RuntimeError(
+RuntimeError: The directory /scratch/yjabary/self-ensembling/datasets/imagenette2 already exists. If you want to re-download or re-extract the images, delete the directory.
+
+"""
