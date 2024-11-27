@@ -407,12 +407,12 @@ def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, 
         return model
 
     torch.cuda.empty_cache()
-    model, train_accs, test_accs = train_model(  # don't autocast
+    model, train_accs, test_accs = train_model(
         model_in=model,
         images_in=images_train_np,
         labels_in=labels_train_np,
         epochs=6,
-        lr=3.3e-5,  # simple grid search, likely not optimal
+        lr=3.3e-5,
         batch_size=128,
         optimizer_in=optim.Adam,
         subset_only=None,
