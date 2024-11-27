@@ -302,7 +302,7 @@ def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> 
 if __name__ == "__main__":
     height = 224
     width = 224
-    opacity = 40
+    opacity = 64
 
     img = get_polygon_mask(
         width=height,
@@ -316,12 +316,15 @@ if __name__ == "__main__":
     )
 
     # store
-    img.save(get_current_dir().parent.parent / "data" / "masks" / "mask.png")
+    img.save(get_current_dir().parent / "data" / "masks" / "mask.png")
 
     # demo
     url = "https://sueszli.github.io/datasets/cat_1966.jpeg"
     img = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
     img = img.crop((0, img.height - img.width, img.width, img.height))
     img = img.resize((height, width))
-    img = add_overlay(img, Image.open(get_current_dir().parent.parent / "data" / "masks" / "mask.png"), opacity=opacity)
+    filepath = get_current_dir().parent / "data" / "masks" / "mask.png"
+    assert filepath.exists()
+
+    img = add_overlay(img, Image.open(filepath), opacity=opacity)
     img.show()
