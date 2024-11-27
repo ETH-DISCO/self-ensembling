@@ -401,10 +401,10 @@ def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, 
     args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}.pth"
     if (weights_path / cache_name).exists():
-        final_model = WrapModelForResNet152(model.imported_model, configured_make_multichannel_input, num_classes=num_classes)
-        final_model.load_state_dict(torch.load(weights_path / cache_name))
+        cached_model = WrapModelForResNet152(imported_model, configured_make_multichannel_input, num_classes=num_classes)
+        cached_model.load_state_dict(torch.load(weights_path / cache_name, weights_only=True))
         print(f"loaded cached model: {cache_name}")
-        return model
+        return cached_model
 
     torch.cuda.empty_cache()
     model, train_accs, test_accs = train_model(
