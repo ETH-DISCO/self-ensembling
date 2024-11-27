@@ -356,17 +356,15 @@ class LinearNet(nn.Module):
 
 
 def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, resolutions, layers_to_use, num_classes, images_train_np, labels_train_np):
-    #
-    # check cache
-    #
-
     args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}.pth"
     if (weights_path / cache_name).exists():
+        configured_make_multichannel_input = lambda x: make_multichannel_input(x, enable_noise=enable_noise, enable_random_shuffle=enable_random_shuffle, resolutions=resolutions)
+        model = WrapModelForResNet152(None, configured_make_multichannel_input, num_classes=num_classes)
         model.load_state_dict(torch.load(weights_path / cache_name))
         print(f"loaded cached model: {cache_name}")
         return model
-
+    
     #
     # backbone model
     #
@@ -402,7 +400,6 @@ def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, 
             return x
 
     configured_make_multichannel_input = lambda x: make_multichannel_input(x, enable_noise=enable_noise, enable_random_shuffle=enable_random_shuffle, resolutions=resolutions)
-
     wrapped_model = ImportedModelWrapper(imported_model, configured_make_multichannel_input).to("cuda")
     wrapped_model.multichannel_fn = configured_make_multichannel_input
     model = copy.deepcopy(wrapped_model)
