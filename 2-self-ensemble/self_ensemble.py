@@ -1,17 +1,3 @@
-"""
-mask config:
-
-get_polygon_mask(
-    width=224
-    height=224,
-    num_sides=6,
-    num_polygons_per_row=4,
-    num_polygons_per_col=4,
-    num_polygons_concentric=5,
-    hcaptcha_colors=True,
-)
-"""
-
 import copy
 import hashlib
 import json

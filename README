@@ -1,10 +1,8 @@
-Experimenting with "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" by Fort et al. (2024)
-
-Based on:
+Implementation of "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" by Fort et al. (2024) based on:
 
 - Official repository by authors: https://github.com/stanislavfort/ensemble-everything-everywhere
 - Aplesner reproduction: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
 
-File tree:
+Experiments:
 
 - .../ - archive of a custom implementation and hyperparam tuning before the authors shared their code
