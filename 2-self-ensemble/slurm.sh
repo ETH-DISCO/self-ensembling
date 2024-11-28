@@ -1,4 +1,5 @@
-# srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i
+# $ srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i
+# $ salloc --nodelist=tikgpu10
 
 # 
 # 1. generate a conda environment
