@@ -1,3 +1,17 @@
+"""
+mask config:
+
+get_polygon_mask(
+    width=224
+    height=224,
+    num_sides=6,
+    num_polygons_per_row=4,
+    num_polygons_per_col=4,
+    num_polygons_concentric=5,
+    hcaptcha_colors=True,
+)
+"""
+
 import copy
 import hashlib
 import json
@@ -29,7 +43,7 @@ os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
 
-prerendered_mask = Image.open((get_current_dir().parent / "data" / "masks" / "mask.png"))
+prerendered_mask = Image.open(get_current_dir() / "masks" / "mask.png")
 
 
 def get_dataset(dataset: str):
