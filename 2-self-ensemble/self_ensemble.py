@@ -86,7 +86,7 @@ def make_multichannel_input(images, enable_noise, enable_random_shuffle, resolut
     down_noise = 0.2  # noise standard deviation to be added at the low resolution
     up_noise = 0.2  # noise stadard deviation to be added at the high resolution
     jit_size = 3  # max size of the x-y jit in each axis, sampled uniformly from -jit_size to +jit_size inclusive
-    up_res = 32  # hard coded for CIFAR-10 or CIFAR-100
+    up_res = 32  # hard coded for CIFAR-10 or CIFAR-100  <---------------- THIS IS WHY IMAGENETTE ISN'T WORKING
 
     if not enable_noise:
         return torch.concatenate([images] * len(resolutions), axis=1)  # don't do anything
