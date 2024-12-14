@@ -11,7 +11,7 @@ rm -rf /scratch/$USER/*
 
 cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
-FILEPATH="./2-self-ensemble/self_ensemble.py"
+FILEPATH="./3-self-ensemble/self_ensemble.py"
 
 # ---
 

@@ -698,23 +698,9 @@ if __name__ == "__main__":
         }
         free_mem()
 
-        fgsm_idxs = [20, 30, 35, 40, 45, 50, 52]
-        for fgsm_idx in fgsm_idxs:
-            fgsm_images_test_np = fgsm_attack_layer(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_i=fgsm_idx, batch_size=64)
-            output[f"fgsm_{fgsm_idx}_ensemble_acc"] = eval_self_ensemble(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
-            output[f"fgsm_{fgsm_idx}_layer_accs"] = eval_layers(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
-        free_mem()
-
-        fgsmcombined_idxs = [20, 30, 35]
-        fgsmcombined_images_test_np = fgsm_attack_layer_combined(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_idxs=fgsmcombined_idxs, layer_weights=None, batch_size=64)
-        output[f"fgsmcombined_{fgsmcombined_idxs}_ensemble_acc"] = eval_self_ensemble(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
-        output[f"fgsmcombined_{fgsmcombined_idxs}_layer_accs"] = eval_layers(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
-        free_mem()
-
-        fgsmensemble_images_test_np = fgsm_attack_ensemble(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, batch_size=64)
-        output["fgsmensemble_ensemble_acc"] = eval_self_ensemble(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
-        output["fgsmensemble_layer_accs"] = eval_layers(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
-        free_mem()
+        # 
+        # just repeat the missing mask experiment stuff
+        # 
 
         opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
         for opacity in opacities:
