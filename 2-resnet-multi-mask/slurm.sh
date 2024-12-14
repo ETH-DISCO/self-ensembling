@@ -2,8 +2,7 @@
 # $ salloc --nodelist=tikgpu10
 
 # 1. generate a conda environment
-# 2. follow tutorial to attach to a shell
-# 3. copy these instructions to the terminal
+# 2. copy these instructions to the terminal
 
 rm -rf /scratch/$USER/*
 
