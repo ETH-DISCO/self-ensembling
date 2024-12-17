@@ -662,6 +662,7 @@ if __name__ == "__main__":
 
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
+        # in future experiments: either set all to True or False, no combinations
         "training_noise": [False, True],
         "training_shuffle": [False, True],
         "training_adversarial": [False, True],
