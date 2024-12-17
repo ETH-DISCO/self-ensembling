@@ -304,20 +304,29 @@ if __name__ == "__main__":
     width = 224
     opacity = 40
 
-    for sides in [3, 4, 5, 6, 7, 8]:
-        for per_rowcol in [2, 4, 6, 8]:
-            for num_concentric in [2, 4, 6, 8, 10]:
-                for colors in [True, False]:
-                    img = get_polygon_mask(
-                        width=height,
-                        height=width,
-                        # config
-                        num_sides=sides,
-                        num_polygons_per_row=per_rowcol,
-                        num_polygons_per_col=per_rowcol,
-                        num_polygons_concentric=num_concentric,
-                        hcaptcha_colors=colors,
-                    )
+    """
+    choose best combination from previous experiment
+    """
 
-                    fp = get_current_dir() / "masks" / f"{sides}_{per_rowcol}_{num_concentric}_{colors}.png"
-                    img.save(fp)
+    img = get_polygon_mask(
+        width=height,
+        height=width,
+        # arbitrary values
+        num_sides=6,
+        num_polygons_per_row=4,
+        num_polygons_per_col=4,
+        num_polygons_concentric=5,
+        hcaptcha_colors=True,
+    )
+
+    # store
+    fp = get_current_dir() / "masks" / "mask.png"
+    img.save(fp)
+
+    # demo
+    url = "https://sueszli.github.io/datasets/cat_1966.jpeg"
+    img = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
+    img = img.crop((0, img.height - img.width, img.width, img.height))
+    img = img.resize((height, width))
+    img = add_overlay(img, Image.open(fp), opacity=opacity)
+    img.show()
