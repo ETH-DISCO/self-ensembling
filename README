@@ -5,5 +5,5 @@ Implementation of "Ensemble everything everywhere: Multi-scale aggregation for a
 
 Experiments:
 
-- 0-custom-impl: hyperparameter tuning with improved version of andreas' code (done)
-- 1-resnet-single-mask: same as `2-resnet-multi-mask` but a single iteration for testing (done)
+- `0-custom-impl` (done) -> hyper parameter testing andreas' code
+- `1-resnet-single-mask` (done) -> looking at train/tuning parameters for a single arbitrary mask
