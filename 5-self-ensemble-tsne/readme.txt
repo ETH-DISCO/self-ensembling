@@ -1,4 +1,5 @@
-tsne plots: try to get latents and tsne plot them
+tsne plots:
+- instead of linear probes just dump the latents of models
 
 set all train configs to true / false simultaneously
 - "training_noise": [False, True],
