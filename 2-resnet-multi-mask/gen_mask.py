@@ -302,7 +302,6 @@ def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> 
 if __name__ == "__main__":
     height = 224
     width = 224
-    opacity = 40
 
     for sides in [3, 4, 5, 6, 7, 8]:
         for per_rowcol in [2, 4, 6, 8]:
