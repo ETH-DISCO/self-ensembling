@@ -10,6 +10,8 @@ workflow:
 - run through, get latents for subset of layers (same as linear probes)
 - map to 2d plot
 - add masks / fgsm
+- run through, get latents
+- map to 2d plot, but don't fit again, but make it relative to first plot: https://umap-learn.readthedocs.io/en/latest/transform.html
 
 set all train configs to true / false simultaneously:
 - "training_noise": [False, True],
