@@ -8,7 +8,7 @@ tsne plots:
 workflow:
 - take ~100 unperturbed images from each class
 - run through, get latents for subset of layers (same as linear probes)
-- map to 2d plot (fit)
+- map to 2d plot (fit tsne / umap only in this stage)
 - add masks / fgsm
 - run through, get latents
 - map to 2d plot, but don't fit again, but make it relative to first plot (don't fit again): https://umap-learn.readthedocs.io/en/latest/transform.html
