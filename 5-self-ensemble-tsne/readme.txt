@@ -3,7 +3,7 @@ tsne plots:
 - stack latents for all images (both perturbed and unperturbed)
 - for a limited set of layers (maybe just the ones you do linear probes for, maybe just 9)
 
-set all train configs to true / false simultaneously
+set all train configs to true / false simultaneously:
 - "training_noise": [False, True],
 - "training_shuffle": [False, True],
 - "training_adversarial": [False, True],
