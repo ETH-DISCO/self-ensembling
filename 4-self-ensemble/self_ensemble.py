@@ -717,12 +717,14 @@ if __name__ == "__main__":
         # output["fgsmensemble_layer_accs"] = eval_layers(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         # free_mem()
 
-        opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
-        for opacity in opacities:
-            hcaptcha_images_test_np = hcaptcha_mask(images_test_np.copy(), prerendered_mask, opacity)
-            output[f"mask_{opacity}_layer_accs"] = eval_layers(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
-            output[f"mask_{opacity}_ensemble_acc"] = eval_self_ensemble(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
-        free_mem()
+        # opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
+        # for opacity in opacities:
+        #     hcaptcha_images_test_np = hcaptcha_mask(images_test_np.copy(), prerendered_mask, opacity)
+        #     output[f"mask_{opacity}_layer_accs"] = eval_layers(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
+        #     output[f"mask_{opacity}_ensemble_acc"] = eval_self_ensemble(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
+        # free_mem()
+
+        # TODO: add pgd attack as well
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
