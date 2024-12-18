@@ -1,7 +1,9 @@
 Implementation of "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" by Fort et al. (2024) based on:
 
 - Official repository by authors: https://github.com/stanislavfort/ensemble-everything-everywhere
-- Aplesner reproduction: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+- Andreas Plesner's reproduction: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
 
 Experiments:
 
+- 0-custom-impl: hyperparameter tuning with improved version of andreas' code (done)
+- 1-resnet-single-mask: same as `2-resnet-multi-mask` but a single iteration for testing (done)
