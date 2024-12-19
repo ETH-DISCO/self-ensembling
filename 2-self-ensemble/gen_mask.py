@@ -10,7 +10,6 @@ from typing import Optional
 
 import cairo
 import numpy as np
-import requests
 from PIL import Image
 
 

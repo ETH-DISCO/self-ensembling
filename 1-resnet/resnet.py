@@ -83,7 +83,7 @@ def apply_hcaptcha_mask(images, opacity: int, mask_sides=3, mask_per_rowcol=2, m
         mask = Image.new("L", overlay.size, opacity)  # 0=transparent; 255=opaque
         result.paste(overlay, (0, 0), mask)
         return result
-    
+
     mask = Image.open(mask_path / f"{mask_sides}_{mask_per_rowcol}_{mask_num_concentric}_{mask_colors}.png")
 
     all_perturbed_images = []

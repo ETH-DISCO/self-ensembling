@@ -221,7 +221,7 @@ def train_model(model_in, images_in, labels_in, epochs, lr, batch_size, optimize
             np_images_used = images_in[randomized_ids[i1:i2]]
             np_labels_used = labels_in[randomized_ids[i1:i2]]
 
-            if use_adversarial_training:  # very light adversarial training if on
+            if use_adversarial_training:  # very light
                 attacked_images = fgsm_attack(model_in.eval(), np_images_used[:], np_labels_used[:], epsilon=adversarial_epsilon, random_reps=1, batch_size=batch_size // 2)
                 np_images_used = attacked_images
                 np_labels_used = np_labels_used
@@ -501,11 +501,11 @@ def fgsm_attack_layer(model, xs, ys, epsilon, layer_i, batch_size=128):
     return np.concatenate(all_perturbed_images, axis=0)
 
 
-def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, batch_size=128, momentum=0.9, grad_norm_type='sign'):
+def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, batch_size=128, momentum=0.9, grad_norm_type="sign"):
     # pgd = projected gradient descent
     model = model.eval()
     model = model.cuda()
-    
+
     all_perturbed_images = []
     its = int(np.ceil(xs.shape[0] / batch_size))
     momentum_buffer = None
@@ -517,15 +517,15 @@ def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, b
 
         x = torch.Tensor(xs[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
         y = torch.Tensor(ys[i1:i2]).to("cuda").to(torch.long)
-        
+
         # random start
         delta = torch.rand_like(x, requires_grad=True).to("cuda")
         delta.data = delta.data * 2 * epsilon - epsilon
         delta.data = torch.clamp(x + delta.data, 0, 1) - x
-        
+
         for _ in range(num_iter):
             x_adv = x + delta
-            
+
             layer_output = model.forward_until(x_adv, layer_i)
             layer_logits = model.linear_layers[layer_i](layer_output.reshape(layer_output.shape[0], -1))
             loss = nn.CrossEntropyLoss()(layer_logits, y)
@@ -533,14 +533,14 @@ def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, b
 
             with torch.no_grad():
                 grad = delta.grad.data
-                
-                if grad_norm_type == 'sign':
+
+                if grad_norm_type == "sign":
                     grad_norm = grad.sign()
-                elif grad_norm_type == 'l2':
-                    grad_norm = grad / (torch.norm(grad, p=2, dim=(1,2,3), keepdim=True) + 1e-8)
-                elif grad_norm_type == 'linf':
+                elif grad_norm_type == "l2":
+                    grad_norm = grad / (torch.norm(grad, p=2, dim=(1, 2, 3), keepdim=True) + 1e-8)
+                elif grad_norm_type == "linf":
                     grad_norm = grad / (grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
-                
+
                 # reset momentum buffer for each new batch size
                 if momentum > 0:
                     if momentum_buffer is None or momentum_buffer.size(0) != current_batch_size:
@@ -554,7 +554,7 @@ def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, b
                 delta.data = delta.data + alpha * update
                 delta.data = torch.clamp(delta.data, -epsilon, epsilon)
                 delta.data = torch.clamp(x + delta.data, 0, 1) - x
-            
+
             # early stop
             with torch.no_grad():
                 layer_output = model.forward_until(x + delta, layer_i)
@@ -562,12 +562,12 @@ def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, b
                 pred = layer_logits.max(1)[1]
                 if (pred != y).all():
                     break
-            
+
             delta.grad.zero_()
 
         perturbed_image = torch.clamp(x + delta.data, 0, 1)
         all_perturbed_images.append(perturbed_image.cpu().numpy().transpose([0, 2, 3, 1]))
-        
+
     return np.concatenate(all_perturbed_images, axis=0)
 
 
@@ -607,7 +607,7 @@ def fgsm_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights
     return np.concatenate(all_perturbed_images, axis=0)
 
 
-def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights, alpha=0.01, num_iter=10, batch_size=128, momentum=0.9, grad_norm_type='sign'):
+def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights, alpha=0.01, num_iter=10, batch_size=128, momentum=0.9, grad_norm_type="sign"):
     if layer_weights is None:
         layer_weights = [1.0 / len(layer_idxs)] * len(layer_idxs)  # equal weights
     layer_weights = np.array(layer_weights)
@@ -642,11 +642,11 @@ def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights,
                 delta.grad.zero_()
 
             with torch.no_grad():
-                if grad_norm_type == 'sign':
+                if grad_norm_type == "sign":
                     grad_norm = combined_grad.sign()
-                elif grad_norm_type == 'l2':
-                    grad_norm = combined_grad / (torch.norm(combined_grad, p=2, dim=(1,2,3), keepdim=True) + 1e-8)
-                elif grad_norm_type == 'linf':
+                elif grad_norm_type == "l2":
+                    grad_norm = combined_grad / (torch.norm(combined_grad, p=2, dim=(1, 2, 3), keepdim=True) + 1e-8)
+                elif grad_norm_type == "linf":
                     grad_norm = combined_grad / (combined_grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
 
                 if momentum > 0:
@@ -671,7 +671,7 @@ def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights,
                     if not (pred != y).all():
                         all_misclassified = False
                         break
-            
+
             if all_misclassified:
                 break
 
@@ -720,7 +720,7 @@ def fgsm_attack_ensemble(model, images, labels, epsilon, batch_size):
     return np.concatenate(perturbed_images, axis=0)
 
 
-def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, num_iter=10, momentum=0.9, grad_norm_type='sign'):
+def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, num_iter=10, momentum=0.9, grad_norm_type="sign"):
     def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int) -> torch.Tensor:
         Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]
         Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]
@@ -748,7 +748,7 @@ def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, 
 
         for _ in range(num_iter):
             x_adv = x + delta
-            
+
             layer_outputs = []
             for layer_i in layers_to_use:
                 outputs = model.predict_from_layer(x_adv, layer_i)
@@ -761,14 +761,14 @@ def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, 
 
             with torch.no_grad():
                 grad = delta.grad.data
-                
-                if grad_norm_type == 'sign':
+
+                if grad_norm_type == "sign":
                     grad_norm = grad.sign()
-                elif grad_norm_type == 'l2':
-                    grad_norm = grad / (torch.norm(grad, p=2, dim=(1,2,3), keepdim=True) + 1e-8)
-                elif grad_norm_type == 'linf':
+                elif grad_norm_type == "l2":
+                    grad_norm = grad / (torch.norm(grad, p=2, dim=(1, 2, 3), keepdim=True) + 1e-8)
+                elif grad_norm_type == "linf":
                     grad_norm = grad / (grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
-                
+
                 if momentum > 0:
                     if momentum_buffer is None or momentum_buffer.size(0) != current_batch_size:
                         momentum_buffer = grad_norm
@@ -781,7 +781,7 @@ def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, 
                 delta.data = delta.data + alpha * update
                 delta.data = torch.clamp(delta.data, -epsilon, epsilon)
                 delta.data = torch.clamp(x + delta.data, 0, 1) - x
-            
+
             with torch.no_grad():
                 layer_outputs = []
                 for layer_i in layers_to_use:
@@ -792,7 +792,7 @@ def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, 
                 pred = logits.max(1)[1]
                 if (pred != y).all():
                     break
-            
+
             delta.grad.zero_()
 
         perturbed_image = torch.clamp(x + delta.data, 0, 1)
@@ -809,7 +809,7 @@ def apply_hcaptcha_mask(images, opacity: int, mask_sides=3, mask_per_rowcol=2, m
         mask = Image.new("L", overlay.size, opacity)  # 0=transparent; 255=opaque
         result.paste(overlay, (0, 0), mask)
         return result
-    
+
     mask = Image.open(mask_path / f"{mask_sides}_{mask_per_rowcol}_{mask_num_concentric}_{mask_colors}.png")
 
     all_perturbed_images = []
@@ -886,10 +886,7 @@ if __name__ == "__main__":
 
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
-        # in future experiments: either set all to True or False, no combinations
-        "training_noise": [False, True],
-        "training_shuffle": [False, True],
-        "training_adversarial": [False, True],
+        "natural_training": [False, True],
     }
     combs = list(product(*combinations.values()))
     for idx, comb in enumerate(combs):
@@ -903,9 +900,10 @@ if __name__ == "__main__":
         resolutions = [32, 16, 8, 4]  # arbitrary resolutions to use in stacked images
         layers_to_use = [20, 30, 35, 40, 45, 50, 52]  # only some layers to save time -> anything below 20 is useless
         model = get_model(
-            enable_noise=comb["training_noise"],
-            enable_random_shuffle=comb["training_shuffle"],
-            enable_adversarial_training=comb["training_adversarial"],
+            # authors combined 3 techniques: noise, shuffle, very light fgsm training
+            enable_noise=comb["natural_training"],
+            enable_random_shuffle=comb["natural_training"],
+            enable_adversarial_training=comb["natural_training"],
             resolutions=resolutions,
             layers_to_use=layers_to_use,
             num_classes=num_classes,
