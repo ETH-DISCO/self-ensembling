@@ -501,6 +501,40 @@ def fgsm_attack_layer(model, xs, ys, epsilon, layer_i, batch_size=128):
     return np.concatenate(all_perturbed_images, axis=0)
 
 
+def pgd_attack_layer(model, xs, ys, epsilon, alpha, num_iter, layer_i, batch_size=128):
+    # ??? does this work?
+    # use libary: https://adversarial-attacks-pytorch.readthedocs.io/en/latest/attacks.html#module-torchattacks.attacks.pgd
+
+    model = model.eval()
+    model = model.cuda()
+
+    all_perturbed_images = []
+    its = int(np.ceil(xs.shape[0] / batch_size))
+
+    for it in range(its):
+        i1 = it * batch_size
+        i2 = min([(it + 1) * batch_size, xs.shape[0]])
+
+        x = torch.Tensor(xs[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
+        y = torch.Tensor(ys[i1:i2]).to("cuda").to(torch.long)
+        x_orig = x.clone()
+        x.requires_grad = True
+
+        for _ in range(num_iter):
+            layer_output = model.forward_until(x, layer_i)
+            layer_logits = model.linear_layers[layer_i](layer_output.reshape(layer_output.shape[0], -1))
+            loss = nn.CrossEntropyLoss()(layer_logits, y)
+            loss.backward()
+
+            perturbed_image = x + alpha * x.grad.data.sign()
+            perturbed_image = torch.clip(perturbed_image, x_orig - epsilon, x_orig + epsilon)
+            perturbed_image = torch.clip(perturbed_image, 0, 1)
+            perturbed_image.grad.zero_()
+
+        all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
+    return np.concatenate(all_perturbed_images, axis=0)
+
+
 def fgsm_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights, batch_size=128):
     if layer_weights is None:
         layer_weights = [1.0 / len(layer_idxs)] * len(layer_idxs)  # equal weights
