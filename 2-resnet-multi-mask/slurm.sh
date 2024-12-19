@@ -21,7 +21,6 @@ fi
 conda env create --file environment.yml
 
 # dispatch job
-git clone https://github.com/ETH-DISCO/cluster-tutorial/ && mv cluster-tutorial/job.sh . && rm -rf cluster-tutorial # get job.sh
 sed -i 's/{{USERNAME}}/'$USER'/g' job.sh
 sed -i 's/{{NODE}}/'$NODE'/g' job.sh
 sbatch job.sh $FILEPATH
@@ -31,5 +30,5 @@ sbatch job.sh $FILEPATH
 #
 
 watch -n 0.5 "squeue -u $USER --states=R"
-tail -f $(ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 300)
-tail -f $(ls -v /scratch/$USER/slurm/*.out 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/2-resnet-multi-mask/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/2-resnet-multi-mask/*.out 2>/dev/null | tail -n 300)

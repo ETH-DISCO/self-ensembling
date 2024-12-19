@@ -887,7 +887,5 @@ if __name__ == "__main__":
         #     output[f"mask_{opacity}_ensemble_acc"] = eval_self_ensemble(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
         # free_mem()
 
-        # TODO: add pgd attack as well
-
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
