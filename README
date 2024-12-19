@@ -1,7 +1,16 @@
-Implementation of "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" by Fort et al. (2024) based on:
+ ▄▄▄ ▗▞▀▚▖█ ▗▞▀▀▘    ▗▞▀▚▖▄▄▄▄   ▄▄▄ ▗▞▀▚▖▄▄▄▄  ▗▖   █ ▄ ▄▄▄▄    
+▀▄▄  ▐▛▀▀▘█ ▐▌       ▐▛▀▀▘█   █ ▀▄▄  ▐▛▀▀▘█ █ █ ▐▌   █ ▄ █   █   
+▄▄▄▀ ▝▚▄▄▖█ ▐▛▀▘     ▝▚▄▄▖█   █ ▄▄▄▀ ▝▚▄▄▖█   █ ▐▛▀▚▖█ █ █   █   
+          █ ▐▌                                  ▐▙▄▞▘█ █     ▗▄▖ 
+                                                            ▐▌ ▐▌
+                                                             ▝▀▜▌
+                                                            ▐▙▄▞▘
 
-- Official repository by authors: https://github.com/stanislavfort/ensemble-everything-everywhere
-- Andreas Plesner's reproduction: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
+Benchmarking self-ensemble'd ResNet architecture.
+Based on the paper "Ensemble everything everywhere: Multi-scale aggregation for adversarial robustness" by Fort et al. (2024)
+
+- Official repository: https://github.com/stanislavfort/ensemble-everything-everywhere
+- Reproduction by Andreas Plesner: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
 
 Experiments:
 
