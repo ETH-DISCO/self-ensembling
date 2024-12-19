@@ -14,7 +14,7 @@ from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
 from utils import *
 
-# assert torch.cuda.is_available()
+assert torch.cuda.is_available()
 set_env()
 
 data_path = get_current_dir().parent / "data"
