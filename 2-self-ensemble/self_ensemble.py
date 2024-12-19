@@ -183,8 +183,6 @@ def train_model(model_in, images_in, labels_in, epochs, lr, batch_size, optimize
             all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
         return np.concatenate(all_perturbed_images, axis=0)
 
-    global storing_models
-
     train_accs = []
     test_accs = []
 
