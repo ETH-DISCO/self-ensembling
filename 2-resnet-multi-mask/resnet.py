@@ -232,14 +232,11 @@ if __name__ == "__main__":
         "mask_colors": [True, False],
     }
     combs = list(product(*combinations.values()))
-    for idx, comb in tqdm(enumerate(combs), desc="combinations", ncols=100, total=len(combs)):
+    for idx, comb in enumerate(combs):
         print(f"progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
-        print(comb)
         if is_cached(fpath, comb):
             continue
-
-        exit()
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
         model = get_model(
