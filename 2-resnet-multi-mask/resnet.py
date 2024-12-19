@@ -233,8 +233,9 @@ if __name__ == "__main__":
     }
     combs = list(product(*combinations.values()))
     for idx, comb in tqdm(enumerate(combs), desc="combinations", ncols=100, total=len(combs)):
-        # print(f"progress: {idx+1}/{len(combs)}")
+        print(f"progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
+        print(comb)
         if is_cached(fpath, comb):
             continue
 
