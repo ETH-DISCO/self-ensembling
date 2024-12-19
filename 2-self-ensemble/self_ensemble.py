@@ -886,9 +886,10 @@ if __name__ == "__main__":
 
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
-        "training_noise": [False, True],
-        "training_shuffle": [False, True],
-        "training_adv": [False, True],
+        "training_natural": [False, True],
+        # "training_noise": [False, True],
+        # "training_shuffle": [False, True],
+        # "training_adv": [False, True],
     }
     combs = list(product(*combinations.values()))
     for idx, comb in enumerate(combs):
@@ -902,9 +903,9 @@ if __name__ == "__main__":
         resolutions = [32, 16, 8, 4]  # arbitrary resolutions to use in stacked images
         layers_to_use = [20, 30, 35, 40, 45, 50, 52]  # only some layers to save time -> anything below 20 is useless
         model = get_model(
-            enable_noise=comb["training_noise"],
-            enable_random_shuffle=comb["training_shuffle"],
-            enable_adversarial_training=comb["training_adv"],
+            enable_noise=comb["training_natural"],
+            enable_random_shuffle=comb["training_natural"],
+            enable_adversarial_training=comb["training_natural"],
             resolutions=resolutions,
             layers_to_use=layers_to_use,
             num_classes=num_classes,
@@ -979,23 +980,13 @@ if __name__ == "__main__":
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
 
-        #
         # dump latents
-        #
-
         sample_size = 100
-        sample_idxs = []
-        for i in range(num_classes):
-            idxs = np.where(labels_test_np == i)[0]
-            sample_idxs.extend(np.random.choice(idxs, sample_size, replace=False))
-        sample_idxs = np.array(sample_idxs)
-
+        sample_idxs = np.hstack([np.random.choice(np.where(labels_test_np == i)[0], sample_size, replace=False) for i in range(num_classes)])
         for layer in layers_to_use:
-            for img_idx in sample_idxs:
-                img = images_test_np[img_idx]
-                img = torch.Tensor(img.transpose([2, 0, 1])).unsqueeze(0).to("cuda")
-                latent = model.forward_until(img, layer).cpu().detach().numpy().flatten()
-
+            imgs = torch.tensor(images_test_np[sample_idxs].transpose([0, 3, 1, 2]), device="cuda")
+            for img, img_idx in zip(imgs, sample_idxs):
+                latent = model.forward_until(img.unsqueeze(0), layer_id=layer).cpu().detach().numpy().flatten()
                 img_cls = labels_test_np[img_idx]
-                np.save(latents_path / f"{comb['dataset']}_{layer}_{img_idx}_{img_cls}.npy", latent)
+                np.save(latents_path / f"{comb['dataset']}_{layer}_{img_idx}_{img_cls}.npy", latent, allow_pickle=False)
         free_mem()
