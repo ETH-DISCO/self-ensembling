@@ -523,7 +523,7 @@ def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, b
         delta.data = delta.data * 2 * epsilon - epsilon
         delta.data = torch.clamp(x + delta.data, 0, 1) - x
         
-        for t in range(num_iter):
+        for _ in range(num_iter):
             x_adv = x + delta
             
             layer_output = model.forward_until(x_adv, layer_i)
@@ -541,7 +541,7 @@ def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, b
                 elif grad_norm_type == 'linf':
                     grad_norm = grad / (grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
                 
-                # Reset momentum buffer for each new batch size
+                # reset momentum buffer for each new batch size
                 if momentum > 0:
                     if momentum_buffer is None or momentum_buffer.size(0) != current_batch_size:
                         momentum_buffer = grad_norm
@@ -607,7 +607,7 @@ def fgsm_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights
     return np.concatenate(all_perturbed_images, axis=0)
 
 
-def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights, alpha=0.01, num_iter=40, batch_size=128):
+def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights, alpha=0.01, num_iter=10, batch_size=128, momentum=0.9, grad_norm_type='sign'):
     if layer_weights is None:
         layer_weights = [1.0 / len(layer_idxs)] * len(layer_idxs)  # equal weights
     layer_weights = np.array(layer_weights)
@@ -615,42 +615,68 @@ def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights,
 
     all_perturbed_images = []
     its = int(np.ceil(xs.shape[0] / batch_size))
+    momentum_buffer = None
 
-    for it in range(its):
+    for it in tqdm(range(its), desc="pgd attack combined layers", ncols=100):
         i1 = it * batch_size
         i2 = min([(it + 1) * batch_size, xs.shape[0]])
+        current_batch_size = i2 - i1
 
         x = torch.Tensor(xs[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
         y = torch.Tensor(ys[i1:i2]).to("cuda").to(torch.long)
 
-        delta = torch.zeros_like(x, requires_grad=True).to("cuda")
-        delta.uniform_(-epsilon, epsilon)
-        delta = torch.clamp(x + delta, 0, 1) - x
+        delta = torch.rand_like(x, requires_grad=True).to("cuda")
+        delta.data = delta.data * 2 * epsilon - epsilon
+        delta.data = torch.clamp(x + delta.data, 0, 1) - x
 
         for _ in range(num_iter):
             x_adv = x + delta
-            combined_grad = torch.zeros_like(x)
+            combined_grad = torch.zeros_like(x_adv)
 
             for layer_idx, weight in zip(layer_idxs, layer_weights):
-                x_copy = x_adv.clone()
-                x_copy.requires_grad = True
-
-                layer_output = model.forward_until(x_copy, layer_idx)
+                layer_output = model.forward_until(x_adv, layer_idx)
                 layer_logits = model.linear_layers[layer_idx](layer_output.reshape(layer_output.shape[0], -1))
-                loss = nn.CrossEntropyLoss()(layer_logits, y)
+                loss = weight * nn.CrossEntropyLoss()(layer_logits, y)
                 loss.backward()
+                combined_grad += delta.grad.data
+                delta.grad.zero_()
 
-                combined_grad += weight * x_copy.grad.data # sum from all layers
+            with torch.no_grad():
+                if grad_norm_type == 'sign':
+                    grad_norm = combined_grad.sign()
+                elif grad_norm_type == 'l2':
+                    grad_norm = combined_grad / (torch.norm(combined_grad, p=2, dim=(1,2,3), keepdim=True) + 1e-8)
+                elif grad_norm_type == 'linf':
+                    grad_norm = combined_grad / (combined_grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
 
-            delta = delta + alpha * combined_grad.sign()
-            delta = torch.clamp(delta, -epsilon, epsilon)
-            delta = torch.clamp(x + delta, 0, 1) - x
+                if momentum > 0:
+                    if momentum_buffer is None or momentum_buffer.size(0) != current_batch_size:
+                        momentum_buffer = grad_norm
+                    else:
+                        momentum_buffer = momentum * momentum_buffer + (1 - momentum) * grad_norm
+                    update = momentum_buffer
+                else:
+                    update = grad_norm
+
+                delta.data = delta.data + alpha * update
+                delta.data = torch.clamp(delta.data, -epsilon, epsilon)
+                delta.data = torch.clamp(x + delta.data, 0, 1) - x
+
+            all_misclassified = True
+            with torch.no_grad():
+                for layer_idx in layer_idxs:
+                    layer_output = model.forward_until(x + delta, layer_idx)
+                    layer_logits = model.linear_layers[layer_idx](layer_output.reshape(layer_output.shape[0], -1))
+                    pred = layer_logits.max(1)[1]
+                    if not (pred != y).all():
+                        all_misclassified = False
+                        break
             
-            delta = delta.detach()
-            delta.requires_grad = True
+            if all_misclassified:
+                break
 
-        perturbed_image = torch.clamp(x + delta, 0, 1)
-        all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
+        perturbed_image = torch.clamp(x + delta.data, 0, 1)
+        all_perturbed_images.append(perturbed_image.cpu().numpy().transpose([0, 2, 3, 1]))
 
     return np.concatenate(all_perturbed_images, axis=0)
 
@@ -694,7 +720,7 @@ def fgsm_attack_ensemble(model, images, labels, epsilon, batch_size):
     return np.concatenate(perturbed_images, axis=0)
 
 
-def pgd_attack_ensemble(model, images, labels, epsilon, alpha=0.01, num_iter=40, batch_size=128):
+def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, num_iter=10, momentum=0.9, grad_norm_type='sign'):
     def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int) -> torch.Tensor:
         Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]
         Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]
@@ -705,23 +731,24 @@ def pgd_attack_ensemble(model, images, labels, epsilon, alpha=0.01, num_iter=40,
     model = model.eval()
     model = model.cuda()
     perturbed_images = []
+    momentum_buffer = None
 
     for i in tqdm(range(0, len(images), batch_size), desc="pgd ensemble", total=len(images) // batch_size, ncols=100):
         batch_images = images[i : i + batch_size]
         batch_labels = labels[i : i + batch_size]
+        current_batch_size = len(batch_images)
 
         x = torch.FloatTensor(batch_images.transpose(0, 3, 1, 2)).cuda()
         y = torch.LongTensor(batch_labels).cuda()
-        
-        delta = torch.zeros_like(x, requires_grad=True).cuda()
-        delta.uniform_(-epsilon, epsilon)
-        delta = torch.clamp(x + delta, 0, 1) - x
-        
+        free_mem()
+
+        delta = torch.rand_like(x, requires_grad=True).cuda()
+        delta.data = delta.data * 2 * epsilon - epsilon
+        delta.data = torch.clamp(x + delta.data, 0, 1) - x
+
         for _ in range(num_iter):
             x_adv = x + delta
-            x_adv.requires_grad = True
-            free_mem()
-
+            
             layer_outputs = []
             for layer_i in layers_to_use:
                 outputs = model.predict_from_layer(x_adv, layer_i)
@@ -732,16 +759,43 @@ def pgd_attack_ensemble(model, images, labels, epsilon, alpha=0.01, num_iter=40,
             loss = nn.CrossEntropyLoss()(logits, y)
             loss.backward()
 
-            grad = x_adv.grad.data
-            delta = delta + alpha * grad.sign()
-            
-            delta = torch.clamp(delta, -epsilon, epsilon)
-            delta = torch.clamp(x + delta, 0, 1) - x
-            
-            delta = delta.detach()
-            delta.requires_grad = True
+            with torch.no_grad():
+                grad = delta.grad.data
+                
+                if grad_norm_type == 'sign':
+                    grad_norm = grad.sign()
+                elif grad_norm_type == 'l2':
+                    grad_norm = grad / (torch.norm(grad, p=2, dim=(1,2,3), keepdim=True) + 1e-8)
+                elif grad_norm_type == 'linf':
+                    grad_norm = grad / (grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
+                
+                if momentum > 0:
+                    if momentum_buffer is None or momentum_buffer.size(0) != current_batch_size:
+                        momentum_buffer = grad_norm
+                    else:
+                        momentum_buffer = momentum * momentum_buffer + (1 - momentum) * grad_norm
+                    update = momentum_buffer
+                else:
+                    update = grad_norm
 
-        perturbed_image = torch.clamp(x + delta, 0, 1)
+                delta.data = delta.data + alpha * update
+                delta.data = torch.clamp(delta.data, -epsilon, epsilon)
+                delta.data = torch.clamp(x + delta.data, 0, 1) - x
+            
+            with torch.no_grad():
+                layer_outputs = []
+                for layer_i in layers_to_use:
+                    outputs = model.predict_from_layer(x + delta, layer_i)
+                    layer_outputs.append(outputs.unsqueeze(1))
+                ensemble_outputs = torch.cat(layer_outputs, dim=1)
+                logits = get_cross_max_consensus_logits(ensemble_outputs, k=3)
+                pred = logits.max(1)[1]
+                if (pred != y).all():
+                    break
+            
+            delta.grad.zero_()
+
+        perturbed_image = torch.clamp(x + delta.data, 0, 1)
         perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose(0, 2, 3, 1))
 
     return np.concatenate(perturbed_images, axis=0)
