@@ -669,7 +669,6 @@ def fgsm_attack_ensemble(model, images, labels, epsilon, batch_size):
     return np.concatenate(perturbed_images, axis=0)
 
 
-
 def pgd_attack_ensemble(model, images, labels, epsilon, alpha=0.01, num_iter=40, batch_size=128):
     def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int) -> torch.Tensor:
         Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]
@@ -688,24 +687,38 @@ def pgd_attack_ensemble(model, images, labels, epsilon, alpha=0.01, num_iter=40,
 
         x = torch.FloatTensor(batch_images.transpose(0, 3, 1, 2)).cuda()
         y = torch.LongTensor(batch_labels).cuda()
-        x.requires_grad = True
-        free_mem()
+        
+        delta = torch.zeros_like(x, requires_grad=True).cuda()
+        delta.uniform_(-epsilon, epsilon)
+        delta = torch.clamp(x + delta, 0, 1) - x
+        
+        for _ in range(num_iter):
+            x_adv = x + delta
+            x_adv.requires_grad = True
+            free_mem()
 
-        layer_outputs = []
-        for layer_i in layers_to_use:
-            outputs = model.predict_from_layer(x, layer_i)
-            layer_outputs.append(outputs.unsqueeze(1))
-        ensemble_outputs = torch.cat(layer_outputs, dim=1)
+            layer_outputs = []
+            for layer_i in layers_to_use:
+                outputs = model.predict_from_layer(x_adv, layer_i)
+                layer_outputs.append(outputs.unsqueeze(1))
+            ensemble_outputs = torch.cat(layer_outputs, dim=1)
 
-        logits = get_cross_max_consensus_logits(ensemble_outputs, k=3)
-        loss = nn.CrossEntropyLoss()(logits, y)
-        loss.backward()
+            logits = get_cross_max_consensus_logits(ensemble_outputs, k=3)
+            loss = nn.CrossEntropyLoss()(logits, y)
+            loss.backward()
 
-        perturbed_image = x + epsilon * x.grad.data.sign()
-        perturbed_image = torch.clamp(perturbed_image, 0, 1)
+            grad = x_adv.grad.data
+            delta = delta + alpha * grad.sign()
+            
+            delta = torch.clamp(delta, -epsilon, epsilon)
+            delta = torch.clamp(x + delta, 0, 1) - x
+            
+            delta = delta.detach()
+            delta.requires_grad = True
+
+        perturbed_image = torch.clamp(x + delta, 0, 1)
         perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose(0, 2, 3, 1))
 
-        x.grad.zero_()
     return np.concatenate(perturbed_images, axis=0)
 
 
@@ -849,6 +862,23 @@ if __name__ == "__main__":
         # output["fgsmensemble_ensemble_acc"] = eval_self_ensemble(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         # output["fgsmensemble_layer_accs"] = eval_layers(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         # free_mem()
+
+        pgd_idxs = [20, 30, 35, 40, 45, 50, 52]
+        for pgd_idx in pgd_idxs:
+            pgd_images_test_np = pgd_attack_layer(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_i=pgd_idx, batch_size=64)
+            output[f"pgd_{pgd_idx}_ensemble_acc"] = eval_self_ensemble(model, pgd_images_test_np, labels_test_np.copy(), layers_to_use)
+            output[f"pgd_{pgd_idx}_layer_accs"] = eval_layers(model, pgd_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
+
+        pgdcombined_idxs = [20, 30, 35]
+        pgdcombined_images_test_np = pgd_attack_layer_combined(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_idxs=pgdcombined_idxs, layer_weights=None, batch_size=64)
+        output[f"pgdcombined_{pgdcombined_idxs}_ensemble_acc"] = eval_self_ensemble(model, pgdcombined_images_test_np, labels_test_np.copy(), layers_to_use)
+        output[f"pgdcombined_{pgdcombined_idxs}_layer_accs"] = eval_layers(model, pgdcombined_images_test_np, labels_test_np.copy(), layers_to_use)
+
+        pgdensemble_images_test_np = pgd_attack_ensemble(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, batch_size=64)
+        output["pgdensemble_ensemble_acc"] = eval_self_ensemble(model, pgdensemble_images_test_np, labels_test_np.copy(), layers_to_use)
+        output["pgdensemble_layer_accs"] = eval_layers(model, pgdensemble_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
 
         # opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
         # for opacity in opacities:
