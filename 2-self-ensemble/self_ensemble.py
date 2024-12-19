@@ -911,10 +911,14 @@ if __name__ == "__main__":
             images_train_np=images_train_np.copy(),
             labels_train_np=labels_train_np.copy(),
         )
-        model.cuda()
-        model.eval()
         free_mem()
 
+        # 
+        # eval
+        # 
+
+        model.cuda()
+        model.eval()
         output = {
             **comb,
             "plain_layer_accs": eval_layers(model, images_test_np.copy(), labels_test_np.copy(), layers_to_use),
@@ -979,7 +983,6 @@ if __name__ == "__main__":
         # dump latents
         #
 
-        # get balanced sample
         sample_size = 100
         sample_idxs = []
         for i in range(num_classes):
@@ -992,4 +995,7 @@ if __name__ == "__main__":
                 img = images_test_np[img_idx]
                 img = torch.Tensor(img.transpose([2, 0, 1])).unsqueeze(0).to("cuda")
                 latent = model.forward_until(img, layer).cpu().detach().numpy().flatten()
-                np.save(latents_path / f"latents_{layer}_{img_idx}.npy", latent)
+
+                img_cls = labels_test_np[img_idx]
+                np.save(latents_path / f"{comb['dataset']}_{layer}_{img_idx}_{img_cls}.npy", latent)
+        free_mem()
