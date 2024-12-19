@@ -27,6 +27,7 @@ os.makedirs(data_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
+os.makedirs(mask_path, exist_ok=True)
 
 
 def get_dataset(dataset: str):

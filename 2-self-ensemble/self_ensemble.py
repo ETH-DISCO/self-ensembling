@@ -23,13 +23,13 @@ data_path = get_current_dir().parent / "data"
 dataset_path = get_current_dir().parent / "datasets"
 weights_path = get_current_dir().parent / "weights"
 output_path = get_current_dir()
+mask_path = get_current_dir() / "masks"
 
 os.makedirs(data_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
-
-prerendered_mask = Image.open(get_current_dir() / "masks" / "mask.png")
+os.makedirs(mask_path, exist_ok=True)
 
 
 def get_dataset(dataset: str):
@@ -801,24 +801,23 @@ def pgd_attack_ensemble(model, images, labels, epsilon, batch_size, alpha=0.01, 
     return np.concatenate(perturbed_images, axis=0)
 
 
-def hcaptcha_mask(images, mask: Image.Image, opacity: int):
-    # opacity range: 0 (transparent) to 255 (opaque)
+def apply_hcaptcha_mask(images, opacity: int, mask_sides=3, mask_per_rowcol=2, mask_num_concentric=2, mask_colors=True):
     def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
         overlay = overlay.resize(background.size)
         result = Image.new("RGBA", background.size)
         result.paste(background, (0, 0))
-        mask = Image.new("L", overlay.size, opacity)
+        mask = Image.new("L", overlay.size, opacity)  # 0=transparent; 255=opaque
         result.paste(overlay, (0, 0), mask)
         return result
+    
+    mask = Image.open(mask_path / f"{mask_sides}_{mask_per_rowcol}_{mask_num_concentric}_{mask_colors}.png")
 
     all_perturbed_images = []
-
     to_pil = lambda x: Image.fromarray((x * 255).astype(np.uint8))
     to_np = lambda x: np.array(x) / 255.0
     for i in tqdm(range(len(images)), desc="adding overlay", ncols=100):
         perturbed_image = to_np(add_overlay(to_pil(images[i]), mask, opacity).convert("RGB"))
         all_perturbed_images.append(perturbed_image)
-
     return np.array(all_perturbed_images)
 
 
@@ -919,28 +918,28 @@ if __name__ == "__main__":
 
         output = {
             **comb,
-            # "plain_layer_accs": eval_layers(model, images_test_np.copy(), labels_test_np.copy(), layers_to_use),
-            # "plain_ensemble_acc": eval_self_ensemble(model, images_test_np.copy(), labels_test_np.copy(), layers_to_use),
+            "plain_layer_accs": eval_layers(model, images_test_np.copy(), labels_test_np.copy(), layers_to_use),
+            "plain_ensemble_acc": eval_self_ensemble(model, images_test_np.copy(), labels_test_np.copy(), layers_to_use),
         }
         free_mem()
 
-        # fgsm_idxs = [20, 30, 35, 40, 45, 50, 52]
-        # for fgsm_idx in fgsm_idxs:
-        #     fgsm_images_test_np = fgsm_attack_layer(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_i=fgsm_idx, batch_size=64)
-        #     output[f"fgsm_{fgsm_idx}_ensemble_acc"] = eval_self_ensemble(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
-        #     output[f"fgsm_{fgsm_idx}_layer_accs"] = eval_layers(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
-        # free_mem()
+        fgsm_idxs = [20, 30, 35, 40, 45, 50, 52]
+        for fgsm_idx in fgsm_idxs:
+            fgsm_images_test_np = fgsm_attack_layer(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_i=fgsm_idx, batch_size=64)
+            output[f"fgsm_{fgsm_idx}_ensemble_acc"] = eval_self_ensemble(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
+            output[f"fgsm_{fgsm_idx}_layer_accs"] = eval_layers(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
 
-        # fgsmcombined_idxs = [20, 30, 35]
-        # fgsmcombined_images_test_np = fgsm_attack_layer_combined(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_idxs=fgsmcombined_idxs, layer_weights=None, batch_size=64)
-        # output[f"fgsmcombined_{fgsmcombined_idxs}_ensemble_acc"] = eval_self_ensemble(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
-        # output[f"fgsmcombined_{fgsmcombined_idxs}_layer_accs"] = eval_layers(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
-        # free_mem()
+        fgsmcombined_idxs = [20, 30, 35]
+        fgsmcombined_images_test_np = fgsm_attack_layer_combined(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_idxs=fgsmcombined_idxs, layer_weights=None, batch_size=64)
+        output[f"fgsmcombined_{fgsmcombined_idxs}_ensemble_acc"] = eval_self_ensemble(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
+        output[f"fgsmcombined_{fgsmcombined_idxs}_layer_accs"] = eval_layers(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
 
-        # fgsmensemble_images_test_np = fgsm_attack_ensemble(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, batch_size=64)
-        # output["fgsmensemble_ensemble_acc"] = eval_self_ensemble(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
-        # output["fgsmensemble_layer_accs"] = eval_layers(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
-        # free_mem()
+        fgsmensemble_images_test_np = fgsm_attack_ensemble(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, batch_size=64)
+        output["fgsmensemble_ensemble_acc"] = eval_self_ensemble(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
+        output["fgsmensemble_layer_accs"] = eval_layers(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
 
         pgd_idxs = [20, 30, 35, 40, 45, 50, 52]
         for pgd_idx in pgd_idxs:
@@ -959,12 +958,20 @@ if __name__ == "__main__":
         output["pgdensemble_layer_accs"] = eval_layers(model, pgdensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
 
-        # opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
-        # for opacity in opacities:
-        #     hcaptcha_images_test_np = hcaptcha_mask(images_test_np.copy(), prerendered_mask, opacity)
-        #     output[f"mask_{opacity}_layer_accs"] = eval_layers(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
-        #     output[f"mask_{opacity}_ensemble_acc"] = eval_self_ensemble(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
-        # free_mem()
+        mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
+        mask_sides = [3, 4, 5, 6, 7, 8]
+        mask_per_rowcols = [2, 4, 6, 8]
+        mask_num_concentrics = [2, 4, 6, 8, 10]
+        mask_colors = [True, False]
+        for opacity in mask_opacities:
+            for side in mask_sides:
+                for per_rowcol in mask_per_rowcols:
+                    for num_concentric in mask_num_concentrics:
+                        for colors in mask_colors:
+                            hcaptcha_images_test_np = apply_hcaptcha_mask(images_test_np.copy(), opacity, side, per_rowcol, num_concentric, colors)
+                            output[f"mask_{opacity}_{side}_{per_rowcol}_{num_concentric}_{colors}_ensemble_acc"] = eval_self_ensemble(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
+                            output[f"mask_{opacity}_{side}_{per_rowcol}_{num_concentric}_{colors}_layer_accs"] = eval_layers(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
