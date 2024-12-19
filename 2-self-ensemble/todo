@@ -1,6 +1,6 @@
 we want to show how much classes have been "moved" by the attack
 
-- take ~100 unperturbed images from each class (balanced sample)
+- get 100 samples from each class
 - for all layers: forward to layer, then dump latents instead of linear probe -> stack latents for all images
 - repeat also with perturbed images (masks)
 

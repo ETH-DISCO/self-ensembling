@@ -6,6 +6,7 @@ from itertools import product
 
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
@@ -23,12 +24,14 @@ dataset_path = get_current_dir().parent / "datasets"
 weights_path = get_current_dir().parent / "weights"
 output_path = get_current_dir()
 mask_path = get_current_dir() / "masks"
+latents_path = get_current_dir() / "latents"
 
 os.makedirs(data_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
 os.makedirs(mask_path, exist_ok=True)
+os.makedirs(latents_path, exist_ok=True)
 
 
 def get_dataset(dataset: str):
@@ -984,5 +987,9 @@ if __name__ == "__main__":
             sample_idxs.extend(np.random.choice(idxs, sample_size, replace=False))
         sample_idxs = np.array(sample_idxs)
 
-        for layer_i in layers_to_use:
-            pass
+        for layer in layers_to_use:
+            for img_idx in sample_idxs:
+                img = images_test_np[img_idx]
+                img = torch.Tensor(img.transpose([2, 0, 1])).unsqueeze(0).to("cuda")
+                latent = model.forward_until(img, layer).cpu().detach().numpy().flatten()
+                np.save(latents_path / f"latents_{layer}_{img_idx}.npy", latent)
