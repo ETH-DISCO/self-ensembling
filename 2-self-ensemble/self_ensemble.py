@@ -6,7 +6,6 @@ from itertools import product
 
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
@@ -971,3 +970,18 @@ if __name__ == "__main__":
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
+
+        #
+        # dump latents
+        #
+
+        # get balanced sample
+        sample_size = 100
+        sample_idxs = []
+        for i in range(num_classes):
+            idxs = np.where(labels_test_np == i)[0]
+            sample_idxs.extend(np.random.choice(idxs, sample_size, replace=False))
+        sample_idxs = np.array(sample_idxs)
+
+        for layer_i in layers_to_use:
+            pass
