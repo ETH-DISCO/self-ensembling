@@ -501,10 +501,7 @@ def fgsm_attack_layer(model, xs, ys, epsilon, layer_i, batch_size=128):
     return np.concatenate(all_perturbed_images, axis=0)
 
 
-def pgd_attack_layer(model, xs, ys, epsilon, alpha, num_iter, layer_i, batch_size=128):
-    # ??? does this work?
-    # use libary: https://adversarial-attacks-pytorch.readthedocs.io/en/latest/attacks.html#module-torchattacks.attacks.pgd
-
+def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=40, batch_size=128):
     model = model.eval()
     model = model.cuda()
 
@@ -517,20 +514,34 @@ def pgd_attack_layer(model, xs, ys, epsilon, alpha, num_iter, layer_i, batch_siz
 
         x = torch.Tensor(xs[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
         y = torch.Tensor(ys[i1:i2]).to("cuda").to(torch.long)
-        x_orig = x.clone()
-        x.requires_grad = True
-
+        
+        # initialize delta (perturbation) randomly within epsilon ball
+        delta = torch.zeros_like(x, requires_grad=True).to("cuda")
+        delta.uniform_(-epsilon, epsilon)
+        delta = torch.clamp(x + delta, 0, 1) - x
+        
         for _ in range(num_iter):
-            layer_output = model.forward_until(x, layer_i)
+            x_adv = x + delta
+            x_adv.requires_grad = True
+
+            layer_output = model.forward_until(x_adv, layer_i)
             layer_logits = model.linear_layers[layer_i](layer_output.reshape(layer_output.shape[0], -1))
             loss = nn.CrossEntropyLoss()(layer_logits, y)
             loss.backward()
 
-            perturbed_image = x + alpha * x.grad.data.sign()
-            perturbed_image = torch.clip(perturbed_image, x_orig - epsilon, x_orig + epsilon)
-            perturbed_image = torch.clip(perturbed_image, 0, 1)
-            perturbed_image.grad.zero_()
+            # update delta with gradient descent
+            grad = x_adv.grad.data
+            delta = delta + alpha * grad.sign()
+            
+            # project perturbation back onto epsilon ball
+            delta = torch.clamp(delta, -epsilon, epsilon)
+            # project perturbed image back into valid range [0,1]
+            delta = torch.clamp(x + delta, 0, 1) - x
+            
+            delta = delta.detach()
+            delta.requires_grad = True
 
+        perturbed_image = torch.clamp(x + delta, 0, 1)
         all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
     return np.concatenate(all_perturbed_images, axis=0)
 
@@ -566,6 +577,54 @@ def fgsm_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights
         perturbed_image = x + epsilon * combined_grad.sign()
         perturbed_image = torch.clip(perturbed_image, 0, 1)
 
+        all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
+
+    return np.concatenate(all_perturbed_images, axis=0)
+
+
+def pgd_attack_layer_combined(model, xs, ys, epsilon, layer_idxs, layer_weights, alpha=0.01, num_iter=40, batch_size=128):
+    if layer_weights is None:
+        layer_weights = [1.0 / len(layer_idxs)] * len(layer_idxs)  # equal weights
+    layer_weights = np.array(layer_weights)
+    layer_weights = layer_weights / np.sum(layer_weights)  # normalize to sum to 1
+
+    all_perturbed_images = []
+    its = int(np.ceil(xs.shape[0] / batch_size))
+
+    for it in range(its):
+        i1 = it * batch_size
+        i2 = min([(it + 1) * batch_size, xs.shape[0]])
+
+        x = torch.Tensor(xs[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
+        y = torch.Tensor(ys[i1:i2]).to("cuda").to(torch.long)
+
+        delta = torch.zeros_like(x, requires_grad=True).to("cuda")
+        delta.uniform_(-epsilon, epsilon)
+        delta = torch.clamp(x + delta, 0, 1) - x
+
+        for _ in range(num_iter):
+            x_adv = x + delta
+            combined_grad = torch.zeros_like(x)
+
+            for layer_idx, weight in zip(layer_idxs, layer_weights):
+                x_copy = x_adv.clone()
+                x_copy.requires_grad = True
+
+                layer_output = model.forward_until(x_copy, layer_idx)
+                layer_logits = model.linear_layers[layer_idx](layer_output.reshape(layer_output.shape[0], -1))
+                loss = nn.CrossEntropyLoss()(layer_logits, y)
+                loss.backward()
+
+                combined_grad += weight * x_copy.grad.data # sum from all layers
+
+            delta = delta + alpha * combined_grad.sign()
+            delta = torch.clamp(delta, -epsilon, epsilon)
+            delta = torch.clamp(x + delta, 0, 1) - x
+            
+            delta = delta.detach()
+            delta.requires_grad = True
+
+        perturbed_image = torch.clamp(x + delta, 0, 1)
         all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
 
     return np.concatenate(all_perturbed_images, axis=0)

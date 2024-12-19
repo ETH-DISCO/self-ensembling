@@ -7,5 +7,7 @@ Experiments:
 
 - `0-custom-impl` (done) -> hyper parameter testing andreas' code
 - `1-resnet-single-mask` (done) -> constant: [mask], variables: [opacity, tune epochs, mask ratio in tune dataset]
-- `2-resnet-multi-mask` (waiting for results) -> variables: [mask type, tune epochs, mask ratio in tune dataset]
-- 
+- `2-resnet-multi-mask` (waiting for results)
+- `3-resnet-tuning` (to be done)
+- `4-resnet-ensemble` (pgd to be done)
+- `5-resnet-ensemble-tsne` (to be done)
