@@ -669,6 +669,46 @@ def fgsm_attack_ensemble(model, images, labels, epsilon, batch_size):
     return np.concatenate(perturbed_images, axis=0)
 
 
+
+def pgd_attack_ensemble(model, images, labels, epsilon, alpha=0.01, num_iter=40, batch_size=128):
+    def get_cross_max_consensus_logits(outputs: torch.Tensor, k: int) -> torch.Tensor:
+        Z_hat = outputs - outputs.max(dim=2, keepdim=True)[0]
+        Z_hat = Z_hat - Z_hat.max(dim=1, keepdim=True)[0]
+        Y, _ = torch.topk(Z_hat, k, dim=1)
+        Y = Y[:, -1, :]
+        return Y
+
+    model = model.eval()
+    model = model.cuda()
+    perturbed_images = []
+
+    for i in tqdm(range(0, len(images), batch_size), desc="pgd ensemble", total=len(images) // batch_size, ncols=100):
+        batch_images = images[i : i + batch_size]
+        batch_labels = labels[i : i + batch_size]
+
+        x = torch.FloatTensor(batch_images.transpose(0, 3, 1, 2)).cuda()
+        y = torch.LongTensor(batch_labels).cuda()
+        x.requires_grad = True
+        free_mem()
+
+        layer_outputs = []
+        for layer_i in layers_to_use:
+            outputs = model.predict_from_layer(x, layer_i)
+            layer_outputs.append(outputs.unsqueeze(1))
+        ensemble_outputs = torch.cat(layer_outputs, dim=1)
+
+        logits = get_cross_max_consensus_logits(ensemble_outputs, k=3)
+        loss = nn.CrossEntropyLoss()(logits, y)
+        loss.backward()
+
+        perturbed_image = x + epsilon * x.grad.data.sign()
+        perturbed_image = torch.clamp(perturbed_image, 0, 1)
+        perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose(0, 2, 3, 1))
+
+        x.grad.zero_()
+    return np.concatenate(perturbed_images, axis=0)
+
+
 def hcaptcha_mask(images, mask: Image.Image, opacity: int):
     # opacity range: 0 (transparent) to 255 (opaque)
     def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
