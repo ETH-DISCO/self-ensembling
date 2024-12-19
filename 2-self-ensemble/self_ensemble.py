@@ -84,12 +84,11 @@ training phase
 """
 
 
-def make_multichannel_input(images, enable_noise, enable_random_shuffle, resolutions):
+def make_multichannel_input(dataset, images, enable_noise, enable_random_shuffle, resolutions):
     down_noise = 0.2  # noise standard deviation to be added at the low resolution
     up_noise = 0.2  # noise stadard deviation to be added at the high resolution
     jit_size = 3  # max size of the x-y jit in each axis, sampled uniformly from -jit_size to +jit_size inclusive
-    up_res = images.shape[-1]
-    # up_res = 32, # hard coded for CIFAR-10 or CIFAR-100
+    up_res = 32 if not dataset == "imagenette" else 224  # so they are comparable
 
     if not enable_noise:
         return torch.concatenate([images] * len(resolutions), axis=1)  # don't do anything
@@ -356,7 +355,7 @@ class LinearNet(nn.Module):
         return self.model.predict_from_layer(inputs, self.layer_i)
 
 
-def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, resolutions, layers_to_use, num_classes, images_train_np, labels_train_np):
+def get_model(dataset, enable_noise, enable_random_shuffle, enable_adversarial_training, resolutions, layers_to_use, num_classes, images_train_np, labels_train_np):
     #
     # backbone model
     #
@@ -391,7 +390,7 @@ def get_model(enable_noise, enable_random_shuffle, enable_adversarial_training, 
             x = self.imported_model(x)
             return x
 
-    configured_make_multichannel_input = lambda x: make_multichannel_input(x, enable_noise=enable_noise, enable_random_shuffle=enable_random_shuffle, resolutions=resolutions)
+    configured_make_multichannel_input = lambda x: make_multichannel_input(dataset, x, enable_noise=enable_noise, enable_random_shuffle=enable_random_shuffle, resolutions=resolutions)
     wrapped_model = ImportedModelWrapper(imported_model, configured_make_multichannel_input).to("cuda")
     wrapped_model.multichannel_fn = configured_make_multichannel_input
     model = copy.deepcopy(wrapped_model)
@@ -901,9 +900,10 @@ if __name__ == "__main__":
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
 
-        resolutions = [32, 16, 8, 4]  # arbitrary resolutions to use in stacked images
+        resolutions = [32, 16, 8, 4] if not comb["dataset"] == "imagenette" else [128, 64, 32, 16] # arbitrary choice
         layers_to_use = [20, 30, 35, 40, 45, 50, 52]  # only some layers to save time -> anything below 20 is useless
         model = get_model(
+            dataset=comb["dataset"],
             enable_noise=comb["training_natural"],
             enable_random_shuffle=comb["training_natural"],
             enable_adversarial_training=comb["training_natural"],
