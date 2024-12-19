@@ -883,7 +883,9 @@ if __name__ == "__main__":
 
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
-        "natural_training": [False, True],
+        "training_noise": [False, True],
+        "training_shuffle": [False, True],
+        "training_adv": [False, True],
     }
     combs = list(product(*combinations.values()))
     for idx, comb in enumerate(combs):
@@ -897,10 +899,9 @@ if __name__ == "__main__":
         resolutions = [32, 16, 8, 4]  # arbitrary resolutions to use in stacked images
         layers_to_use = [20, 30, 35, 40, 45, 50, 52]  # only some layers to save time -> anything below 20 is useless
         model = get_model(
-            # authors combined 3 techniques: noise, shuffle, very light fgsm training
-            enable_noise=comb["natural_training"],
-            enable_random_shuffle=comb["natural_training"],
-            enable_adversarial_training=comb["natural_training"],
+            enable_noise=comb["training_noise"],
+            enable_random_shuffle=comb["training_shuffle"],
+            enable_adversarial_training=comb["training_adv"],
             resolutions=resolutions,
             layers_to_use=layers_to_use,
             num_classes=num_classes,
