@@ -21,13 +21,12 @@ data_path = get_current_dir().parent / "data"
 dataset_path = get_current_dir().parent / "datasets"
 weights_path = get_current_dir().parent / "weights"
 output_path = get_current_dir()
+mask_path = get_current_dir() / "masks"
 
 os.makedirs(data_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
-
-prerendered_mask = Image.open(get_current_dir() / "masks" / "mask.png")
 
 
 def get_dataset(dataset: str):
@@ -75,7 +74,7 @@ def get_dataset(dataset: str):
     return images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes
 
 
-def hcaptcha_mask(images, mask: Image.Image, opacity: int):
+def apply_hcaptcha_mask(images, opacity: int, mask_sides=3, mask_per_rowcol=2, mask_num_concentric=2, mask_colors=True):
     def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> Image.Image:
         overlay = overlay.resize(background.size)
         result = Image.new("RGBA", background.size)
@@ -83,6 +82,8 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
         mask = Image.new("L", overlay.size, opacity)  # 0=transparent; 255=opaque
         result.paste(overlay, (0, 0), mask)
         return result
+    
+    mask = Image.open(mask_path / f"{mask_sides}_{mask_per_rowcol}_{mask_num_concentric}_{mask_colors}.png")
 
     all_perturbed_images = []
     to_pil = lambda x: Image.fromarray((x * 255).astype(np.uint8))
@@ -94,17 +95,21 @@ def hcaptcha_mask(images, mask: Image.Image, opacity: int):
 
 
 def get_model(
-    dataset,  # used by hash
+    dataset,  # used by cache hash
     num_classes,
     images_train_np,
     labels_train_np,
     images_test_np,
     labels_test_np,
-    # dataset tuning epochs
-    num_epochs=0,
-    # ratio of adversarial training
-    use_hcaptcha_ratio=0.0,
-    use_hcaptcha_opacity=0,
+    # train config
+    train_num_epochs=0,
+    train_hcaptcha_ratio=0.0,
+    train_hcaptcha_opacity=0,
+    # mask config
+    mask_sides=3,
+    mask_per_rowcol=2,
+    mask_num_concentric=2,
+    mask_colors=True,
 ):
     model = resnet152(weights=ResNet152_Weights.IMAGENET1K_V2)
     model.fc = nn.Linear(2048, num_classes)
@@ -112,7 +117,7 @@ def get_model(
     model.train()
     free_mem()
 
-    if num_epochs == 0:
+    if train_num_epochs == 0:
         return model
 
     args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
@@ -122,11 +127,11 @@ def get_model(
         print(f"loaded cached model: {cache_name}")
         return model
 
-    if use_hcaptcha_ratio > 0.0:
+    if train_hcaptcha_ratio > 0.0:
         num_total = len(labels_train_np)
-        num_perturbed = int(use_hcaptcha_ratio * num_total)
+        num_perturbed = int(train_hcaptcha_ratio * num_total)
         perturbed_indices = np.random.choice(num_total, num_perturbed, replace=False)
-        images_train_np[perturbed_indices] = hcaptcha_mask(images_train_np[perturbed_indices], prerendered_mask, opacity=use_hcaptcha_opacity)
+        images_train_np[perturbed_indices] = apply_hcaptcha_mask(images_train_np[perturbed_indices], opacity=train_hcaptcha_opacity, mask_sides=mask_sides, mask_per_rowcol=mask_per_rowcol, mask_num_concentric=mask_num_concentric, mask_colors=mask_colors)
 
     learning_rate = 0.001
     batch_size = 128
@@ -138,12 +143,12 @@ def get_model(
     test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    for epoch in range(num_epochs):
+    for epoch in range(train_num_epochs):
         running_loss = 0.0
         correct = 0
         total = 0
         model.train()
-        for inputs, labels in tqdm(train_loader, desc=f"epoch {epoch+1}/{num_epochs}", ncols=100):
+        for inputs, labels in tqdm(train_loader, desc=f"epoch {epoch+1}/{train_num_epochs}", ncols=100):
             inputs, labels = inputs.to("cuda"), labels.to("cuda")
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -172,7 +177,7 @@ def get_model(
                 correct += predicted.eq(labels).sum().item()
         test_loss = test_loss / len(test_loader)
         test_acc = 100.0 * correct / total
-        print(f"epoch [{epoch+1}/{num_epochs}]: train loss: {train_loss:.4f}, train acc: {train_acc:.2f}%, test loss: {test_loss:.4f}, test acc: {test_acc:.2f}%")
+        print(f"epoch [{epoch+1}/{train_num_epochs}]: train loss: {train_loss:.4f}, train acc: {train_acc:.2f}%, test loss: {test_loss:.4f}, test acc: {test_acc:.2f}%")
 
     torch.save(model.state_dict(), weights_path / cache_name)
     print(f"cached model {cache_name} ({sum(p.numel() for p in model.parameters()) / 1e6:.2f} MB)")
@@ -215,9 +220,15 @@ if __name__ == "__main__":
 
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
-        "tune_epochs": [0, 2, 4, 6, 8, 10],
-        "tune_hcaptcha_ratio": [0.0, 0.5, 1.0],  # no adv training, 50% adv training, 100% adv training
-        "opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],  # same opacity both for training and eval
+        # train config
+        "train_epochs": [0, 2, 4, 6, 8, 10],
+        "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
+        "train_opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],
+        # mask config
+        "mask_sides": [3, 4, 5, 6, 7, 8],
+        "mask_per_rowcol": [2, 4, 6, 8],
+        "mask_num_concentric": [2, 4, 6, 8, 10],
+        "mask_colors": [True, False],
     }
     combs = list(product(*combinations.values()))
     for idx, comb in enumerate(combs):
@@ -227,6 +238,7 @@ if __name__ == "__main__":
             continue
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
+
         model = get_model(
             comb["dataset"],
             num_classes,
@@ -234,14 +246,24 @@ if __name__ == "__main__":
             labels_train_np.copy(),
             images_test_np.copy(),
             labels_test_np.copy(),
-            num_epochs=comb["tune_epochs"],
-            use_hcaptcha_ratio=comb["tune_hcaptcha_ratio"],
-            use_hcaptcha_opacity=comb["opacity"],
+            # train config
+            train_num_epochs=comb["train_epochs"],
+            train_hcaptcha_ratio=comb["train_hcaptcha_ratio"],
+            train_hcaptcha_opacity=comb["train_opacity"],
+            # mask config
+            mask_sides=comb["mask_sides"],
+            mask_per_rowcol=comb["mask_per_rowcol"],
+            mask_num_concentric=comb["mask_num_concentric"],
+            mask_colors=comb["mask_colors"],
         )
-        acc = eval_model(model, images_test_np.copy(), labels_test_np.copy())
+
         output = {
             **comb,
-            "accuracy": acc,
+            "acc": eval_model(model, images_test_np.copy(), labels_test_np.copy()),
         }
+        eval_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
+        for opacity in eval_opacities:
+            output[f"acc_{opacity}"] = eval_model(model, apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]), labels_test_np.copy())
+
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")

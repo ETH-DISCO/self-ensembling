@@ -5,9 +5,4 @@ Implementation of "Ensemble everything everywhere: Multi-scale aggregation for a
 
 Experiments:
 
-- `0-custom-impl` (done) -> hyper parameter testing andreas' code
-- `1-resnet-single-mask` (done) -> just a test run for the `2-resnet-multi-mask` experiment
-- `2-resnet-multi-mask` (waiting for results)
-- `3-resnet-tuning` (to be done)
-- `4-resnet-ensemble` (pgd to be done)
-- `5-resnet-ensemble-tsne` (to be done)
+- ...

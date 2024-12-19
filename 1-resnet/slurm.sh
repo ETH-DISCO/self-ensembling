@@ -1,8 +1,8 @@
 rm -rf /scratch/$USER/*
 cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
-FILEPATH="./1-resnet-single-mask/resnet.py"
-NODE="tikgpu10"
+FILEPATH="./1-resnet/resnet.py"
+NODE="tikgpu07"
 
 #
 # dispatch
