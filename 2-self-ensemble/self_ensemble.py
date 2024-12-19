@@ -501,48 +501,73 @@ def fgsm_attack_layer(model, xs, ys, epsilon, layer_i, batch_size=128):
     return np.concatenate(all_perturbed_images, axis=0)
 
 
-def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=40, batch_size=128):
+def pgd_attack_layer(model, xs, ys, epsilon, layer_i, alpha=0.01, num_iter=10, batch_size=128, momentum=0.9, grad_norm_type='sign'):
+    # pgd = projected gradient descent
     model = model.eval()
     model = model.cuda()
-
+    
     all_perturbed_images = []
     its = int(np.ceil(xs.shape[0] / batch_size))
+    momentum_buffer = None
 
-    for it in range(its):
+    for it in tqdm(range(its), desc="pgd attack layer", ncols=100):
         i1 = it * batch_size
         i2 = min([(it + 1) * batch_size, xs.shape[0]])
+        current_batch_size = i2 - i1
 
         x = torch.Tensor(xs[i1:i2].transpose([0, 3, 1, 2])).to("cuda")
         y = torch.Tensor(ys[i1:i2]).to("cuda").to(torch.long)
         
-        # initialize delta (perturbation) randomly within epsilon ball
-        delta = torch.zeros_like(x, requires_grad=True).to("cuda")
-        delta.uniform_(-epsilon, epsilon)
-        delta = torch.clamp(x + delta, 0, 1) - x
+        # random start
+        delta = torch.rand_like(x, requires_grad=True).to("cuda")
+        delta.data = delta.data * 2 * epsilon - epsilon
+        delta.data = torch.clamp(x + delta.data, 0, 1) - x
         
-        for _ in range(num_iter):
+        for t in range(num_iter):
             x_adv = x + delta
-            x_adv.requires_grad = True
-
+            
             layer_output = model.forward_until(x_adv, layer_i)
             layer_logits = model.linear_layers[layer_i](layer_output.reshape(layer_output.shape[0], -1))
             loss = nn.CrossEntropyLoss()(layer_logits, y)
             loss.backward()
 
-            # update delta with gradient descent
-            grad = x_adv.grad.data
-            delta = delta + alpha * grad.sign()
-            
-            # project perturbation back onto epsilon ball
-            delta = torch.clamp(delta, -epsilon, epsilon)
-            # project perturbed image back into valid range [0,1]
-            delta = torch.clamp(x + delta, 0, 1) - x
-            
-            delta = delta.detach()
-            delta.requires_grad = True
+            with torch.no_grad():
+                grad = delta.grad.data
+                
+                if grad_norm_type == 'sign':
+                    grad_norm = grad.sign()
+                elif grad_norm_type == 'l2':
+                    grad_norm = grad / (torch.norm(grad, p=2, dim=(1,2,3), keepdim=True) + 1e-8)
+                elif grad_norm_type == 'linf':
+                    grad_norm = grad / (grad.abs().max(dim=1, keepdim=True)[0].max(dim=2, keepdim=True)[0].max(dim=3, keepdim=True)[0] + 1e-8)
+                
+                # Reset momentum buffer for each new batch size
+                if momentum > 0:
+                    if momentum_buffer is None or momentum_buffer.size(0) != current_batch_size:
+                        momentum_buffer = grad_norm
+                    else:
+                        momentum_buffer = momentum * momentum_buffer + (1 - momentum) * grad_norm
+                    update = momentum_buffer
+                else:
+                    update = grad_norm
 
-        perturbed_image = torch.clamp(x + delta, 0, 1)
-        all_perturbed_images.append(perturbed_image.detach().cpu().numpy().transpose([0, 2, 3, 1]))
+                delta.data = delta.data + alpha * update
+                delta.data = torch.clamp(delta.data, -epsilon, epsilon)
+                delta.data = torch.clamp(x + delta.data, 0, 1) - x
+            
+            # early stop
+            with torch.no_grad():
+                layer_output = model.forward_until(x + delta, layer_i)
+                layer_logits = model.linear_layers[layer_i](layer_output.reshape(layer_output.shape[0], -1))
+                pred = layer_logits.max(1)[1]
+                if (pred != y).all():
+                    break
+            
+            delta.grad.zero_()
+
+        perturbed_image = torch.clamp(x + delta.data, 0, 1)
+        all_perturbed_images.append(perturbed_image.cpu().numpy().transpose([0, 2, 3, 1]))
+        
     return np.concatenate(all_perturbed_images, axis=0)
 
 
