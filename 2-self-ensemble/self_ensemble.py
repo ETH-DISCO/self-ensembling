@@ -914,10 +914,6 @@ if __name__ == "__main__":
         )
         free_mem()
 
-        # 
-        # eval
-        # 
-
         model.cuda()
         model.eval()
         output = {
@@ -983,10 +979,10 @@ if __name__ == "__main__":
         # dump latents
         sample_size = 100
         sample_idxs = np.hstack([np.random.choice(np.where(labels_test_np == i)[0], sample_size, replace=False) for i in range(num_classes)])
-        for layer in layers_to_use:
-            imgs = torch.tensor(images_test_np[sample_idxs].transpose([0, 3, 1, 2]), device="cuda")
-            for img, img_idx in zip(imgs, sample_idxs):
-                latent = model.forward_until(img.unsqueeze(0), layer_id=layer).cpu().detach().numpy().flatten()
+        for layer in tqdm(layers_to_use, desc="dumping latents", ncols=100):
+            for img_idx in sample_idxs:
+                img = torch.tensor(images_test_np[img_idx].transpose([2, 0, 1]), device="cuda").float().unsqueeze(0)
+                latent = model.forward_until(img, layer_id=layer).cpu().detach().numpy().flatten()
                 img_cls = labels_test_np[img_idx]
                 np.save(latents_path / f"{comb['dataset']}_{layer}_{img_idx}_{img_cls}.npy", latent, allow_pickle=False)
         free_mem()
