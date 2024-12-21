@@ -16,8 +16,8 @@ fi
 conda env create --file environment.yml
 
 # dispatch jobs
-sbatch job-1.sh "./1-resnet/resnet.py"
-sbatch job-2.sh "./2-self-ensemble/self_ensemble.py"
+sbatch slurm-job-1.sh "./1-resnet/resnet.py"
+sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py"
 
 #
 # monitoring
