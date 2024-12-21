@@ -14,6 +14,7 @@ from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
 from utils import *
 
+assert torch.cuda.is_available()
 set_env()
 
 data_path = get_current_dir().parent / "data"
@@ -231,10 +232,7 @@ if __name__ == "__main__":
         "mask_colors": [True, False],
     }
     combs = list(product(*combinations.values()))
-
-    totalcombs = len(combs)
-    print(f"total combinations: {totalcombs}")
-    exit()
+    print(f"total combinations: {len(combs)}")
 
     for idx, comb in enumerate(combs):
         print(f"progress: {idx+1}/{len(combs)}")

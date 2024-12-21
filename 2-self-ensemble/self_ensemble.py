@@ -892,6 +892,8 @@ if __name__ == "__main__":
         # "training_adv": [False, True],
     }
     combs = list(product(*combinations.values()))
+    print(f"total combinations: {len(combs)}")
+
     for idx, comb in enumerate(combs):
         print(f"progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
