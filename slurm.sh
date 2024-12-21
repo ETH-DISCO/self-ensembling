@@ -16,13 +16,17 @@ fi
 conda env create --file environment.yml
 
 # dispatch jobs
-sbatch job.sh "./1-resnet/resnet.py"
-sbatch job.sh "./2-self-ensemble/self_ensemble.py"
+sbatch job-1.sh "./1-resnet/resnet.py"
+sbatch job-2.sh "./2-self-ensemble/self_ensemble.py"
 
 #
 # monitoring
 #
 
 watch -n 0.5 "squeue -u $USER --states=R"
-tail -f $(ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 300)
-tail -f $(ls -v /scratch/$USER/slurm/*.out 2>/dev/null | tail -n 300)
+
+tail -f $(ls -v /scratch/$USER/slurm/job-1/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job-1/*.out 2>/dev/null | tail -n 300)
+
+tail -f $(ls -v /scratch/$USER/slurm/job-2/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job-2/*.out 2>/dev/null | tail -n 300)
