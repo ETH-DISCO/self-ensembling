@@ -14,7 +14,6 @@ from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
 from utils import *
 
-assert torch.cuda.is_available()
 set_env()
 
 data_path = get_current_dir().parent / "data"
@@ -222,16 +221,21 @@ if __name__ == "__main__":
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
         # train config
-        "train_epochs": [0, 2, 6], # 2 should already have a huge effect
+        "train_epochs": [0, 2, 6],
         "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
-        "train_opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],
+        "train_opacity": [0, 2, 4, 8, 16, 32, 64, 128],
         # mask config
-        "mask_sides": [3, 4, 5, 6, 7, 8],
-        "mask_per_rowcol": [2, 4, 6, 8],
-        "mask_num_concentric": [2, 4, 8],
+        "mask_sides": [3, 4, 6, 10],
+        "mask_per_rowcol": [2, 4, 10],
+        "mask_num_concentric": [2, 5, 10],
         "mask_colors": [True, False],
     }
     combs = list(product(*combinations.values()))
+
+    totalcombs = len(combs)
+    print(f"total combinations: {totalcombs}")
+    exit()
+
     for idx, comb in enumerate(combs):
         print(f"progress: {idx+1}/{len(combs)}")
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
@@ -262,9 +266,13 @@ if __name__ == "__main__":
             **comb,
             "acc": eval_model(model, images_test_np.copy(), labels_test_np.copy()),
         }
-        eval_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
+        eval_opacities = [0, 2, 4, 8, 16, 32, 64, 128]
         for opacity in eval_opacities:
-            output[f"acc_{opacity}"] = eval_model(model, apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]), labels_test_np.copy())
+            output[f"acc_{opacity}"] = eval_model(
+                model,
+                apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]),
+                labels_test_np.copy(),
+            )
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")

@@ -299,12 +299,15 @@ def add_overlay(background: Image.Image, overlay: Image.Image, opacity: int) -> 
 
 
 if __name__ == "__main__":
+    mask_dir = get_current_dir() / "masks"
+    mask_dir.mkdir(exist_ok=True)
+
     height = 224
     width = 224
 
-    for sides in [3, 4, 5, 6, 7, 8]:
-        for per_rowcol in [2, 4, 6, 8]:
-            for num_concentric in [2, 4, 6, 8, 10]:
+    for sides in [3, 4, 6, 10]:
+        for per_rowcol in [2, 4, 10]:
+            for num_concentric in [2, 5, 10]:
                 for colors in [True, False]:
                     img = get_polygon_mask(
                         width=height,
@@ -317,5 +320,24 @@ if __name__ == "__main__":
                         hcaptcha_colors=colors,
                     )
 
-                    fp = get_current_dir() / "masks" / f"{sides}_{per_rowcol}_{num_concentric}_{colors}.png"
+                    fp = mask_dir / f"{sides}_{per_rowcol}_{num_concentric}_{colors}.png"
                     img.save(fp)
+
+    # from PIL import Image
+    # import requests
+
+    # url = "https://sueszli.github.io/datasets/cat_1966.jpeg"
+    # img = Image.open(requests.get(url, stream=True).raw).convert("RGBA")
+    # img = img.crop((0, img.height - img.width, img.width, img.height))
+    # img = img.resize((width, height))
+    # mask = get_polygon_mask(
+    #     width=width,
+    #     height=height,
+    #     num_sides=10,
+    #     num_polygons_per_row=10,
+    #     num_polygons_per_col=10,
+    #     num_polygons_concentric=2,
+    #     hcaptcha_colors=True,
+    # )
+    # img = add_overlay(img, mask, 128)
+    # img.show()

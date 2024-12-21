@@ -900,7 +900,7 @@ if __name__ == "__main__":
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
 
-        resolutions = [32, 16, 8, 4] if not comb["dataset"] == "imagenette" else [128, 64, 32, 16] # arbitrary choice
+        resolutions = [32, 16, 8, 4] if not comb["dataset"] == "imagenette" else [128, 64, 32, 16]  # arbitrary choice
         layers_to_use = [20, 30, 35, 40, 45, 50, 52]  # only some layers to save time -> anything below 20 is useless
         model = get_model(
             dataset=comb["dataset"],
