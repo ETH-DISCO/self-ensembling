@@ -914,6 +914,7 @@ if __name__ == "__main__":
             labels_train_np=labels_train_np.copy(),
         )
         free_mem()
+        print(f"model trained")
 
         model.cuda()
         model.eval()
@@ -923,6 +924,7 @@ if __name__ == "__main__":
             "plain_ensemble_acc": eval_self_ensemble(model, images_test_np.copy(), labels_test_np.copy(), layers_to_use),
         }
         free_mem()
+        print(f"plain eval done")
 
         fgsm_idxs = [20, 30, 35, 40, 45, 50, 52]
         for fgsm_idx in fgsm_idxs:
@@ -930,17 +932,20 @@ if __name__ == "__main__":
             output[f"fgsm_{fgsm_idx}_ensemble_acc"] = eval_self_ensemble(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
             output[f"fgsm_{fgsm_idx}_layer_accs"] = eval_layers(model, fgsm_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
+        print(f"fgsm eval done")
 
         fgsmcombined_idxs = [20, 30, 35]
         fgsmcombined_images_test_np = fgsm_attack_layer_combined(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_idxs=fgsmcombined_idxs, layer_weights=None, batch_size=64)
         output[f"fgsmcombined_{fgsmcombined_idxs}_ensemble_acc"] = eval_self_ensemble(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
         output[f"fgsmcombined_{fgsmcombined_idxs}_layer_accs"] = eval_layers(model, fgsmcombined_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
+        print(f"fgsmcombined eval done")
 
         fgsmensemble_images_test_np = fgsm_attack_ensemble(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, batch_size=64)
         output["fgsmensemble_ensemble_acc"] = eval_self_ensemble(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         output["fgsmensemble_layer_accs"] = eval_layers(model, fgsmensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
+        print(f"fgsmensemble eval done")
 
         pgd_idxs = [20, 30, 35, 40, 45, 50, 52]
         for pgd_idx in pgd_idxs:
@@ -948,21 +953,25 @@ if __name__ == "__main__":
             output[f"pgd_{pgd_idx}_ensemble_acc"] = eval_self_ensemble(model, pgd_images_test_np, labels_test_np.copy(), layers_to_use)
             output[f"pgd_{pgd_idx}_layer_accs"] = eval_layers(model, pgd_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
+        print(f"pgd eval done")
 
         pgdcombined_idxs = [20, 30, 35]
         pgdcombined_images_test_np = pgd_attack_layer_combined(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, layer_idxs=pgdcombined_idxs, layer_weights=None, batch_size=64)
         output[f"pgdcombined_{pgdcombined_idxs}_ensemble_acc"] = eval_self_ensemble(model, pgdcombined_images_test_np, labels_test_np.copy(), layers_to_use)
         output[f"pgdcombined_{pgdcombined_idxs}_layer_accs"] = eval_layers(model, pgdcombined_images_test_np, labels_test_np.copy(), layers_to_use)
+        free_mem()
+        print(f"pgdcombined eval done")
 
         pgdensemble_images_test_np = pgd_attack_ensemble(model, images_test_np.copy()[:], labels_test_np.copy()[:], epsilon=8 / 255, batch_size=64)
         output["pgdensemble_ensemble_acc"] = eval_self_ensemble(model, pgdensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         output["pgdensemble_layer_accs"] = eval_layers(model, pgdensemble_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
+        print(f"pgdensemble eval done")
 
-        mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255]
-        mask_sides = [3, 4, 5, 6, 7, 8]
-        mask_per_rowcols = [2, 4, 6, 8]
-        mask_num_concentrics = [2, 4, 6, 8, 10]
+        mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128]
+        mask_sides = [3, 4, 6, 10]
+        mask_per_rowcols = [2, 4, 10]
+        mask_num_concentrics = [2, 5, 10]
         mask_colors = [True, False]
         for opacity in mask_opacities:
             for side in mask_sides:
@@ -973,6 +982,7 @@ if __name__ == "__main__":
                             output[f"mask_{opacity}_{side}_{per_rowcol}_{num_concentric}_{colors}_ensemble_acc"] = eval_self_ensemble(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
                             output[f"mask_{opacity}_{side}_{per_rowcol}_{num_concentric}_{colors}_layer_accs"] = eval_layers(model, hcaptcha_images_test_np, labels_test_np.copy(), layers_to_use)
         free_mem()
+        print(f"mask eval done")
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
@@ -987,3 +997,5 @@ if __name__ == "__main__":
                 img_cls = labels_test_np[img_idx]
                 np.save(latents_path / f"{comb['dataset']}_{layer}_{img_idx}_{img_cls}.npy", latent, allow_pickle=False)
         free_mem()
+        latents_dir_size = sum(f.stat().st_size for f in latents_path.iterdir())
+        print(f"latents dumped - current directory size: {latents_dir_size / 1e6:.2f} MB")
