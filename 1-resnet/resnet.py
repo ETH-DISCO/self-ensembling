@@ -222,13 +222,13 @@ if __name__ == "__main__":
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
         # train config
-        "train_epochs": [0, 2, 4, 6, 8, 10],
+        "train_epochs": [0, 2, 6], # 2 should already have a huge effect
         "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
         "train_opacity": [0, 1, 2, 4, 8, 16, 32, 64, 128, 255],
         # mask config
         "mask_sides": [3, 4, 5, 6, 7, 8],
         "mask_per_rowcol": [2, 4, 6, 8],
-        "mask_num_concentric": [2, 4, 6, 8, 10],
+        "mask_num_concentric": [2, 4, 8],
         "mask_colors": [True, False],
     }
     combs = list(product(*combinations.values()))
