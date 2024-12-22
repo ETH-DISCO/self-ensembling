@@ -887,9 +887,6 @@ if __name__ == "__main__":
     combinations = {
         "dataset": ["cifar10", "cifar100", "imagenette"],
         "training_natural": [False, True],
-        # "training_noise": [False, True],
-        # "training_shuffle": [False, True],
-        # "training_adv": [False, True],
     }
     combs = list(product(*combinations.values()))
     print(f"total combinations: {len(combs)}")
