@@ -1,6 +1,6 @@
 # --------------------------------------------------------------- venv
 
-.PHONY: venv # infer dependencies from code, compile and install in venv
+.PHONY: venv # infer dependencies from code, initialize venv
 venv:
 	pip install pip --upgrade
 	pip install pipreqs
@@ -16,7 +16,7 @@ venv:
 	./.venv/bin/python3 -m pip install -r requirements.txt
 	@echo "to activate venv, run: source .venv/bin/activate"
 
-.PHONY: venv-freeze # freeze venv into requirements.txt
+.PHONY: venv-lock # freeze venv into requirements.txt
 venv-lock:
 	./.venv/bin/python3 -m pip freeze > requirements.in
 
@@ -28,16 +28,16 @@ in-lock:
 
 .PHONY: docker-up # run docker container
 docker-up:
-	docker-compose up --detach
+	docker compose up --detach
 	@echo "to exec into docker container, run: docker exec -it main bash"
 
 .PHONY: docker-build # save changes to container
 docker-build:
-	docker-compose build
+	docker compose build
 
 .PHONY: docker-clean # wipe everything in all docker containers
 docker-clean:
-	docker-compose down
+	docker compose down
 
 	docker stop $$(docker ps -a -q) || true
 	docker rm $$(docker ps -a -q) || true
@@ -128,6 +128,25 @@ monitor-kill:
 
 # --------------------------------------------------------------- utils
 
+.PHONY: tex-to-pdf # compile tex to pdf
+tex-to-pdf:
+	# sudo tlmgr update --self
+	# sudo tlmgr install enumitem adjustbox tcolorbox tikzfill pdfcol listingsutf8
+	# sudo tlmgr install biblatex biber
+	pdflatex -interaction=nonstopmode "$(filepath)"
+	rm -f *.bib *.aux *.log *.out *.synctex.gz
+	# open -a "Google Chrome" "$(filepath)"
+
+.PHONY: rmd-to-pdf # compile rmd to pdf
+rmd-to-pdf:
+	Rscript -e 'for(p in c("rmarkdown", "ISLR", "IRkernel")) if(!requireNamespace(p, quietly = TRUE)) install.packages(p, repos = "https://cran.rstudio.com")'
+	Rscript -e "rmarkdown::render('$(filepath)', output_format = 'pdf_document')"
+	rm -rf *.bib *.aux *.log *.out *.synctex.gz
+
+.PHONY: md-to-pdf # compile md to pdf
+md-to-pdf:
+	pandoc "$(filepath)" -o "$(basename $(filepath)).pdf"
+
 .PHONY: fmt # format codebase
 fmt:
 	./.venv/bin/python3 -m pip install isort
@@ -136,15 +155,7 @@ fmt:
 
 	./.venv/bin/python3 -m isort .
 	./.venv/bin/python3 -m autoflake --remove-all-unused-imports --recursive --in-place .
-	./.venv/bin/python3 -m ruff format --config line-length=500 .
-
-.PHONY: sec # check for vulns
-sec:
-	./.venv/bin/python3 -m pip install bandit
-	./.venv/bin/python3 -m pip install safety
-	
-	./.venv/bin/python3 -m bandit -r .
-	./.venv/bin/python3 -m safety check --full-report
+	./.venv/bin/python3 -m ruff format --config line-length=5000 .
 
 .PHONY: up # pull and push changes
 up:
