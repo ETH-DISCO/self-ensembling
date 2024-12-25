@@ -15,24 +15,32 @@ if conda env list | grep -q "^con "; then
 fi
 conda env create --file environment.yml
 
-# dispatch jobs
+# 
+# full run (tikgpu10)
+# 
+
+# dispatch
 sbatch slurm-job-1.sh "./1-resnet/resnet.py"
 sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py"
 
-sbatch slurm-job-1.sh "./1-resnet-cifar100/resnet.py"
-sbatch slurm-job-1.sh "./1-resnet-imagenette/resnet.py"
-
-# monitoring
+# monitor
 watch -n 0.5 "squeue -u $USER --states=R"
-
 tail -f $(ls -v /scratch/$USER/slurm/job-1/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v /scratch/$USER/slurm/job-1/*.out 2>/dev/null | tail -n 300)
-
 tail -f $(ls -v /scratch/$USER/slurm/job-2/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v /scratch/$USER/slurm/job-2/*.out 2>/dev/null | tail -n 300)
 
+# 
+# sub runs (tikgpu07)
+# 
+
+# dispatch
+sbatch slurm-job-1-cifar100.sh "./1-resnet-cifar100/resnet.py"
+sbatch slurm-job-1-imagenette.sh "./1-resnet-imagenette/resnet.py"
+
+# monitor
+watch -n 0.5 "squeue -u $USER --states=R"
 tail -f $(ls -v /scratch/$USER/slurm/job-cifar100/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v /scratch/$USER/slurm/job-cifar100/*.out 2>/dev/null | tail -n 300)
-
 tail -f $(ls -v /scratch/$USER/slurm/job-imagenette/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v /scratch/$USER/slurm/job-imagenette/*.out 2>/dev/null | tail -n 300)
