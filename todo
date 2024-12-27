@@ -1,0 +1,4 @@
+- wait for most current experiments to finish
+
+- plot as soon as cifar10 is done
+- resnet: make exhaustive eval on masks by downloading (`scp`) pretrained models from /tmp folder -> you can also just take 5, and try to tell an interesting story
