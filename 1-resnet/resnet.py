@@ -266,12 +266,6 @@ if __name__ == "__main__":
         }
         eval_opacities = [0, 2, 4, 8, 16, 32, 64, 128]
         for opacity in eval_opacities:
-
-            # 
-            # take some random existing models (maybe just 5) and evaluate them against different mask configs as well
-            # see what happens
-            # 
-
             output[f"acc_{opacity}"] = eval_model(
                 model,
                 apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]),
