@@ -2,5 +2,5 @@
 
 - plot as soon as cifar10 is done
     - resnet: ???
-    - self-ensemble: ✅
+    - self-ensemble: ✅ -> you can also download the latents
 - resnet: make exhaustive eval on masks by downloading (`scp`) pretrained models from /tmp folder -> you can also just take 5, and try to tell an interesting story
