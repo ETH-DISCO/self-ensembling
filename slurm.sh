@@ -17,15 +17,13 @@ conda env create --file environment.yml
 
 # dispatch
 sbatch slurm-job-1.sh "./1-resnet/resnet.py"
-sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py" # got kicked out of tikgput10, can't train this anymore!
-
-# got kicked out of tikgput10!
+sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py"
 
 # monitor
-# srun --mem=10GB --nodelist tikgpu10 --pty bash -i
+srun --mem=10GB --nodelist tikgpu10 --pty bash -i
 
-# watch -n 0.5 "squeue -u $USER --states=R"
-# tail -f $(ls -v /scratch/$USER/slurm/job-1/*.err 2>/dev/null | tail -n 300)
-# tail -f $(ls -v /scratch/$USER/slurm/job-1/*.out 2>/dev/null | tail -n 300)
-# tail -f $(ls -v /scratch/$USER/slurm/job-2/*.err 2>/dev/null | tail -n 300)
-# tail -f $(ls -v /scratch/$USER/slurm/job-2/*.out 2>/dev/null | tail -n 300)
+watch -n 0.5 "squeue -u $USER --states=R"
+tail -f $(ls -v /scratch/$USER/slurm/job-1/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job-1/*.out 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job-2/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job-2/*.out 2>/dev/null | tail -n 300)
