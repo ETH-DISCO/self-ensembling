@@ -1,7 +1,7 @@
 - wait for most current experiments to finish
 
 - wait for cifar 10 to finish
-    - resnet: around 1000 missing (should take a day)
+    - resnet: 951 (should take a day)
     - self-ensemble: done
         - download latents for cifar10 for plotting
 
@@ -10,7 +10,7 @@
 - resnet:
 
     - wait for resnet to finish
-    - use models in `/tmp` folder to compare against more mask types
+    - use models in `/tmp` folder to compare against more mask types 
 
 - self-ensemble:
 
