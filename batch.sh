@@ -54,6 +54,7 @@ sbatch ./batch-job.sh ./1-batch/batch.py 7
 #
 
 watch -n 0.5 "squeue -u $USER --states=R"
+grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
 
 salloc --mem=10GB --nodelist=tikgpu07
 
