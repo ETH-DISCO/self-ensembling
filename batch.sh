@@ -40,19 +40,14 @@ srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i
 cd /scratch/$USER
 git clone https://github.com/ETH-DISCO/self-ensembling/ && cd self-ensembling
 
-NODE="tikgpu07"
-
-for JOB_NUM in {0..7}; do
-    rm -rf job.sh
-    git clone https://github.com/ETH-DISCO/cluster-tutorial/
-    mv cluster-tutorial/job.sh .
-    rm -rf cluster-tutorial
-    sed -i 's/{{USERNAME}}/'$USER'/g' job.sh
-    sed -i 's/{{NODE}}/'$NODE'/g' job.sh
-    
-    sed -i 's/{{JOB_NUM}}/'$JOB_NUM'/g' job.sh
-    sbatch ./batch-job.sh ./1-batch/batch.py $JOB_NUM
-done
+sbatch ./batch-job.sh ./1-batch/batch.py 0
+sbatch ./batch-job.sh ./1-batch/batch.py 1
+sbatch ./batch-job.sh ./1-batch/batch.py 2
+sbatch ./batch-job.sh ./1-batch/batch.py 3
+sbatch ./batch-job.sh ./1-batch/batch.py 4
+sbatch ./batch-job.sh ./1-batch/batch.py 5
+sbatch ./batch-job.sh ./1-batch/batch.py 6
+sbatch ./batch-job.sh ./1-batch/batch.py 7
 
 #
 # monitoring

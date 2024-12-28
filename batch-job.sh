@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-type=NONE # disable email notifications can be [NONE, BEGIN, END, FAIL, REQUEUE, ALL]
-#SBATCH --output=/scratch/{{USERNAME}}/slurm/job-{{JOB_NUM}}/%j.out # redirection of stdout (%j is the job id)
-#SBATCH --error=/scratch/{{USERNAME}}/slurm/job-{{JOB_NUM}}/%j.err # redirection of stderr
-#SBATCH --nodelist={{NODE}} # choose specific node
+#SBATCH --output=/scratch/yjabary/slurm/job/%j.out # redirection of stdout (%j is the job id)
+#SBATCH --error=/scratch/yjabary/slurm/job/%j.err # redirection of stderr
+#SBATCH --nodelist=tikgpu07 # choose specific node
 #SBATCH --mem=150G
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
