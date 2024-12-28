@@ -1,7 +1,3 @@
-# 
-# set up
-# 
-
 export SLURM_CONF=/home/sladmitet/slurm/slurm.conf
 
 find /home/$USER -mindepth 1 -maxdepth 1 ! -name 'public_html' -exec rm -rf {} +
@@ -36,17 +32,6 @@ fi
 grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
 
 srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i
-
-eval "$(/itet-stor/$USER/net_scratch/conda/bin/conda shell.bash hook)" # conda activate base
-conda info --envs
-if conda env list | grep -q "^con "; then
-    read -p "the 'con' environment already exists. recreate? (y/n): " answer
-    if [[ $answer =~ ^[Yy]$ ]]; then
-        conda remove --yes --name con --all
-        rm -rf /itet-stor/$USER/net_scratch/conda_envs/con && conda remove --yes --name con --all || true
-    fi
-fi
-conda env create --file environment.yml
 
 # 
 # dispatch
