@@ -1,3 +1,8 @@
+# 
+# this stuff is for waiting for the tikgpu10 node to be available
+# to then run missing experiments, use weights to extend some missing stuff
+# 
+
 rm -rf /scratch/$USER/*
 cd /scratch/$USER
 
