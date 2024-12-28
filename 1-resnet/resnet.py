@@ -272,5 +272,21 @@ if __name__ == "__main__":
                 labels_test_np.copy(),
             )
 
+        # mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128]
+        # mask_sides = [3, 4, 6, 10]
+        # mask_per_rowcols = [2, 4, 10]
+        # mask_num_concentrics = [2, 5, 10]
+        # mask_colors = [True, False]
+        # for opacity in mask_opacities:
+        #     for side in mask_sides:
+        #         for per_rowcol in mask_per_rowcols:
+        #             for num_concentric in mask_num_concentrics:
+        #                 for colors in mask_colors:
+        #                     output[f"acc_{opacity}_{side}_{per_rowcol}_{num_concentric}_{colors}"] = eval_model(
+        #                         model,
+        #                         apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=side, mask_per_rowcol=per_rowcol, mask_num_concentric=num_concentric, mask_colors=colors),
+        #                         labels_test_np.copy(),
+        #                     )
+
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")

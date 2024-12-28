@@ -127,62 +127,8 @@ def get_model(
         model.load_state_dict(torch.load(weights_path / cache_name))
         print(f"loaded cached model: {cache_name}")
         return model
-
-    if train_hcaptcha_ratio > 0.0:
-        num_total = len(labels_train_np)
-        num_perturbed = int(train_hcaptcha_ratio * num_total)
-        perturbed_indices = np.random.choice(num_total, num_perturbed, replace=False)
-        images_train_np[perturbed_indices] = apply_hcaptcha_mask(images_train_np[perturbed_indices], opacity=train_hcaptcha_opacity, mask_sides=mask_sides, mask_per_rowcol=mask_per_rowcol, mask_num_concentric=mask_num_concentric, mask_colors=mask_colors)
-
-    learning_rate = 0.001
-    batch_size = 128
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    train_dataset = TensorDataset(torch.FloatTensor(images_train_np).permute(0, 3, 1, 2), torch.LongTensor(labels_train_np))
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    for epoch in range(train_num_epochs):
-        running_loss = 0.0
-        correct = 0
-        total = 0
-        model.train()
-        for inputs, labels in tqdm(train_loader, desc=f"epoch {epoch+1}/{train_num_epochs}", ncols=100):
-            inputs, labels = inputs.to("cuda"), labels.to("cuda")
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-        train_loss = running_loss / len(train_loader)
-        train_acc = 100.0 * correct / total
-
-        model.eval()
-        test_loss = 0.0
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to("cuda"), labels.to("cuda")
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                test_loss += loss.item()
-                _, predicted = outputs.max(1)
-                total += labels.size(0)
-                correct += predicted.eq(labels).sum().item()
-        test_loss = test_loss / len(test_loader)
-        test_acc = 100.0 * correct / total
-        print(f"epoch [{epoch+1}/{train_num_epochs}]: train loss: {train_loss:.4f}, train acc: {train_acc:.2f}%, test loss: {test_loss:.4f}, test acc: {test_acc:.2f}%")
-
-    torch.save(model.state_dict(), weights_path / cache_name)
-    print(f"cached model {cache_name} ({sum(p.numel() for p in model.parameters()) / 1e6:.2f} MB)")
-    return model
+    else:
+        return None
 
 
 def eval_model(
@@ -216,11 +162,12 @@ def is_cached(filepath, combination):
 
 
 if __name__ == "__main__":
-    fpath = output_path / "resnet.jsonl"
+    fpath = output_path / "resnet-cifar10-missing.jsonl"
     fpath.touch(exist_ok=True)
 
     combinations = {
-        "dataset": ["cifar100"],
+        # "dataset": ["cifar10", "cifar100", "imagenette"],
+        "dataset": ["cifar10"],
         # train config
         "train_epochs": [0, 2, 6],
         "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
@@ -259,18 +206,29 @@ if __name__ == "__main__":
             mask_num_concentric=comb["mask_num_concentric"],
             mask_colors=comb["mask_colors"],
         )
+        if model is None:
+            print(f"unable to find: {comb}")
 
         output = {
             **comb,
-            "acc": eval_model(model, images_test_np.copy(), labels_test_np.copy()),
+            # "acc": eval_model(model, images_test_np.copy(), labels_test_np.copy()),
         }
-        eval_opacities = [0, 2, 4, 8, 16, 32, 64, 128]
-        for opacity in eval_opacities:
-            output[f"acc_{opacity}"] = eval_model(
-                model,
-                apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]),
-                labels_test_np.copy(),
-            )
+
+        mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128]
+        mask_sides = [3, 4, 6, 10]
+        mask_per_rowcols = [2, 4, 10]
+        mask_num_concentrics = [2, 5, 10]
+        mask_colors = [True, False]
+        for opacity in mask_opacities:
+            for side in mask_sides:
+                for per_rowcol in mask_per_rowcols:
+                    for num_concentric in mask_num_concentrics:
+                        for colors in mask_colors:
+                            output[f"acc_{opacity}_{side}_{per_rowcol}_{num_concentric}_{colors}"] = eval_model(
+                                model,
+                                apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=side, mask_per_rowcol=per_rowcol, mask_num_concentric=num_concentric, mask_colors=colors),
+                                labels_test_np.copy(),
+                            )
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
