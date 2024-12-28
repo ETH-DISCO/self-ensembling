@@ -58,5 +58,5 @@ grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
 
 salloc --mem=10GB --nodelist=tikgpu07
 
-tail -f $(ls -v /scratch/$USER/slurm/*.err 2>/dev/null | tail -n 300)
-tail -f $(ls -v /scratch/$USER/slurm/*.out 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job/*.err 2>/dev/null | tail -n 300)
+tail -f $(ls -v /scratch/$USER/slurm/job/*.out 2>/dev/null | tail -n 300)
