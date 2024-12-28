@@ -17,8 +17,7 @@ conda env create --file environment.yml
 
 # dispatch
 sbatch slurm-job-1.sh "./1-resnet/resnet.py"
-sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py" # can't train this anymore!
-
+sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py" # got kicked out of tikgput10, can't train this anymore!
 
 # got kicked out of tikgput10!
 
