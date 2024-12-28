@@ -272,6 +272,8 @@ if __name__ == "__main__":
                 labels_test_np.copy(),
             )
 
+        # maybe also pgd and fgsm?
+
         # mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128]
         # mask_sides = [3, 4, 6, 10]
         # mask_per_rowcols = [2, 4, 10]
