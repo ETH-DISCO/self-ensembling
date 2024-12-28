@@ -24,6 +24,8 @@ sbatch slurm-job-1.sh "./1-resnet/resnet.py"
 sbatch slurm-job-2.sh "./2-self-ensemble/self_ensemble.py"
 
 # monitor
+srun --mem=100GB --nodelist tikgpu10 --pty bash -i
+
 watch -n 0.5 "squeue -u $USER --states=R"
 tail -f $(ls -v /scratch/$USER/slurm/job-1/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v /scratch/$USER/slurm/job-1/*.out 2>/dev/null | tail -n 300)
@@ -39,6 +41,8 @@ sbatch slurm-job-1-cifar100.sh "./1-resnet-cifar100/resnet.py"
 sbatch slurm-job-1-imagenette.sh "./1-resnet-imagenette/resnet.py"
 
 # monitor
+srun --mem=100GB --nodelist tikgpu07 --pty bash -i
+
 watch -n 0.5 "squeue -u $USER --states=R"
 tail -f $(ls -v /scratch/$USER/slurm/job-cifar100/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v /scratch/$USER/slurm/job-cifar100/*.out 2>/dev/null | tail -n 300)
