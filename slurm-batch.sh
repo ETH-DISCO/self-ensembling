@@ -42,6 +42,8 @@ sbatch --output=$(pwd)/%j.out --error=$(pwd)/%j.err --nodelist=$(hostname) --mem
 
 grep --color=always --extended-regexp 'free|$' /home/sladmitet/smon.txt
 watch -n 0.5 "squeue -u $USER --states=R"
+squeue -u $USER --states=PENDING
+
 tail -f $(ls -v $(pwd)/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v $(pwd)/*.out 2>/dev/null | tail -n 300)
 
