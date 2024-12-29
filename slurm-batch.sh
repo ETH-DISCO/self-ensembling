@@ -21,17 +21,21 @@ conda env create --file environment.yml
 # dispatch
 #
 
-# or alternatively: `srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i`
-# or alternatively: `srun --mem=100GB --nodelist tikgpu10 --pty bash -i`
+# a) `srun --mem=10GB --nodelist tikgpu10 --pty bash -i`
+# b) `salloc --mem=10GB --nodelist=tikgpu10`
 
+# `salloc --mem=10GB --nodelist=artongpu01`
+# `salloc --mem=10GB --nodelist=artongpu02`
+# `salloc --mem=10GB --nodelist=artongpu03`
+# `salloc --mem=10GB --nodelist=artongpu04`
+# `salloc --mem=10GB --nodelist=artongpu04`
+# `salloc --mem=10GB --nodelist=artongpu05`
+# `salloc --mem=10GB --nodelist=artongpu06`
+# `salloc --mem=10GB --nodelist=artongpu07`
 # `salloc --mem=10GB --nodelist=hardin01`
 # `salloc --mem=10GB --nodelist=lbbgpu01`
-# `salloc --mem=10GB --nodelist=tikgpu02`
-# `salloc --mem=10GB --nodelist=tikgpu03`
-# `salloc --mem=10GB --nodelist=tikgpu04`
 # `salloc --mem=10GB --nodelist=tikgpu05`
-# `salloc --mem=10GB --nodelist=tikgpu07`
-# `salloc --mem=10GB --nodelist=tikgpu10` --> running jobs, don't interrupt
+# `salloc --mem=10GB --nodelist=tikgpu10` --> running old jobs, can't read
 
 # max 3 jobs per node (idk why)
 sbatch --output=$(pwd)/%j.out --error=$(pwd)/%j.err --nodelist=$(hostname) --mem=150G --nodes=1 --gres=gpu:1 --wrap="bash -c 'source /itet-stor/${USER}/net_scratch/conda/etc/profile.d/conda.sh && conda activate con && python3 $(pwd)/1-batch/batch.py 0 3'"
