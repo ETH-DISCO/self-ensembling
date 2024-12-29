@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print(f"total combinations: {len(combs)}")
 
     covered = 0
-    for comb in tqdm(range(combs), total=len(combs), ncols=80):
+    for comb in tqdm(combs, total=len(combs), ncols=80):
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
         if is_cached(get_current_dir() / "aggregated.jsonl", comb):
             covered += 1
