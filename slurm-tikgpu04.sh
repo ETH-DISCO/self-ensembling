@@ -1,3 +1,4 @@
+# srun --mem=100GB --gres=gpu:01 --nodelist tikgpu04 --pty bash -i
 rm -rf /scratch/$USER/*
 
 # clone project
