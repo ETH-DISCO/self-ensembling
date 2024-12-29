@@ -21,6 +21,15 @@ conda env create --file environment.yml
 # dispatch
 #
 
+cat /scratch/$USER/self-ensembling/1-batch/resnet_0.jsonl
+
+# copy stuff from 3,10
+# kill all jobs (except for those on node 10)
+# run again
+
+
+
+
 # `salloc --mem=10GB --nodelist=tikgpu03`
 # `salloc --mem=10GB --nodelist=tikgpu04`
 # `salloc --mem=10GB --nodelist=tikgpu05`
