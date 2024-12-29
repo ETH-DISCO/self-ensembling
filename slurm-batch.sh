@@ -1,3 +1,17 @@
+# `salloc --mem=10GB --nodelist=artongpu01`
+# `salloc --mem=10GB --nodelist=artongpu02`
+# `salloc --mem=10GB --nodelist=artongpu03` --> dispatched
+# `salloc --mem=10GB --nodelist=artongpu04` --> dispatched
+# `salloc --mem=10GB --nodelist=artongpu05` --> dispatched
+# `salloc --mem=10GB --nodelist=artongpu06` --> dispatched
+# `salloc --mem=10GB --nodelist=artongpu07` --> dispatched
+# `salloc --mem=10GB --nodelist=tikgpu05` --> dispatched
+# `salloc --mem=10GB --nodelist=tikgpu10` --> running old jobs, can't read
+
+# 
+# dispatch
+# 
+
 rm -rf /scratch/$USER/*
 
 # clone project
@@ -17,26 +31,6 @@ if conda env list | grep -q "^con "; then
 fi
 conda env create --file environment.yml
 
-#
-# dispatch
-#
-
-# a) `srun --mem=10GB --nodelist tikgpu10 --pty bash -i`
-# b) `salloc --mem=10GB --nodelist=tikgpu10`
-
-# `salloc --mem=10GB --nodelist=artongpu01`
-# `salloc --mem=10GB --nodelist=artongpu02`
-# `salloc --mem=10GB --nodelist=artongpu03`
-# `salloc --mem=10GB --nodelist=artongpu04`
-# `salloc --mem=10GB --nodelist=artongpu04`
-# `salloc --mem=10GB --nodelist=artongpu05`
-# `salloc --mem=10GB --nodelist=artongpu06`
-# `salloc --mem=10GB --nodelist=artongpu07`
-# `salloc --mem=10GB --nodelist=hardin01`
-# `salloc --mem=10GB --nodelist=lbbgpu01`
-# `salloc --mem=10GB --nodelist=tikgpu05`
-# `salloc --mem=10GB --nodelist=tikgpu10` --> running old jobs, can't read
-
 # max 3 jobs per node (idk why)
 sbatch --output=$(pwd)/%j.out --error=$(pwd)/%j.err --nodelist=$(hostname) --mem=150G --nodes=1 --gres=gpu:1 --wrap="bash -c 'source /itet-stor/${USER}/net_scratch/conda/etc/profile.d/conda.sh && conda activate con && python3 $(pwd)/1-batch/batch.py 0 3'"
 sbatch --output=$(pwd)/%j.out --error=$(pwd)/%j.err --nodelist=$(hostname) --mem=150G --nodes=1 --gres=gpu:1 --wrap="bash -c 'source /itet-stor/${USER}/net_scratch/conda/etc/profile.d/conda.sh && conda activate con && python3 $(pwd)/1-batch/batch.py 1 3'"
@@ -52,7 +46,9 @@ tail -f $(ls -v $(pwd)/*.err 2>/dev/null | tail -n 300)
 tail -f $(ls -v $(pwd)/*.out 2>/dev/null | tail -n 300)
 
 # read results
-# `cat /scratch/$USER/self-ensembling/1-batch/resnet_0.jsonl`
+cat /scratch/$USER/self-ensembling/1-batch/resnet_0.jsonl
+cat /scratch/$USER/self-ensembling/1-batch/resnet_1.jsonl
+cat /scratch/$USER/self-ensembling/1-batch/resnet_2.jsonl
 
 # cancel remaining
 scancel --user=$USER --state=PENDING
