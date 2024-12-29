@@ -219,7 +219,6 @@ def is_cached(filepath, combination):
 if __name__ == "__main__":
     BATCH_ID = int(sys.argv[1])
     TOTAL_BATCHES = int(sys.argv[2])
-    DATASET = sys.argv[3] # cifar10, cifar100, imagenette
     assert 0 <= BATCH_ID < TOTAL_BATCHES
 
     # custom output
@@ -227,7 +226,7 @@ if __name__ == "__main__":
     fpath.touch(exist_ok=True)
 
     combinations = {
-        "dataset": [DATASET],
+        "dataset": ["cifar10"],
         # train config
         "train_epochs": [0, 2, 6],
         "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
