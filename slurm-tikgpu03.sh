@@ -1,3 +1,5 @@
+rm -rf /scratch/$USER/*
+
 # clone project
 mkdir -p /scratch/$USER
 cd /scratch/$USER
