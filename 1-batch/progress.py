@@ -17,11 +17,9 @@ def is_cached(filepath, combination):
 if __name__ == "__main__":
     combinations = {
         "dataset": ["cifar10"],
-        # train config
         "train_epochs": [0, 2, 6],
         "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
         "train_opacity": [0, 2, 4, 8, 16, 32, 64, 128],
-        # mask config
         "mask_sides": [3, 4, 6, 10],
         "mask_per_rowcol": [2, 4, 10],
         "mask_num_concentric": [2, 5, 10],
