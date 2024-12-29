@@ -1,17 +1,5 @@
-import sys
-import hashlib
 import json
-import os
 from itertools import product
-
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchvision
-from PIL import Image
-from torch.utils.data import DataLoader, TensorDataset
-from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
 from utils import *
 
@@ -27,11 +15,6 @@ def is_cached(filepath, combination):
 
 
 if __name__ == "__main__":
-    BATCH_ID = int(sys.argv[1])
-    TOTAL_BATCHES = int(sys.argv[2])
-    DATASET = sys.argv[3] # cifar10, cifar100, imagenette
-    assert 0 <= BATCH_ID < TOTAL_BATCHES
-
     combinations = {
         "dataset": ["cifar10"],
         # train config
@@ -47,13 +30,9 @@ if __name__ == "__main__":
     combs = list(product(*combinations.values()))
     print(f"total combinations: {len(combs)}")
 
-    # select batch
-    batch_size = len(combs) // TOTAL_BATCHES
-    combs = [combs[i:i+batch_size] for i in range(0, len(combs), batch_size)]
-    combs = combs[BATCH_ID]
-
-    for idx, comb in enumerate(combs):
-        print(f"progress: {idx+1}/{len(combs)}")
+    covered = 0
+    for comb in tqdm(range(combs), total=len(combs), ncols=80):
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
         if is_cached(get_current_dir() / "aggregated.jsonl", comb):
-            continue
+            covered += 1
+    print(f"\ncovered: {covered}/{len(combs)}")
