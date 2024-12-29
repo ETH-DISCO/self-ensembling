@@ -217,17 +217,17 @@ def is_cached(filepath, combination):
 
 
 if __name__ == "__main__":
-    NUM_BATCHES = 8 
     BATCH_ID = int(sys.argv[1])
-    assert 0 <= BATCH_ID < NUM_BATCHES
+    TOTAL_BATCHES = int(sys.argv[2])
+    DATASET = sys.argv[3] # cifar10, cifar100, imagenette
+    assert 0 <= BATCH_ID < TOTAL_BATCHES
 
     # custom output
     fpath = output_path / f"resnet_{BATCH_ID}.jsonl"
     fpath.touch(exist_ok=True)
 
     combinations = {
-        # "dataset": ["cifar10", "cifar100", "imagenette"],
-        "dataset": ["cifar10"],
+        "dataset": [DATASET],
         # train config
         "train_epochs": [0, 2, 6],
         "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
@@ -241,8 +241,8 @@ if __name__ == "__main__":
     combs = list(product(*combinations.values()))
     print(f"total combinations: {len(combs)}")
 
-    # split into batches
-    batch_size = len(combs) // NUM_BATCHES
+    # select batch
+    batch_size = len(combs) // TOTAL_BATCHES
     combs = [combs[i:i+batch_size] for i in range(0, len(combs), batch_size)]
     combs = combs[BATCH_ID]
 
