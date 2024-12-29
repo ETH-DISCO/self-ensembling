@@ -1,7 +1,3 @@
-# 
-# idk what happened here
-# 
-
 # srun --mem=100GB --gres=gpu:01 --nodelist tikgpu07 --pty bash -i
 rm -rf /scratch/$USER/*
 
