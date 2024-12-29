@@ -1,5 +1,3 @@
-# salloc --mem=10GB --nodelist=tikgpu10
-
 # clone project
 mkdir -p /scratch/$USER
 cd /scratch/$USER

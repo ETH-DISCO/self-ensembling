@@ -21,6 +21,9 @@ conda env create --file environment.yml
 # dispatch
 #
 
+# or alternatively: `srun --mem=100GB --gres=gpu:01 --nodelist tikgpu10 --pty bash -i`
+# or alternatively: `srun --mem=100GB --nodelist tikgpu10 --pty bash -i`
+
 # `salloc --mem=10GB --nodelist=hardin01`
 # `salloc --mem=10GB --nodelist=lbbgpu01`
 # `salloc --mem=10GB --nodelist=tikgpu02`
