@@ -1,3 +1,15 @@
+"""
+couldn't run any additional experiments on weights. ran out of space on the server: `OSError: [Errno 28] No space left on device`
+moving 0.6TB of data to my local machine wouldn't be feasible.
+the second `/scratch` partition wasn't mounted, so I couldn't use that either.
+
+couldn't rerun experiments because the A100 node was fully booked.
+parallel batch jobs didn't work either because the SLURM scheduler throttled me to just 3 jobs and just kept too many in the queue.
+tried running 24 experiments on the tikgpu04 node, but it still wouldn't have finished in time for the deadline.
+
+all i could do was to extract the results (where i evaluate against the same mask i trained on).
+"""
+
 import hashlib
 import json
 import os

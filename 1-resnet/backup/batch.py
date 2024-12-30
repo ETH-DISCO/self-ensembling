@@ -1,3 +1,7 @@
+"""
+didn't manage to get batch jobs working
+"""
+
 import sys
 import hashlib
 import json
