@@ -1,11 +1,8 @@
-"""
-pip install contourpy==1.3.1 cycler==0.12.1 filelock==3.16.1 fonttools==4.55.0 fsspec==2024.10.0 jinja2==3.1.4 kiwisolver==1.4.7 markupsafe==3.0.2 matplotlib==3.9.2 mizani==0.13.0 mpmath==1.3.0 networkx==3.4.2 numpy==2.1.3 packaging==24.2 pandas==2.2.3 patsy==1.0.1 pillow==11.0.0 plotnine==0.14.1 pyparsing==3.2.0 python-dateutil==2.9.0.post0 pytz==2024.2 scipy==1.14.1 six==1.16.0 statsmodels==0.14.4 sympy==1.13.1 torch==2.5.1 torchvision==0.20.1 tqdm==4.67.0 typing-extensions==4.12.2 tzdata==2024.2
-"""
-
 import hashlib
 import json
 import os
 from itertools import product
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -15,116 +12,17 @@ from PIL import Image
 from torch.utils.data import DataLoader, TensorDataset
 from torchvision.models import ResNet152_Weights, resnet152
 from tqdm import tqdm
-import functools
-import gc
-import os
-import random
-import time
-from contextlib import contextmanager
-from pathlib import Path
-import numpy as np
-import torch
-
-
-"""
-utils
-"""
-
-
-def get_current_dir() -> Path:
-    try:
-        return Path(__file__).parent.absolute()
-    except NameError:
-        return Path(os.getcwd())
-
-
-def timeit(func) -> callable:
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        result = func(*args, **kwargs)
-        end = time.time()
-        print(f"{func.__name__} executed in {end - start:.2f}s")
-        return result
-
-    return wrapper
-
-
-def free_mem():
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
-        torch.cuda.ipc_collect()
-    if torch.backends.mps.is_available():
-        torch.mps.empty_cache()
-
-
-def get_device(disable_mps=False) -> str:
-    if torch.backends.mps.is_available() and not disable_mps:
-        return "mps"
-    elif torch.cuda.is_available():
-        return "cuda"
-    else:
-        return "cpu"
-
-
-def print_gpu_memory() -> None:
-    if torch.cuda.is_available():
-        print(f"memory summary: {torch.cuda.memory_summary(device='cuda')}")
-        print(f"gpu memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
-        print(f"gpu memory cached: {torch.cuda.memory_reserved() / 1e9:.2f} GB")
-        print(f"gpu memory peak: {torch.cuda.max_memory_allocated() / 1e9:.2f} GB")
-        print(f"gpu memory peak cached: {torch.cuda.max_memory_reserved() / 1e9:.2f} GB")
-
-
-def set_env(seed: int = -1) -> None:
-    if seed == -1:
-        seed = 42
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = True
-
-        # perf
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:128"  # (range: 16-512)
-
-
-@contextmanager
-def isolated_environment():
-    np_random_state = np.random.get_state()
-    python_random_state = random.getstate()
-    torch_random_state = torch.get_rng_state()
-    cuda_random_state = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None
-    numpy_print_options = np.get_printoptions()
-    try:
-        yield  # execute, then restore the saved state of random seeds and numpy precision
-    finally:
-        np.random.set_state(np_random_state)
-        random.setstate(python_random_state)
-        torch.set_rng_state(torch_random_state)
-        if cuda_random_state:
-            torch.cuda.set_rng_state_all(cuda_random_state)
-        np.set_printoptions(**numpy_print_options)
-
-
-"""
-code
-"""
-
+from utils import *
 
 set_env()
 
+data_path = get_current_dir().parent / "data"
 dataset_path = get_current_dir().parent / "datasets"
 weights_path = get_current_dir().parent / "weights"
 output_path = get_current_dir()
 mask_path = get_current_dir() / "masks"
 
+os.makedirs(data_path, exist_ok=True)
 os.makedirs(dataset_path, exist_ok=True)
 os.makedirs(weights_path, exist_ok=True)
 os.makedirs(output_path, exist_ok=True)
@@ -224,65 +122,9 @@ def get_model(
 
     args_hash = hashlib.md5(json.dumps({k: v for k, v in locals().items() if isinstance(v, (int, float, str, bool, list, dict))}, sort_keys=True).encode()).hexdigest()
     cache_name = f"tmp_{args_hash}.pth"
-    if (weights_path / cache_name).exists():
-        model.load_state_dict(torch.load(weights_path / cache_name))
-        print(f"loaded cached model: {cache_name}")
-        return model
-
-    if train_hcaptcha_ratio > 0.0:
-        num_total = len(labels_train_np)
-        num_perturbed = int(train_hcaptcha_ratio * num_total)
-        perturbed_indices = np.random.choice(num_total, num_perturbed, replace=False)
-        images_train_np[perturbed_indices] = apply_hcaptcha_mask(images_train_np[perturbed_indices], opacity=train_hcaptcha_opacity, mask_sides=mask_sides, mask_per_rowcol=mask_per_rowcol, mask_num_concentric=mask_num_concentric, mask_colors=mask_colors)
-
-    learning_rate = 0.001
-    batch_size = 128
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    train_dataset = TensorDataset(torch.FloatTensor(images_train_np).permute(0, 3, 1, 2), torch.LongTensor(labels_train_np))
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_dataset = TensorDataset(torch.FloatTensor(images_test_np).permute(0, 3, 1, 2), torch.LongTensor(labels_test_np))
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    for epoch in range(train_num_epochs):
-        running_loss = 0.0
-        correct = 0
-        total = 0
-        model.train()
-        for inputs, labels in tqdm(train_loader, desc=f"epoch {epoch+1}/{train_num_epochs}", ncols=100):
-            inputs, labels = inputs.to("cuda"), labels.to("cuda")
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-        train_loss = running_loss / len(train_loader)
-        train_acc = 100.0 * correct / total
-
-        model.eval()
-        test_loss = 0.0
-        correct = 0
-        total = 0
-        with torch.no_grad():
-            for inputs, labels in test_loader:
-                inputs, labels = inputs.to("cuda"), labels.to("cuda")
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                test_loss += loss.item()
-                _, predicted = outputs.max(1)
-                total += labels.size(0)
-                correct += predicted.eq(labels).sum().item()
-        test_loss = test_loss / len(test_loader)
-        test_acc = 100.0 * correct / total
-        print(f"epoch [{epoch+1}/{train_num_epochs}]: train loss: {train_loss:.4f}, train acc: {train_acc:.2f}%, test loss: {test_loss:.4f}, test acc: {test_acc:.2f}%")
-
-    torch.save(model.state_dict(), weights_path / cache_name)
-    print(f"cached model {cache_name} ({sum(p.numel() for p in model.parameters()) / 1e6:.2f} MB)")
+    assert (weights_path / cache_name).exists()
+    model.load_state_dict(torch.load(weights_path / cache_name))
+    print(f"loaded cached model: {cache_name}")
     return model
 
 
@@ -322,11 +164,12 @@ if __name__ == "__main__":
 
     combinations = {
         "dataset": ["cifar10"],
-        # train config
-        "train_epochs": [6],
-        "train_hcaptcha_ratio": [0.0, 0.25], # no adv training, 25% adv training
-        "train_opacity": [16, 32, 64, 128],
-        # mask config
+
+        "train_epochs": [0, 2, 6],
+        "train_hcaptcha_ratio": [0.0, 0.5, 1.0],
+        "train_opacity": [0, 2, 4, 8, 16, 32, 64, 128],
+        
+        # subset we're interested in
         "mask_sides": [3],
         "mask_per_rowcol": [2, 4, 10],
         "mask_num_concentric": [2],
@@ -335,11 +178,11 @@ if __name__ == "__main__":
     combs = list(product(*combinations.values()))
     print(f"total combinations: {len(combs)}")
 
-    for idx, comb in enumerate(combs):
-        print(f"progress: {idx+1}/{len(combs)}")
+    for idx, comb in tqdm(enumerate(combs), total=len(combs), desc="progress", ncols=100):
         comb = {k: v for k, v in zip(combinations.keys(), comb)}
-        if is_cached(fpath, comb):
-            continue
+        assert is_cached(fpath, comb)
+
+        # load models, eval everything
 
         images_train_np, labels_train_np, images_test_np, labels_test_np, num_classes = get_dataset(comb["dataset"])
 
@@ -365,13 +208,6 @@ if __name__ == "__main__":
             **comb,
             "acc": eval_model(model, images_test_np.copy(), labels_test_np.copy()),
         }
-        eval_opacities = [0, 2, 4, 8, 16, 32, 64, 128]
-        for opacity in eval_opacities:
-            output[f"acc_{opacity}"] = eval_model(
-                model,
-                apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]),
-                labels_test_np.copy(),
-            )
 
         mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128]
         mask_sides = [3, 4, 6, 10]
@@ -389,5 +225,6 @@ if __name__ == "__main__":
                                 labels_test_np.copy(),
                             )
 
-        with fpath.open("a") as f:
+        new_fpath = output_path / "resnet_new.jsonl"
+        with new_fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")

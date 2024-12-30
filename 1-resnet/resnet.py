@@ -264,13 +264,6 @@ if __name__ == "__main__":
             **comb,
             "acc": eval_model(model, images_test_np.copy(), labels_test_np.copy()),
         }
-        eval_opacities = [0, 2, 4, 8, 16, 32, 64, 128]
-        for opacity in eval_opacities:
-            output[f"acc_{opacity}"] = eval_model(
-                model,
-                apply_hcaptcha_mask(images_test_np.copy(), opacity=opacity, mask_sides=comb["mask_sides"], mask_per_rowcol=comb["mask_per_rowcol"], mask_num_concentric=comb["mask_num_concentric"], mask_colors=comb["mask_colors"]),
-                labels_test_np.copy(),
-            )
 
         mask_opacities = [0, 1, 2, 4, 8, 16, 32, 64, 128]
         mask_sides = [3, 4, 6, 10]
