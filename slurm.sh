@@ -1,3 +1,4 @@
+# `srun --mem=10GB--gres=gpu:1 --nodelist=tikgpu10 --pty bash`
 # `salloc --mem=10GB --nodelist=tikgpu10`
 
 # clone project
