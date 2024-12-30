@@ -387,4 +387,3 @@ if __name__ == "__main__":
 
         with fpath.open("a") as f:
             f.write(json.dumps(output) + "\n")
-            print(json.dumps(output))
