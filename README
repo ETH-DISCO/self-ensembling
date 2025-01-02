@@ -12,4 +12,8 @@ Based on:
 - Official repository: https://github.com/stanislavfort/ensemble-everything-everywhere
 - Implementation by Andreas Plesner: https://github.com/aplesner/Ensemble-everything-everywhere-recreating-results
 
-Report: https://github.com/sueszli/thesis
+File tree:
+
+- `/0-custom-impl`: reimplementing architecture from scratch, evaluating hyperparams
+- `/1-resnet`: evaluating backbone alone
+- `/2-self-ensemble`: actual self-ensemble implementation, benchmarked against various attacks
